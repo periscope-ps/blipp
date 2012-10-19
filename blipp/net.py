@@ -150,6 +150,9 @@ class Probe:
             post_dict['name'] = face
             post_dict['capacity'] = capacity
 
+            # hack in a 'nodeRef' so we can find port from rspec
+            post_dict['nodeRef'] = settings.URN_STRING[:-1]
+
             resp = unis.post_port(post_dict)
             if isinstance(resp, dict):
                 subjects[face]=resp['selfRef']
