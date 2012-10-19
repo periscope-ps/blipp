@@ -127,18 +127,24 @@ class Probe:
                 capacity = 0
             
             # assume each port is a layer2 port for the main 'address'
-            l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
-            if len(l2_addr):
-                addr = {"type": "mac", "address": l2_addr[0]['addr']}
-                post_dict['address'] = addr
+            try:
+                l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
+                if len(l2_addr):
+                    addr = {"type": "mac", "address": l2_addr[0]['addr']}
+                    post_dict['address'] = addr
+            except:
+                pass
                 
             # add all the other address info we can find
             post_dict['properties'] = {}
             for t in type_map:
-                addrs = netifaces.ifaddresses(face)[type_map[t]]
-                for a in addrs:
-                    addr = {"type": t, "address": a['addr']}
-                    post_dict['properties'][t] = addr
+                try:
+                    addrs = netifaces.ifaddresses(face)[type_map[t]]
+                    for a in addrs:
+                        addr = {"type": t, "address": a['addr']}
+                        post_dict['properties'][t] = addr
+                except:
+                    pass
                     
             ### some sort of verification here that capacity is right
             post_dict['name'] = face
