@@ -1,6 +1,7 @@
 import os
 from pprint import pprint
 import ethtool
+import netifaces
 from unis_client import UNISInstance
 import settings
 
@@ -110,19 +111,39 @@ class Probe:
         netdev = self._proc.open('net', 'dev')
         faces = []
         subjects = {}
+        type_map = {'ipv4': netifaces.AF_INET,
+                    'ipv6': netifaces.AF_INET6,
+                    'mac': netifaces.AF_LINK}
         for line in netdev:
             line = line.split()
             if line[0].count(":"):
                 faces.append(line[0][:line[0].index(":")])
         unis = UNISInstance(unis_url=self.unis_url)
         for face in faces:
+            post_dict = {}
             try:
                 capacity = ethtool.get_speed(face)
             except OSError:
                 capacity = 0
+            
+            # assume each port is a layer2 port for the main 'address'
+            l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
+            if len(l2_addr):
+                addr = {"type": "mac", "address": l2_addr[0]['addr']}
+                post_dict['address'] = addr
+                
+            # add all the other address info we can find
+            post_dict['properties'] = {}
+            for t in type_map:
+                addrs = netifaces.ifaddresses(face)[type_map[t]]
+                for a in addrs:
+                    addr = {"type": t, "address": a['addr']}
+                    post_dict['properties'][t] = addr
+                    
             ### some sort of verification here that capacity is right
-            post_dict={"name":face,
-                       "capacity":capacity}
+            post_dict['name'] = face
+            post_dict['capacity'] = capacity
+
             resp = unis.post_port(post_dict)
             if isinstance(resp, dict):
                 subjects[face]=resp['selfRef']
