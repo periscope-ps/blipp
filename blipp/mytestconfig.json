@@ -1,0 +1,46 @@
+{
+    "status": "ON",
+    "serviceType": "http://some_schema_domain/blipp",
+    "name": "blipp",
+    "ttl": 100000,
+    "location":{"institution": "IUJaffee"},
+    "description": "jaffee, local blipp testing from hikerbear",
+    "properties": {
+	"configurations": {
+	    "unis_url":"http://dev.incntre.iu.edu",
+	    "probe_defaults":
+	    {"collection_schedule":"builtins.simple",
+	     "schedule_params":{"every": 20},
+	     "reporting_params":7,
+	     "collection_size":10000000,
+	     "collection_ttl":1500000,
+	     "ms_url":"http://dev.incntre.iu.edu"},
+	    "domain":"jaffeetestdomain",
+	    "hostname":"hikerbear",
+	    "urn_template":"urn:ogf:network:domain=DOMAIN:node=HOSTNAME:",
+	    "probes":{
+		"ping":{
+		    "collection_schedule":"simple",
+		    "kwargs":{"remote_host":"google.com",
+			      "timeout":2,
+			      "packet_size":56,
+			      "byte_pattern":"0xAAAA"},
+		    "targets":[{"kwargs":{"remote_host":"127.0.0.1", "timeout":3}, "collection_ttl":30000},
+			       {"kwargs":{"remote_host":"131.253.13.32"}}]
+		},
+		"cpu":{
+		    "collection_schedule":"simple",
+		    "schedule_params":{"every": 5},
+		    "kwargs":{"proc_dir":"/proc"}
+		},
+		"net":{
+		    "status": "OFF",
+		    "kwargs": {"proc_dir":"/proc", "unis_url": "http://dev.incntre.iu.edu"}
+		}
+	    }
+	},
+	"summary": {
+	    "metadata": []
+	}
+    }
+}

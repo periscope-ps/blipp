@@ -1,5 +1,6 @@
 import resource
 import os
+from utils import full_event_types
 
 class Proc:
     """Wrapper to opening files in /proc
@@ -22,12 +23,22 @@ class Proc:
         except IOError:
             return False
 
+EVENT_TYPES={
+    "free":"ps:tools:blipp:linux:memory:utilization:free",
+    "used":"ps:tools:blipp:linux:memory:utilization:used",
+    "buffer":"ps:tools:blipp:linux:memory:utilization:buffer",
+    "cache":"ps:tools:blipp:linux:memory:utilization:cache",
+    "kernel":"ps:tools:blipp:linux:memory:utilization:kernel"
+    }
+
 
 class Probe:
     """Get memory statistics.
     """
-    
-    def __init__(self, **kwargs):
+
+    def __init__(self, config={}):
+        self.config = config
+        kwargs = config.get("kwargs", {})
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
 
 
@@ -73,4 +84,5 @@ class Probe:
                 elif linel[0].startswith("Slab"):
                     ans.update({"kernel":int(linel[1])})
             ans.update({"used":(total-free)})
+            ans = full_event_types(ans, EVENT_TYPES)
         return ans

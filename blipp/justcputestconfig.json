@@ -1,0 +1,32 @@
+{
+    "status": "ON",
+    "serviceType": "http://some_schema_domain/blipp",
+    "name": "blipp",
+    "ttl": 100000,
+    "location":{"institution": "IUJaffee"},
+    "description": "jaffee, local blipp testing from hikerbear",
+    "properties": {
+	"configurations": {
+	    "unis_url":"http://dev.incntre.iu.edu",
+	    "probe_defaults":
+	    {"collection_schedule":"builtins.simple",
+	     "schedule_params":{"every": 20},
+	     "reporting_params":4,
+	     "collection_size":10000000,
+	     "collection_ttl":1500000,
+	     "ms_url":"http://dev.incntre.iu.edu"},
+	    "domain":"jaffeetestdomain",
+	    "hostname":"hikerbear",
+	    "probes":{
+		"cpu":{
+		    "collection_schedule":"simple",
+		    "schedule_params":{"every": 2},
+		    "kwargs":{"proc_dir":"/proc"}
+		}
+	    }
+	},
+	"summary": {
+	    "metadata": []
+	}
+    }
+}

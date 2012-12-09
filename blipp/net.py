@@ -1,9 +1,9 @@
 import os
-from pprint import pprint
 import ethtool
 import netifaces
 from unis_client import UNISInstance
 import settings
+from utils import full_event_types
 
 
 logger = settings.get_logger('net')
@@ -28,6 +28,20 @@ class Proc:
         except IOError:
             return False
 
+EVENT_TYPES={
+    "packets_in":"ps:tools:blipp:linux:network:ip:utilization:packets:in",
+    "packets_out":"ps:tools:blipp:linux:network:ip:utilization:packets:out",
+    "bytes_in":"ps:tools:blipp:linux:network:utilization:bytes:in",
+    "bytes_out":"ps:tools:blipp:linux:network:utilization:bytes:out",
+    "errors":"ps:tools:blipp:linux:network:ip:utilization:errors",
+    "drops":"ps:tools:blipp:linux:network:ip:utilization:drops",
+    "tcp_segments_in":"ps:tools:blipp:linux:network:tcp:utilization:segments:in",
+    "tcp_segments_out":"ps:tools:blipp:linux:network:tcp:utilization:segments:out",
+    "tcp_retrans":"ps:tools:blipp:linux:network:tcp:utilization:retrans",
+    "datagrams_in":"ps:tools:blipp:linux:network:udp:utilization:datagrams:in",
+    "datagrams_out":"ps:tools:blipp:linux:network:udp:utilization:datagrams:out"
+    }
+
 class Probe:
     """Get network statistics
     """
@@ -35,11 +49,12 @@ class Probe:
                       "fifo_in", "fifo_out", "frame_in", "compressed_in",
                       "compressed_out", "multicast_in", "colls_out",
                       "carrier_out"]
-    
-    def __init__(self, **kwargs):
+
+    def __init__(self, config={}):
+        kwargs = config.get("kwargs", {})
         logger.debug('Probe.__init__', kwargs=str(kwargs))
+        self.config = config
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
-        self.unis_url=kwargs.get("unis_url", None)
         self.node_subject=kwargs.get("subject", "this_node")
         logger.debug('Probe.__init__ ', subject=self.node_subject)
         self.subjects=self.get_interface_subjects()
@@ -99,12 +114,11 @@ class Probe:
             elif line[0].lower()=="udp:":
                 in_index  = line.index("InDatagrams")
                 out_index = line.index("OutDatagrams")
-                dataline = netsnmp.readline().split()                
+                dataline = netsnmp.readline().split()
                 data[self.node_subject].update({"datagrams_in":dataline[in_index],
                                      "datagrams_out":dataline[out_index]})
             line = netsnmp.readline()
-#        print "PRINTING DATA FROM NET:"
-#        pprint(data)
+            data = full_event_types(data, EVENT_TYPES)
         return data
 
     def get_interface_subjects(self):
@@ -118,14 +132,14 @@ class Probe:
             line = line.split()
             if line[0].count(":"):
                 faces.append(line[0][:line[0].index(":")])
-        unis = UNISInstance(unis_url=self.unis_url)
+        unis = UNISInstance(self.config)
         for face in faces:
             post_dict = {}
             try:
                 capacity = ethtool.get_speed(face)
             except OSError:
                 capacity = 0
-            
+
             # assume each port is a layer2 port for the main 'address'
             try:
                 l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
@@ -134,7 +148,7 @@ class Probe:
                     post_dict['address'] = addr
             except:
                 pass
-                
+
             # add all the other address info we can find
             post_dict['properties'] = {}
             for t in type_map:
@@ -143,10 +157,10 @@ class Probe:
                     for a in addrs:
                         addr = {"type": t, "address": a['addr']}
                         post_dict['properties'][t] = addr
-                except:
-                    pass
-                    
-            ### some sort of verification here that capacity is right
+                except Exception as e:
+                    logger.exc('get_interface_subjects', e)
+
+            # TODO some sort of verification here that capacity is right
             post_dict['name'] = face
             post_dict['capacity'] = capacity
 

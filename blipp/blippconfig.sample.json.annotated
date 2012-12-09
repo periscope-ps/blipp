@@ -1,0 +1,96 @@
+// sample config file for blipp - designed to match unis service definition
+// with blipp specific stuff under ["properties"]["configurations"]
+// service schema http://unis.incntre.iu.edu/schema/20120709/service
+// configuration schema is ###TODO
+// This conf file schema deviates from the service schema only in that it
+// may not require all fields that the schema does
+{
+    "status": "ON", // blipp doesn't respect this 02/03/13
+    "id": 12345678990, // UNIS adds, or blipp will use for lookup if not provided at cmd line
+    "selfRef": "https://example.com/services/1234567890", // blipp doesn't use this... unis adds it
+    "accessPoint": "", // not relevant to blipp (yet?)
+    "serviceType": "http://some_schema_domain/blipp", // required to post - blipp puts in automatically
+    "name": "blipp", // blipp uses this to query unis if no service_id is provided
+    "ttl": 1000, // no plans to implement a lifetime right now
+    "ts": 2098340983223, // unis inserts this when the config gets sent to it
+    "description": "blipp desc", // will be added by defaults if not specified
+    "runningOn":{ // this get's passed on to the probe config
+	"href":"http://dev.incntre.iu.edu/nodes/hikerbear",
+	"rel":"full"
+    }
+    "properties": {
+	"geni": {"slice_uuid": "someuuid387234deadbeef"},
+	"configurations": {
+	    "unis_url":"http://dev.incntre.iu.edu",
+	    "config_file": "/usr/local/etc/blippconfig.json",
+	    "unis_poll_interval": 300, // reload config from unis every 300 seconds
+	    "use_ssl": "", // empty is false... anything else is true
+	    "ssl_cert": "cert_file",
+	    "ssl_key": "key_file",
+	    "ssl_cafile": "ca_file",
+	    "probe_defaults": { // default config for each probe... will be overridden by
+		                // anything specified within the probe specific config below
+		"collection_schedule":"builtins.simple", // under schedules dir, look in file
+		                                         // builtins for method "simple"
+		"schedule_params":{"every": 10},         // keyword args passed to schedule method
+		                                         // in this case, collect every 10 s
+		"reporting_schedule": "simple|num_measurements...etc", // not implemented yet
+		"reporting_params": 10 // send data every 10 measurements collected
+		"metadata_cache_dir":"/usr/local/etc/blippcache", // not yet implemented, name may change
+		"collection_size":10000000, // collection size (bytes) to be created in MS
+		"collection_ttl":1500000, // collection ttl (seconds) for collection in MS
+		"ms_url":"http://dev.incntre.iu.edu" // MS can be specified per probe
+	    },
+	    // may be used for gemini integration - not implemented
+	    "gemini_node_info":"/usr/local/etc/node.info",
+	    // used by net probe - set dynamically in defaults
+	    // based on socket.gethostname() by settings
+	    "host_urn": "urn:ogf:network:domain=foo:node=bar",
+	    // used for queries while setting up configuration - set dynamically in defaults
+	    "hostname": "bar",
+	    "location":{"institution": "GENI"}, // used to post node to unis if necessary
+	    // this is above... do we need it here? look through code to see what's going on
+	    "probes":{ // the keys under probes are the filenames of probes without the ".py"
+		       // their values are dictionaries which contain default config for all instances
+		       // of that probe. The different instances are in a list of dictionaries
+		       // under "targets". The config in each dictionary in the list adds to and
+		       // overrides the default config for the probe, as well as the default config
+		       // for the whole blipp instance.
+		"ping":{
+		    "collection_schedule":"builtins.random", // not implemented yet
+		    "schedule_params":{"low": 10, "high": 60, "distribution": "poisson"},
+		    // wait randomly between 10 and 60 seconds between collections, with a
+                    // poisson distribution of wait values (not yet implemented)
+		    "reporting_params":10,
+		    "collection_size":3000000,
+		    "collection_ttl":1200000,
+		    "kwargs":{"remote_host":"google.com", // the kwargs dict is passed directly to the probe
+			                                  // so each probe can have specific parameters
+			      "timeout":2,
+			      "packet_size":56,
+			      "byte_pattern":"0xAAAA"},
+		    "targets":[{"kwargs":{"remote_host":"129.62.33.22", "timeout":3}, "collection_ttl":30000},
+			       {"kwargs":{"remote_host":"bing.com"}}]
+		},
+		"cpu":{
+		    "collection_schedule":"simple",
+		    "schedule_params":1,
+		    "kwargs":{"proc_dir":"/proc"}
+		    // could theoretically have list of targets with different schedules or something,
+		    // but it'd be a bit silly for the cpu probe
+		},
+		"net":{
+		    "status":"off", // not used yet
+		    "kwargs":{"proc_dir":"/proc",
+			      // the net probe needs to be passed unis url
+			      // so that it can lookup ports and add them if necessary
+			      "unis_url":"http://www.dev.incntre.iu.edu",
+			      "subject":"http://www.dev.incntre.iu.edu/nodes/hikerbear"}
+		}
+	    }
+	}
+	"summary": {
+	    "metadata": [] // may be used for metadata reuse, but not currently
+	}
+    }
+}

@@ -1,0 +1,440 @@
+* blipp
+
+IP, UDP, TCP stats
+
+table stuff, leave it to INSTOOLs
+
+minimize "touchpoints" with gush vs flack
+
+its just a measurement store.... it doesn't make the garbage, it just
+drives the truck
+
+how do things look in UNIS?
+
+service registration - installed but disabled will be there
+ahmed will do an example instance of service schema for blipp or unis
+
+When blipp starts:
+gets service json
+apply config
+check local cache for metadata
+query unis for metadata
+create metadata for those not found
+create collections for unknown
+blipp's config will include MS location
+TTL?
+blipp metrics +mem +disk
+
+** disk metrics
+fields may wrap... watch for this
+no locks while modifying counters
+in 2.6 there are per-CPU counters so no locking becomes less of an
+issue
+
+
+Diskstats:
+|               1 |            2 |            3 |                4 |                5 |             6 |               7 |                8 |               9 |              10 |                11 |
+| reads completed | reads merged | sectors read | ms spent reading | writes completed | writes merged | sectors written | ms spent writing | ios in progress | ms spent in ios | weighted ms in io |
+
+For partitions in 2.6 there are only 4 fields:
+|            1 |            2 |             3 |               4 |
+| reads issued | sectors read | writes issued | sectors written |
+
+In 2.6.25, the full statistic set is again available for partitions
+
+** TODO cpu metrics
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:user" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:system" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:nice" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:iowait" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:hwirq" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:swirq" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:steal" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:utilization:guest" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:load:onemin" ]
+blipp-mds-cpu.js:	"eventTypes": [ "ps:tools:blipp:linux:cpu:load:fivemin" ]
+blipp-mds-cpu.js:	"eventTypes": ["ps:tools:blipp:linux:cpu:load:fifteenmin" ]
+
+
+registration
+
+* what does blipp need to do
+its a scheduler for a variety of probes basically
+reads config for probes and runs them at the specified interval
+it registers itself with UNIS
+it fills UNIS in with extra info, like cpu cores and status
+it exports data to the MS or to an XSP daemon
+
+
+* issues
+** how are we doing metadata ids? hash of metadata?
+need to post metadata to unis, and get IDs back - then add them to the service summary
+
+** DONE metadata collection interval - rejected
+Consider having no collection interval in metadata... collection interval should
+be clear from timestamps. It could change without chaning the metadata. A tool
+used to view the data could separate out different sections with different
+intervals, but that would require reading all the data.
+
+** DONE standardize config files - how are we gonna do it?
+json file that looks like the service rep in unis
+** metadata timestamp
+its called nanoseconds in ahmed's big html tar, but I think it should be seconds?
+** content-type... why is it so long?
+** DONE There is no GET /collections/{mid} ?
+   just query /collections?mid=blah
+** It'd be cool if you could query unis by sending some json instead of constructing a URL
+** create multiple collections with one post in MS
+** how can there be a conflict(409) when posting to /events in MS? timestamp collision?
+** can you have an MS without UNIS?
+* metadata
+** to post:
+subject - yes in config somewhere OR sent to you by the probe
+parameters - yes determined by config, or by probe if requested config is impossible
+eventType - yes determined by the probe
+
+id - unis will create
+timestamp - unis will create
+selfRef - created by unis
+
+* config
+* TODO New Structure - to be updated with new new structure
+** blipp module
+*** probes are submodules
+**** Class called "Probe"
+has a method "get_data" get_data reports data in the format
+{"metric_name":value, "metric_name2":value2, ...} OR
+{"subject1":{"metric_name":value, "metric_name2":value2, ...},
+"subject2":{...}, ...}  without subjects, the subject for metadata is
+assumed to be the node blipp is runningOn
+*** settings files
+*** UnisInstance
+* External libraries
+** TODO python requests - going to switch this out for httplib and eventually our own solution?
+easy_install or pip install
+** python-ethtool
+needed to sudo apt-get install libnl-dev
+http://dsommers.fedorapeople.org/python-ethtool/python-ethtool-0.7.tar.bz2
+http://dsommers.fedorapeople.org/python-ethtool/python-ethtool-libnl-1.0-support.patch
+from the python-ethtool dir: $ patch -p1 < ../python-ethtool-libnl-1.0-support.patch
+*** add in get_speed function to ethtool.c
+#+BEGIN_SRC
+static PyObject *get_speed(PyObject *self __unused, PyObject *args)
+{
+	struct ifreq ifr;
+	int fd, err;
+	struct ethtool_cmd edata;
+	char *devname;
+	if (!PyArg_ParseTuple(args, "s", &devname))
+		return NULL;
+
+	/* Setup our control structures. */
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(&ifr.ifr_name[0], devname, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = 0;
+	ifr.ifr_data = &edata;
+	edata.cmd = ETHTOOL_GSET;
+
+
+	/* Open control socket. */
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) {
+          PyErr_SetString(PyExc_OSError, strerror(errno));
+          return NULL;
+	}
+
+	/* Get current settings. */
+	err = ioctl(fd, SIOCETHTOOL, &ifr);
+        if (err < 0) {
+          PyErr_SetString(PyExc_OSError, strerror(errno));
+          return NULL;
+        }
+
+	close(fd);
+        return PyInt_FromLong((long) edata.speed);
+}
+#+END_SRC
+setup.py install
+
+** netlogger
+$ sudo pip install netlogger
+** netifaces
+sudo pip install netifaces
+* TESTing
+unittest2
+mock
+
+* Planned changes/additions before March 2013
+** integrate active network tools
+In some cases these tools have built in scheduling functionality and
+such. For the purposes of blipp we will ignore most of this, and use
+the tools under simple "Probe" wrapper within the blipp
+architecture. This way we'll have a consistent scheduling architecture
+without having to re-write the functionality of these tools in python.
+
+Need to be able to run multiple instances of a probe. Will have to
+change the way configuration works to support this.
+
+*** delay - PingER
+I'm going to posit that we not use PingER and just write a simple
+Probe wrapper to the ubiquitous "ping" utility and use it within
+blipp's scheduling framework. Adapting PingER for use within blipp
+seems much harder as PingER's output is automatically written to a
+DB. (see https://uisapp2.iu.edu/jira-prd/browse/GEMINI-92)
+
+**** Possible issues
+1. sending icmp packets requires root - which we get around by
+   wrapping ping, but this could have portability issues
+2. need to figure out data/metadata representation report
+just report rtt, ttlping_min, ping_avg, ping_max, and ping_mdev
+need metadata like packet_size,
+from_ip, to_ip, ttl, send_interval, num_packets, pattern?
+
+
+*** NTP
+bwctl and owamp need NTP - available in apt/yum
+
+*** bandwith - bwctl/iperf
+1. probe wrapper for bwctl shouldn't be an issue
+2. need to ensure bwctld, iperf, etc. are installed on nodes
+
+*** one way delay - OWAMP
+1. probe wrapper for owping
+2. owampd installed on nodes
+
+** add unit tests
+** improve scheduling functionality
+** configuration interface
+At some point blipp will need to be configurable from a web
+interface. Right now you can reconfigure blipp on the fly by rewriting
+its settings files - it looks at them ever few seconds to see if
+they've changed. This is hacky and pretty dumb. I think the way we're
+supposed to go here is blipp should poll unis occasionally for
+updated config
+
+let's:
+1. confirm that blipp should configure itself from UNIS
+2. talk about how blipp's config will be stored in UNIS
+
+
+
+
+
+When pushing scheduling functionality into blipp
+
+user to be able to specify exactly what they want
+conflict resolution ability
+auto full mesh
+
+
+
+* random thinkings
+Probes
+  get_data needs to be run async
+  coll_interval
+  report_interval
+  coll_size
+  coll_ttl
+  kwargs of probe specific params
+
+probes take their config in json, basically as a dictionary, this
+needs to be passed to unis as metadata
+sched_obj should be called probe_runner
+
+scheduler
+  - runs multiple things
+  - each thing is different
+  - run every x amnt of time
+  - run every x amnt of time from time1-time2, time3-time4 etc.
+  - run every x amnt of time from time1-time2, time3-time4 etc. every
+    yth day starting in z days
+  - month support? i.e. the first of every month, or the 3rd of
+    february
+  - day of week support? every wednesday or the 3rd sunday of each
+    month
+
+run every x seconds for y seconds every z seconds
+
+Generalized scheduling:
+  starting at time a, run this probe every z seconds for y seconds
+  every x seconds for w seconds....
+
+
+  probe_tuple = (((probe, interval, time), interval2, time2), interval3, time3)
+
+#+BEGIN_SRC python
+  when time.time()>=start_time:
+    do(thing):
+      if isinstance(thing, tuple):
+        start_time = time.time()
+        end_time = start_time+thing[2]
+        count = 0
+        while time.time()<=end_time:
+          do(thing[0])
+          count += 1
+          sleep((count*thing[1]+start_time)-time.time())
+      else: #thing is a probe
+        thing.get_data and send to collector
+#+END_SRC
+
+
+* blipp execution
+1. read cmd line args - at a minimum, we need a unis instance(and node, or service_id), or a config file
+2. if config_file, read config file - store in dict file_config
+3. contact unis instance, any config in unis adds to and overrides file config
+4. register all config to unis
+   - register node if not there
+   - register ports? or let net probe do that?
+   - register blipp as a service if not there
+5. at this point, we should have:
+   - a list of probes to run, with probe specific config
+   - global blipp settings, like
+     - unis_instance
+     - ms_instance (could be probe specific)
+     - hostname
+     - defaults for probe settings like coll_interval, coll_time etc
+6. pass probes to arbiter which creates a probe_runner as a separate
+   process for each probe, arbiter checks to see if the config has
+   changed at check_interval, and stops and starts probes as necessary
+7. probe_runner runs get_data on the specified schedule and passes
+   data onto a collector object
+
+
+* blipp use cases
+** UNIS (unis_url provided)
+*** blipp already registered (service_id provided) I think this means the node must be registered as well
+use service_id to look up service - get all config and node info,
+reconcile with file config (if any) and register back to unis
+*** node registered, but not blipp (node_id provided)
+get the node to verify id and get name/urn etc. register blipp with
+the appropriate running_on
+*** node possibly registered, but not blipp, no node_id provided (node_name, and/or urn possibly provided)
+1. query the node based on provided info and socket.gethostname
+2. if multiple results, fail if 1 result, register blipp, if 0
+   results, register node based on provided info and socket.gethostname
+
+*** neither node nor blipp registered, config file and unis url passed
+register node, then register service
+** Non UNIS (config file provided)
+
+* configuration
+how do we handle config once we have it (from unis/file)?
+
+
+
+** approach 1 (bad for a variety of reasons (or is it?))
+1. pass config object to each probe_runner (sched_obj)
+2. whenever probe runner needs to know something it queries this
+   object for it... that way if things change, the probe_runner knows
+   automatically
+   - how does the probe runner know which probe to get if they are
+     being added and removed by unis?
+     + have the config generate an id for each probe based upon it's
+       configuration - this could be the mdid, so that when
+       measurements come configured the same way, they get the same
+       mdid
+       - have to take into account the subject and all of the config when generating the hash
+3. sched (which starts the probe_runners) tells the config to refresh
+   itself, it makes sure to start new probe_runners when new probes are
+   added, and kill old ones when they are removed
+4.
+
+** approach 2 (current)
+1. expand config into a list of probe configs
+2. add stuff from the top level of config that might be useful to
+   probes - maybe just end up adding everything (except name as that
+   would conflict with probe name)
+3. send each probe its own config, and the arbiter starts and restarts
+   probes as necessary (when changed config comes in)
+
+
+* call 2/01/13
+** scheduling and conflicts
+blipp can start to do smart things like loading the whole unis network
+topology and reasoning about what tests hit what links. OR, individual
+schedules can ask unis/locally loaded unis about whether they are
+conflicting. Could run in some time span with some probability to
+statistically reduce the chance of collisions
+
+* DONE streamline *_clients
+* TODO replace requests with httplib
+* DONE Bring in AUTH
+* TODO config (again)
+- cmd line
+- file
+- defaults
+- unis
+
+Take defaults, overwite with file, overwrite with cmd line,
+setup_node, setup_service, overwrite with unis config
+
+move reconcile_config and delete_nones to dict_ops module... call
+reconcile merge_dicts or something.
+
+* DONE fix eventTypes
+* TODO need a way to tell blipp to overwrite unis conf with file conf
+maybe
+* TODO fix net probe to lookup ports before posting
+* TODO figure out metadata reuse
+metadata needs to be pushed to the service summary in unis once we
+have it, and we need to check that location for mdata before posting
+new. We should also probably cache it locally because searching
+through that summary will be a pain.
+* TODO add bandwidth and one way ping probes
+* TODO bring in XSP code
+* TODO reporting scheduling
+need to think about this... probably doesn't need to be as generic as
+collection scheduling, but we'll see
+
+* TODO put Proc in some utils place
+
+* TODO colorize logging
+
+* TODO handle transient network failures
+* TODO merge utils reconcile_config with conf
+* 2/5 Demo
+** configuration (figure)
+[[https://docs.google.com/drawings/d/1FGeQd5vwefien-rQ-4r3AuPc57syFvepzBjA3hdOx3o/edit?usp=sharing][Blipp Components]]
+[[http://www.websequencediagrams.com/cgi-bin/cdraw?lz=CnRpdGxlIEJsaXBwIERhdGEgRmxvdwoKbm90ZSBvdmVyABUGOiByZWFkIGNvbW1hbmQgbGluZQAREmFkZCBjb25maWcgZmlsAAoXZGVmYXVsdHMAUhAgVU5JUzogc2V0dXAgbm9kZQoAgQ8FLT4rABMGaWYgaGF2ZSBhABgFX2lkIGdldAAjBlVOSVMtPi0AgSAJdHVybgA-BQCBCQUgb3Igbm90IGZvdW5kAEYPcXVlcnkgZgAdBWRlIHdpdGggVVJOIChjb25zdHJ1Y3RlZCBmcm9tIGhvc3RuYW1lKQBYFmxpc3Qgb2YgbWF0Y2hlcwCBKhJubwAUCCwgY3JlYXRlIG5ldwCBJRsAHwZkAIIFBgCCEB1zZXJ2aWMAgiAQY2hlY2sgZ2l2ZW4AGgggaWQgYWdhaW5zdACCaQUAgiMWACUIAIIcGwCBSwV0AE4JAIJABmJhc2VkIG8AgnQGAIIIHnJlcwCDfgUAggsbAIIZDACBNwgAgxoFAIRZCG91bmQgc28gZmFyAIIjHgCCFwgAhRoVVU5JUwCFLQcAhWESZXhwYW4AhUoJaW50bwCDXwlwcm9iAIRZBmlnAIU6ETogc3RhcnRvbGFkaXBvIG1pY2hpZ2FuIGR1bmsAg3gFbidzIGZhY2UAQQYALRMAEgYgY29sbGVjdCBkYXRhIGFuZCBzZW5kIHRvABEIb3IAhGEJAINuBwAQCCBwb3N0cyBtZXRhADgFdG8Ag2wGAIZNB00AIAwAgmMJAGgHaW9ucyBpbiBNABcYAIEBBQBPCHRoZSBNUwo&s=modern-blue][Blipp Data Flow]]
+[[http://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgR2VtaW5pIENvbmZpZ3VyYXRpb24gV29ya2Zsb3cKQmxpcHAtPlVOSVM6IGdldCBpbml0aWFsIGMAJAwKbm90ZSBvdmVyIAAsBTogc3RhcnQgcHJvYmVzABgGcmlnaHQgb2YAGghwb2xsIGludGVydmFsIHBhc3NlcwpXZWIgVUkAaAh1c2VyIHNldHMAXw8AgQgNAEMFZm9yAHIgcmVsb2FkAIEMByBhcyBuZWNlc3NhcnkAdSsARTVub3RoaW5nIGhhcyBjaGFuZ2VkAIFVPgA_BgCBU0MgCiAgIHNlZQCBDwgAg08HLAogIACCFBxlbmQgbm90ZQoK&s=modern-blue][Configuration Workflow]]
+** summary of demo steps
+Depends on what sort of interfaces we have. The plan is to port the
+existing perfAdmin GUI to work with the new configuration in the new
+UNIS. If that happens we can do a similar demo to last time as far as
+how it looks. All the names of different tools should look a bit more
+streamlined since everything is going through blipp, and there is only
+one measurement store, but since most of the work has been on
+generalizing the backend code, the demo shouldn't change much.
+
+Now that the configuration structure has mostly settled, we can
+start working on interfaces to configure BLiPP. If we aren't able to
+port in time, the old tools are still available. It should also be
+pretty easy to write a quick client tool that can get and post new
+config from and to UNIS.
+** current interfaces to other entities, and message flows (like “AA-workflow”)
+BLiPP interacts with UNIS and the MS through their well defined APIs,
+it doesn't expose any interface itself, although this might be
+something to think about in the future so that it can be commanded to
+reload config rather than waiting for it to poll UNIS. See figures above for details.
+
+Blipp does reload it's config file at the same time it reloads config
+from UNIS, so it can be reconfigured that way, but anything that's
+already in UNIS will override changes in the file.
+** features available now (2/5)
+- generic scheduling
+- passive probes
+  - cpu
+  - memory
+  - network
+- active probes
+  - ping
+- more unit tests
+- measurement aggregation
+- flexible, cascading configuration structure
+** features expected to be available by GEC16 (3/19)
+- metadata reuse, either from service summary, or caching locally
+- net probe to gather port info and merge with what's already in unis
+- bandwidth probe
+- one way ping probe
+** issues that need to be resolved before GEC16 (3/19)
+*** AA

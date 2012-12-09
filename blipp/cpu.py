@@ -1,13 +1,5 @@
 import os
-import cpu_settings
-import settings
-
-
-# startup
-# read config
-# check metadata cache based on configured measurements
-# use cached metadata, query UNIS for metadata, create mdids
-# query MS for collections and create non-existent ones
+from utils import full_event_types
 
 class Proc:
     """Wrapper to opening files in /proc
@@ -23,6 +15,21 @@ class Proc:
         """
         return open(os.path.join(self._dir, *path))
 
+EVENT_TYPES={
+    'user':"ps:tools:blipp:linux:cpu:utilization:user",
+    'system':"ps:tools:blipp:linux:cpu:utilization:system",
+    'nice':"ps:tools:blipp:linux:cpu:utilization:nice",
+    'iowait':"ps:tools:blipp:linux:cpu:utilization:iowait",
+    'hwirq':"ps:tools:blipp:linux:cpu:utilization:hwirq",
+    'swirq':"ps:tools:blipp:linux:cpu:utilization:swirq",
+    'steal':"ps:tools:blipp:linux:cpu:utilization:steal",
+    'guest':"ps:tools:blipp:linux:cpu:utilization:guest",
+    'idle':"ps:tools:blipp:linux:cpu:utilization:idle",
+    'onemin':"ps:tools:blipp:linux:cpu:load:onemin",
+    'fivemin':"ps:tools:blipp:linux:cpu:load:fivemin",
+    'fifteenmin':"ps:tools:blipp:linux:cpu:load:fifteenmin"
+    }
+
 
 class Probe:
     """Get processor/core statistics.
@@ -31,19 +38,19 @@ class Probe:
     """
     CPU_TYPE = "socket"
     CORE_TYPE = "core"
-    
-    def __init__(self, **kwargs):
+
+    def __init__(self, config={}):
+        kwargs = config.get("kwargs", {})
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
         self._prev_cpu_hz = {}
         self._prev_cpu_total_hz = 0
-        
+
     def get_data(self):
         """Get general host CPU information (first line of /proc/stat)
-        
+
         Return: {'user':.1, 'system':.9, 'nice':0.0, etc... }
-        """    
-        
-        cpu = 0
+        """
+
         stat_file = self._proc.open("stat")
         line = stat_file.readline()
         #timestamp=time.time() # not sure whether this goes here or
@@ -51,7 +58,7 @@ class Probe:
         fields = line.split()
         key = fields[0]
         v = map(int, fields[1:])
-        
+
         # basic values
         cpudata = dict(zip(('user', 'nice', 'system', 'idle'), v[0:4]))
         # extended values
@@ -76,7 +83,7 @@ class Probe:
                 prev_values[key] = value # save abs. value
         (d1, d2, d3) = os.getloadavg()
         cpudata.update({"onemin":d1, "fivemin":d2, "fifteenmin":d3})
-        result = cpudata        
+        result=full_event_types(cpudata, EVENT_TYPES)
         self._prev_cpu_hz = prev_values
         self._prev_cpu_total_hz = total_hz
         return result
@@ -88,17 +95,17 @@ class CPUInfo:
     """
     CPU_TYPE = "socket"
     CORE_TYPE = "core"
-    
+
     def __init__(self, proc=None, **_):
         self._proc = proc
         self._prev_cpu_hz = { }
         self._prev_cpu_total_hz = { }
-        
+
     def get_data(self):
         """Get host CPU information.
-        
+
         Return: list [ cpu  = list [ value, [ per-core-values.. ] ], ... ]
-        """    
+        """
         # Get system total from uptime. This will be used
         # to scale the CPU numbers to percentages.
         #f = open(os.path.join(self._dir, "uptime"), "r")
@@ -156,121 +163,4 @@ class CPUInfo:
                 self._prev_cpu_hz[idx] = prev_values
                 self._prev_cpu_total_hz[idx] = total_hz
         return result
-
-            
-            
-# def main():
-#     try:
-#         cpu_settings.COLLECTION_INTERVAL
-#         ci=cpu_settings.COLLECTION_INTERVAL
-#     except AttributeError:
-#         ci,cpu_settings.COLLECTION_INTERVAL=1000,1000
-#     try:
-#         cpu_settings.REPORTING_INTERVAL
-#         ri=cpu_settings.REPORTING_INTERVAL
-#     except AttributeError:
-#         ri,cpu_settings.REPORTING_INTERVAL=10000,10000
-#     try:
-#         cpu_settings.UNIS_URL
-#     except AttributeError:
-#         cpu_settings.UNIS_URL=None
-#     try:
-#         cpu_settings.MS_URL
-#     except AttributeError:
-#         cpu_settings.MS_URL=None
-#     try:
-#         cpu_settings.COLLECTION_TIME
-#     except AttributeError:
-#         cpu_settings.COLLECTION_TIME=0
-#     try:
-#         cpu_settings.PROC_DIR
-#     except AttributeError:
-#         cpu_settings.PROC_DIR="/proc/"
-#     if ri<ci:
-#         ri=ci
-#         ### LOG
-#     ### UPDATE UNIS with realized config
-
-#     proc_obj = Proc(cpu_settings.PROC_DIR)
-#     cpu_obj = CPUInfoGeneral(proc=proc_obj)
-
-#     # take care of metadata, create collections
-#     unis = unis_client.UNISInstance(unis_url=cpu_settings.UNIS_URL)
-#     collector = blipp_collector.Collector(ms_url=cpu_settings.MS_URL)
-#     mids = {}
-#     for metric in cpu_obj.get_data():
-#         event_type = blipp_utils.CPU_ET[metric]
-#         params = {"datumSchema": blipp_utils.SCHEMAS["datum"],
-#                   "collectionInterval": cpu_settings.COLLECTION_INTERVAL
-#                   }
-#         subject=settings.SUBJECT
-#         resp = unis.post_metadata(subject, event_type, params)
-#         if isinstance(resp, dict):
-#             collector.update_metadatas(resp)
-#             mids.update({metric:resp["id"]})
-#         else:
-#             ### LOG
-#             print "metadata post failed, response follows:"
-#             print resp
-
-        
-    
-#     start_time=time.time()
-#     end_time=start_time+cpu_settings.COLLECTION_TIME
-#     if end_time==start_time:
-#         end_time=sys.maxint 
-
-#     last_rtime = 0
-#     last_ctime = 0
-    
-#     # main collection loop
-#     while 1:
-#         cur_time = time.time()
-#         if cur_time > end_time:
-#             break
-
-#         if cur_time >= (last_ctime + ci):
-#             data = cpu_obj.get_data()
-#             ts = cur_time
-#             last_ctime=cur_time
-#             for metric in data:
-#                 mid=mids[metric]
-#                 value=data[metric]
-#                 collector.insert(mid, ts, value)
-
-#         if cur_time >= (last_rtime + ri):
-#             collector.report()
-#             last_rtime=cur_time
-
-
-## TESTING ##    
-# proc_obj = Proc()
-# cpu_obj = CPUInfo(proc=proc_obj)
-# print "BLALALALAL"
-# print "["
-# for item in cpu_obj.get_data():
-#     print "  ["
-#     for it in item:
-#         if isinstance(it, list):
-#             print "    ["
-#             for i in it:
-#                 print i
-#             print "    ]"
-#         else:
-#             print it
-#     print "  ]"
-# print "]"
-
-# print "\n\n\n\n"
-# cpudat= cpu_obj.get_data()
-# for item in cpudat[0]:
-#     print item
-
-# proc_obj = Proc()
-# gcpu_obj = CPUInfoGeneral(proc=proc_obj)
-# print gcpu_obj.get_data()
-# time.sleep(1)
-# print gcpu_obj.get_data()
-# time.sleep(1)
-# print gcpu_obj.get_data()
 
