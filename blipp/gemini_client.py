@@ -17,7 +17,7 @@ class GeminiClient:
             if schema:
                 data.setdefault('$schema', schema)
             if rtype=='post' or rtype=='put':
-                loc = "parameters" if rtype=='metadata' else "properties"
+                loc = "parameters" if url.count('/metadata') else "properties"
                 self._add_gemini_auth(data, loc)
         if config.get("use_ssl", None):
             r = http.make_request(rtype, url, headers, json.dumps(data),

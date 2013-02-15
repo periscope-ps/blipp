@@ -29,6 +29,7 @@ class ServiceConfigure(object):
 
     def refresh_config(self):
         self.config = deepcopy(settings.STANDALONE_DEFAULTS)
+        merge_dicts(self.config, self.cmd_cfg)
         file_cfg = self._get_file_config(
             self.config["properties"]["configurations"].get("config_file", None))
         merge_dicts(self.config, file_cfg)
@@ -88,6 +89,9 @@ class ServiceConfigure(object):
             for i in range(len(rlist)):
                 r = self.unis.get('/services/' + rlist[i]["id"])
                 if r:
+                    if isinstance(r, list):
+                        logger.warn('_setup_service', msg="id not unique... taking first result")
+                        r = r[0]
                     config["id"] = r["id"]
                     logger.info('_setup_service',
                                 msg="%s service found with id %s" %\
@@ -99,6 +103,9 @@ class ServiceConfigure(object):
                             "...creating new service")
             r = self.unis.post("/services", data=config)
             merge_dicts(config, r)
+        if isinstance(r, list):
+            logger.warn('_setup_service', msg="id not unique... taking first result")
+            r = r[0]
         merge_dicts(config, r)
         self.unis.put("/services/" + config["id"], data=config)
 
