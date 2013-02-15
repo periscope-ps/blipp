@@ -30,7 +30,8 @@ def get_options():
 
 
 
-def main(options):
+def main(options=None):
+    options = get_options() if not options else options
     bconf = BlippConfigure(file_loc=options.config_file,
                            unis_url=options.unis_url,
                            service_id=options.service_id, service_name='blipp',
@@ -46,6 +47,6 @@ def main(options):
 
 
 if __name__=="__main__":
-    main(get_options())
+    main()
 #    cProfile.run('main(get_options())', 'blippprof')
 

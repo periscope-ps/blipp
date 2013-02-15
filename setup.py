@@ -36,7 +36,7 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'blippd = blipp.sched:main',
+            'blippd = blipp.start_blipp:main',
         ]
     },
 )
