@@ -1,44 +1,27 @@
+import requests
 import settings
 import pprint
 import json
-import httplib
-from urlparse import urlparse
 
 logger = settings.get_logger('http')
 
-def handle(r):
-    text = r.read()
-    logger.debug('handle', status=r.status, text=text, reason=r.reason)
-    if 200 <= r.status <= 299:
-        if text:
-            return text
+def handle(resp):
+    logger.debug('handle', status=resp.status_code, text=resp.text)
+    if 200 <= resp.status_code <= 299:
+        if resp.text:
+            return resp.text
         else:
-            return r.status
-    elif 400 <= r.status <= 499:
+            return resp.status_code
+    elif 400 <= resp.status_code <= 499:
         return None
     else:
-        raise Blipp_HTTP_Error(r.status, text)
+        raise Blipp_HTTP_Error(resp.status_code, resp.text)
 
 def make_request(rtype, rurl, headers, data,
                  ssl_cert=None, ssl_key=None, ssl_cafile = None):
     logger.debug('make_request', rtype=rtype, url=rurl, data=pprint.pformat(json.loads(data)))
-    o = urlparse(rurl)
-    if ssl_cert is not None and ssl_key is not None:
-        conn = httplib.HTTPSConnection(o.hostname, o.port, ssl_key, ssl_cert)
-    else:
-        conn = httplib.HTTPConnection(o.hostname, o.port)
-
-    if rtype.upper()=="GET":
-        if headers:
-            conn.request("GET", o.path + '?' + o.query, data, headers)
-        else:
-            conn.request("GET", o.path + '?' + o.query, data)
-    else:
-        if headers:
-            conn.request(rtype.upper(), o.path, data, headers)
-        else:
-            conn.request(rtype.upper(), o.path, data)
-    return handle(conn.getresponse())
+    return handle(requests.request(rtype, rurl, headers=headers, data=data,
+                                   cert=(ssl_cert, ssl_key), verify=ssl_cafile))
 
 def get(get_url, data=None, headers=None,
         ssl_cert=None, ssl_key=None, ssl_cafile = None):
