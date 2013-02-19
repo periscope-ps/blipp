@@ -18,7 +18,9 @@ def handle(resp):
         raise Blipp_HTTP_Error(resp.status_code, resp.text)
 
 def make_request(rtype, rurl, headers, data,
-                 ssl_cert=None, ssl_key=None, ssl_cafile = None):
+                 ssl_cert=None, ssl_key=None, ssl_cafile=None):
+    if not ssl_cafile:
+        ssl_cafile = False
     logger.debug('make_request', rtype=rtype, url=rurl, data=pprint.pformat(json.loads(data)))
     return handle(requests.request(rtype, rurl, headers=headers, data=data,
                                    cert=(ssl_cert, ssl_key), verify=ssl_cafile))
