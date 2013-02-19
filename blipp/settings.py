@@ -48,7 +48,7 @@ STANDALONE_DEFAULTS = {
             "use_ssl": "",
 	    "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
 	    "ssl_key": "/usr/local/etc/certs/mp_key.pem",
-	    "ssl_cafile": "/usr/local/etc/certs/cacerts.pem",
+	    "ssl_cafile": "",
             "hostname": HOSTNAME,
             "host_urn": URN_STRING,
             "location":{},
