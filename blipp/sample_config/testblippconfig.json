@@ -1,0 +1,29 @@
+{
+    "status": "ON",
+    "serviceType": "http://some_schema_domain/blipp",
+    "name": "blipp",
+    "ttl": 100000,
+    "location":{"institution": "test-institution"},
+    "description": "blipp testing in slice newblipptest",
+    "properties": {
+	"configurations": {
+	    "unis_url":"https://unis.incntre.iu.edu:8443",
+	    "use_ssl": true,
+	    "probe_defaults":
+	    {"collection_schedule":"builtins.simple",
+	     "schedule_params": {"every": 2},
+	     "reporting_params": 8,
+	     "collection_size":10000000,
+	     "collection_ttl":1500000,
+	     "ms_url":"https://unis.incntre.iu.edu:8443"},
+	    "probes":{
+		"cpu":{
+		    "kwargs":{"proc_dir":"/proc"}
+		}
+	    }
+	},
+	"summary": {
+	    "metadata": []
+	}
+    }
+}
