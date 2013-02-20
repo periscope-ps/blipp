@@ -67,3 +67,21 @@ def reconcile_config(defaults, master):
             else:
                 ans[key] = deepcopy(val)
     return ans
+
+def query_string_from_dict(adict, prefix=""):
+    '''Construct a UNIS REST API query string from a dictionary'''
+    retstring = ""
+    for k,v in adict.items():
+        if isinstance(v, dict):
+            retstring += query_string_from_dict(v, prefix + "." + str(k))
+        else:
+            if prefix:
+                retstring += prefix + "."
+            if isinstance(v, bool): # bool goes first because isinstance(False, int)==True *sigh*
+                retstring += str(k) + "=boolean:" + str(v).lower() + "&"
+            elif isinstance(v, int):
+                retstring += str(k) + "=number:" + str(v) + "&"
+            elif isinstance(v, str):
+                retstring+= str(k) + "=" + v + "&"
+
+    return retstring

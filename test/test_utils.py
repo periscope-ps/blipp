@@ -69,6 +69,25 @@ class UtilsTests(unittest2.TestCase):
         res = {"a": 1, "c": {"a": 1, "d": {}}}
         self.assertEqual(d, res)
 
+    def test_query_string_from_dict(self):
+        adict = {"numkey":4,
+                 "dict":{"nestnum":5, "nestbool":True, "neststr":"hey",
+                         "doublenest": {"anumdnest":9}},
+                 "strkey": "astr",
+                 "boolkey": False}
+        ret = utils.query_string_from_dict(adict)
+
+        print ret
+
+        self.assertTrue("numkey=number:4&" in ret)
+        self.assertTrue("dict.nestnum=number:5&" in ret)
+        self.assertTrue("dict.nestbool=boolean:true&" in ret)
+        self.assertTrue("dict.neststr=hey&" in ret)
+        self.assertTrue("dict.doublenest.anumdnest=number:9&" in ret)
+        self.assertTrue("strkey=astr&" in ret)
+        self.assertTrue("boolkey=boolean:false&" in ret)
+
+
 if __name__ == '__main__':
     unittest2.main()
 
