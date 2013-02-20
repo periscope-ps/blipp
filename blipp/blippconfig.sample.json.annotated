@@ -24,7 +24,7 @@
 	    "unis_url":"http://dev.incntre.iu.edu",
 	    "config_file": "/usr/local/etc/blippconfig.json",
 	    "unis_poll_interval": 300, // reload config from unis every 300 seconds
-	    "use_ssl": "", // empty is false... anything else is true
+	    "use_ssl": false, // empty is false... anything else is true
 	    "ssl_cert": "cert_file",
 	    "ssl_key": "key_file",
 	    "ssl_cafile": "ca_file",
