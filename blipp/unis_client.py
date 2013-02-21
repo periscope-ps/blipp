@@ -1,7 +1,9 @@
 import settings
 from gemini_client import GeminiClient
-from utils import reconcile_config
+from utils import reconcile_config, query_string_from_dict
 from copy import deepcopy
+from pprint import pprint
+import urllib
 
 logger = settings.get_logger('unis_client')
 
@@ -33,7 +35,6 @@ class UNISInstance:
 
     def post_metadata(self, subject, metric, config):
         post_dict = {
-            "$schema": settings.SCHEMAS["metadata"],
             "subject": {
                 "href": subject,
                 "rel": "full"
@@ -44,6 +45,18 @@ class UNISInstance:
                 "config": config
                 }
             }
+
+        qstring = query_string_from_dict(post_dict)
+        qstring = urllib.quote_plus(qstring)
+        qstring = qstring.replace('%3D', '=') # see GEMINI-115
+        qstring = qstring.replace('%26', '&') # GEMINI-115 comment 2
+        qstring += "limit=2" # getting a bazillion results tends to slow things down
+        md_list = self.get("/metadata?" + qstring)
+
+        if md_list:
+            return md_list[0]
+        # put $schema in down here due to query bug see GEMINI-115 comment 1
+        post_dict.update({"$schema": settings.SCHEMAS["metadata"]})
         return self.gc.do_req("post", "/metadata", data=post_dict)
 
     def post_port(self, post_dict, headers=None):
