@@ -73,12 +73,20 @@ class UtilsTests(unittest2.TestCase):
         adict = {"numkey":4,
                  "dict":{"nestnum":5, "nestbool":True, "neststr":"hey",
                          "doublenest": {"anumdnest":9}},
+                 "tnest1": {"tnest2": {"tnest3-1":"1", "tnest3-2":"2", "tnest3-3":"b"}},
                  "strkey": "astr",
-                 "boolkey": False}
+                 "boolkey": False,
+                 'unicodevalkey': u'unicodeval',
+                 u'unicode_key': 'val'}
         ret = utils.query_string_from_dict(adict)
 
+        print ""
         print ret
+        print ""
 
+        self.assertTrue("tnest1.tnest2.tnest3-1=1" in ret)
+        self.assertTrue("tnest1.tnest2.tnest3-2=2" in ret)
+        self.assertTrue("tnest1.tnest2.tnest3-3=b" in ret)
         self.assertTrue("numkey=number:4&" in ret)
         self.assertTrue("dict.nestnum=number:5&" in ret)
         self.assertTrue("dict.nestbool=boolean:true&" in ret)
@@ -86,6 +94,9 @@ class UtilsTests(unittest2.TestCase):
         self.assertTrue("dict.doublenest.anumdnest=number:9&" in ret)
         self.assertTrue("strkey=astr&" in ret)
         self.assertTrue("boolkey=boolean:false&" in ret)
+        self.assertTrue("unicodevalkey=unicodeval" in ret)
+        self.assertTrue("unicode_key=val" in ret)
+
 
 
 if __name__ == '__main__':
