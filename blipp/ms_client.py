@@ -17,7 +17,7 @@ class MSInstance:
         return def_headers
 
     def post_events(self, mid, size, ttl):
-        data = dict({"metadata_URL": self.ms_url + "/metadata/" + mid,
+        data = dict({"metadata_URL": self.config['unis_url'] + "/metadata/" + mid,
                      "collection_size": size,
                      "ttl": ttl
                      })
