@@ -4,7 +4,8 @@ import netifaces
 from unis_client import UNISInstance
 import settings
 from utils import full_event_types
-
+import re
+from pprint import pprint
 
 logger = settings.get_logger('net')
 class Proc:
@@ -47,8 +48,8 @@ class Probe:
     """
     UNUSED_METRICS = ["errs_in", "errs_out", "drop_in", "drop_out",
                       "fifo_in", "fifo_out", "frame_in", "compressed_in",
-                      "compressed_out", "multicast_in", "colls_out",
-                      "carrier_out"]
+                      "compressed_out", "multicast_in", "colls_out", "colls_in",
+                      "carrier_out", "carrier_in", "frame_out", "multicast_out"]
 
     def __init__(self, config={}):
         kwargs = config.get("kwargs", {})
@@ -63,63 +64,71 @@ class Probe:
     def get_data(self):
         netdev = self._proc.open('net', 'dev')
         netsnmp = self._proc.open('net', 'snmp')
+        netdev.readline()
+        data = self._get_dev_data(netdev.read())
+        sdata = self._get_snmp_data(netsnmp.read())
+
+        data[self.node_subject] = sdata
+        data = full_event_types(data, EVENT_TYPES)
+        return data
+
+    def _get_dev_data(self, dev_string):
+        headers_regex = re.compile(
+            '[^|]*\|(?P<rxheaders>[^|]*)\|(?P<txheaders>.*)')
+        dev_lines = dev_string.splitlines()
+        matches = headers_regex.search(dev_lines.pop(0)).groupdict()
+        txheaders = [ head + "_in" for head in matches['txheaders'].split() ]
+        rxheaders = [ head + "_out" for head in matches['rxheaders'].split() ]
+        headers = txheaders + rxheaders
         data = {}
-        netdev.readline() # Should be 'Inter-| Receive | Transmit'
-        heads = netdev.readline()
-        headscl = []
-        t = False
-        r = False
-        for item in heads.split():
-            if item.startswith('|'):
-                t = True
-                item = item[1:]
-            elif item.count('|'):
-                its = item.split('|')
-                i1 = its[0]
-                headscl.append(i1 + "_in")
-                t = False
-                r = True
-                item = its[1]
-            if t:
-                item += "_in"
-            elif r:
-                item += "_out"
-            headscl.append(item)
-
-        for line in netdev.readlines():
+        for line in dev_lines:
+            if not line:
+                continue
+            line = line.replace(':', ' ')
             line = line.split()
-            if line[0][-1] != ":":
-                line = line[0].split(":") + line[1:]
-                line[0] += ":"
-            a = dict(zip(headscl[1:], line[1:]))
-            a["errors"]=int(a["errs_in"])+int(a["errs_out"])
-            a["drops"]=int(a["drop_in"])+int(a["drop_out"])
+            iface = line.pop(0)
+            face_data = dict(zip(headers, line))
+            self._vals_to_int(face_data)
+            errors = face_data.pop('errs_in') + face_data.pop('errs_out')
+            drops = face_data.pop('drop_in') + face_data.pop('drop_out')
+            face_data['errors'] = errors
+            face_data['drops'] = drops
             for metric in self.UNUSED_METRICS:
-                if metric in a:
-                    del a[metric]
-            data[self.subjects[line[0][:-1]]] = a
+                if metric in face_data:
+                    del face_data[metric]
+            data[iface] = face_data
 
-        data[self.node_subject] = {}
-        line = netsnmp.readline()
-        while line:
-            line = line.split()
+        return data
+
+    def _vals_to_int(self, adict):
+        for k,v in adict.items():
+            adict[k] = int(v)
+        return adict
+
+    def _get_snmp_data(self, snmp_string):
+        data = {}
+        lines = snmp_string.splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i].split()
             if line[0].lower()=="tcp:":
+                i += 1
                 in_index      = line.index("InSegs")
                 out_index     = line.index("OutSegs")
                 retrans_index = line.index("RetransSegs")
-                dataline = netsnmp.readline().split()
-                data[self.node_subject].update({"tcp_segments_in":dataline[in_index],
+                dataline = lines[i].split()
+                data.update({"tcp_segments_in":dataline[in_index],
                                      "tcp_segments_out":dataline[out_index],
                                      "tcp_retrans":dataline[retrans_index]})
             elif line[0].lower()=="udp:":
+                i += 1
                 in_index  = line.index("InDatagrams")
                 out_index = line.index("OutDatagrams")
-                dataline = netsnmp.readline().split()
-                data[self.node_subject].update({"datagrams_in":dataline[in_index],
+                dataline = lines[i].split()
+                data.update({"datagrams_in":dataline[in_index],
                                      "datagrams_out":dataline[out_index]})
-            line = netsnmp.readline()
-            data = full_event_types(data, EVENT_TYPES)
-        return data
+            i += 1
+        return self._vals_to_int(data)
 
     def get_interface_subjects(self):
         netdev = self._proc.open('net', 'dev')
