@@ -26,10 +26,10 @@ class ServiceConfigure(object):
                     "node_id": node_id,
                     "config_file": file_loc}}}
         delete_nones(self.cmd_cfg)
-
-    def refresh_config(self):
         self.config = deepcopy(settings.STANDALONE_DEFAULTS)
         merge_dicts(self.config, self.cmd_cfg)
+
+    def refresh_config(self):
         file_cfg = self._get_file_config(
             self.config["properties"]["configurations"].get("config_file", None))
         merge_dicts(self.config, file_cfg)
@@ -82,7 +82,7 @@ class ServiceConfigure(object):
                             "unis instance ...querying for service")
             rlist = self.unis.get("/services?name=" + config.get("name", None) +
                                       "&runningOn.href=" +
-                                  config["runningOn"]["href"])
+                                  config["runningOn"]["href"] + "&limit=2")
             # loop over the returned services and find one that
             # doesn't return 410 see
             # https://uisapp2.iu.edu/jira-prd/browse/GEMINI-98
