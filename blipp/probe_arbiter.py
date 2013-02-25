@@ -45,6 +45,7 @@ class Arbiter():
     def check_procs(self):
         for proc, conn in self.proc_to_config.keys():
             if not proc.is_alive():
+                proc.join()
                 logger.warn('check_procs', msg="a probe has exited", exitcode=proc.exitcode)
                 self.proc_to_config.pop((proc, conn))
 
