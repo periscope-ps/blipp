@@ -56,7 +56,7 @@ class Probe:
         logger.debug('Probe.__init__', kwargs=str(kwargs))
         self.config = config
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
-        self.node_subject=kwargs.get("subject", "this_node")
+        self.node_subject=kwargs.get("subject", config.get("runningOn", {}).get('href', 'not found'))
         self.port_match_method=kwargs.get("port_match_method", "geni_utils.mac_match")
         self.port_match_method=blipp_import_method(self.port_match_method)
         self.unis = None
@@ -103,7 +103,7 @@ class Probe:
             for metric in self.UNUSED_METRICS:
                 if metric in face_data:
                     del face_data[metric]
-            data[iface] = face_data
+            data[self.subjects[iface]] = face_data
 
         return data
 
