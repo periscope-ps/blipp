@@ -4,11 +4,12 @@ from utils import merge_dicts
 
 
 class BlippConfigure(ServiceConfigure):
-    def __init__(self, file_loc=None, unis_url=None,
-                 service_id=None, node_id=None, service_name=None):
+    def __init__(self, file_loc=None, unis_url=None, service_id=None,
+                 node_id=None, service_name=None, query_service=True):
         if service_name==None:
             service_name="blipp"
-        super(BlippConfigure, self).__init__(file_loc, unis_url, service_id, node_id, service_name)
+        super(BlippConfigure, self).__init__(file_loc, unis_url, service_id,
+                                             node_id, service_name, query_service)
 
     def expand_probe_config(self):
         '''Configuration for probes has 3 levels, there are the
