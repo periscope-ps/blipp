@@ -84,5 +84,5 @@ class Probe:
                 elif linel[0].startswith("Slab"):
                     ans.update({"kernel":int(linel[1])})
             ans.update({"used":(total-free)})
-            ans = full_event_types(ans, EVENT_TYPES)
+        ans = full_event_types(ans, EVENT_TYPES)
         return ans
