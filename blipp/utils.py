@@ -1,4 +1,5 @@
 from copy import deepcopy
+import re
 
 def try__import__(name):
     try:
@@ -19,6 +20,11 @@ def blipp_import(name, **kwargs):
     except ImportError:
         ret = __import__("blipp." + name, fromlist=[1])
     return ret
+
+def blipp_import_method(method_string):
+    mod, dot, method = method_string.rpartition(".")
+    mod = blipp_import(mod)
+    return mod.__getattribute__(method)
 
 def full_event_types(data, EVENT_TYPES):
     result = {}
@@ -90,3 +96,11 @@ def query_string_from_dict(adict, prefix=""):
                 print v
 
     return retstring
+
+def clean_mac(mac):
+    mac = mac.strip().lower().replace(":", "")
+    mac = mac.replace(" ", "")
+    try:
+        return re.search('([0-9a-f]{12})', mac).groups()[0]
+    except AttributeError:
+        return None

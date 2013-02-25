@@ -3,7 +3,7 @@ import ethtool
 import netifaces
 from unis_client import UNISInstance
 import settings
-from utils import full_event_types
+from utils import full_event_types, blipp_import_method
 import re
 from pprint import pprint
 
@@ -57,9 +57,16 @@ class Probe:
         self.config = config
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
         self.node_subject=kwargs.get("subject", "this_node")
+        self.port_match_method=kwargs.get("port_match_method", "geni_utils.mac_match")
+        self.port_match_method=blipp_import_method(self.port_match_method)
+        self.unis = None
         logger.debug('Probe.__init__ ', subject=self.node_subject)
         self.subjects=self.get_interface_subjects()
 
+    def _get_unis(self):
+        if not self.unis:
+            self.unis = UNISInstance(self.config)
+        return self.unis
 
     def get_data(self):
         netdev = self._proc.open('net', 'dev')
@@ -134,6 +141,7 @@ class Probe:
         netdev = self._proc.open('net', 'dev')
         faces = []
         subjects = {}
+        unis_ports = self.get_interfaces_in_unis()
         type_map = {'ipv4': netifaces.AF_INET,
                     'ipv6': netifaces.AF_INET6,
                     'mac': netifaces.AF_LINK}
@@ -141,7 +149,7 @@ class Probe:
             line = line.split()
             if line[0].count(":"):
                 faces.append(line[0][:line[0].index(":")])
-        unis = UNISInstance(self.config)
+
         for face in faces:
             post_dict = {}
             try:
@@ -154,7 +162,7 @@ class Probe:
                 l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
                 if len(l2_addr):
                     addr = {"type": "mac", "address": l2_addr[0]['addr']}
-                    post_dict['address'] = addr
+                    post_dict['address'] = addr.strip().replace(':', '').lower()
             except:
                 pass
 
@@ -176,7 +184,24 @@ class Probe:
             # hack in a 'nodeRef' so we can find port from rspec
             post_dict['nodeRef'] = settings.URN_STRING[:-1]
 
-            resp = unis.post_port(post_dict)
-            if isinstance(resp, dict):
-                subjects[face]=resp['selfRef']
+            portRef = self._find_or_post_port(unis_ports, post_dict, self.port_match_method)
+            if isinstance(portRef, str):
+                subjects[face]=portRef
         return subjects
+
+    def get_interfaces_in_unis(self):
+        node = self._get_unis().get_node()
+        port_list = node.get('ports', [])
+        ports = []
+        for port in port_list:
+            ports.append(self._get_unis().get(port['href']))
+        return ports
+
+    def _find_or_post_port(self, ports, local_port, matching_method):
+        for port in ports:
+            if matching_method(port, local_port):
+                return port["selfRef"]
+        return self._get_unis().post_port(local_port)
+
+
+

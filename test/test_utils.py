@@ -97,7 +97,15 @@ class UtilsTests(unittest2.TestCase):
         self.assertTrue("unicodevalkey=unicodeval" in ret)
         self.assertTrue("unicode_key=val" in ret)
 
+    def test_clean_mac(self):
+        mac = '00:24:D7:39:8a:64'
+        ret = utils.clean_mac(mac)
+        self.assertEqual(ret, '0024d7398a64')
 
+    def test_clean_mac2(self):
+        mac = '00:24:d7:39:8a:6'
+        ret = utils.clean_mac(mac)
+        self.assertEqual(ret, None)
 
 if __name__ == '__main__':
     unittest2.main()
