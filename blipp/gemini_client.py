@@ -1,6 +1,7 @@
 import http
 import json
 import settings
+import re
 
 logger = settings.get_logger('gemini_client')
 
@@ -33,6 +34,12 @@ class GeminiClient:
             return r
 
     def _url_schema_headers(self, url):
+        if re.search('^https?://', url):
+            m = re.search('^(https?://[^/]*)(/.*)', url)
+            urlpref = m.groups()[0]
+            url = m.groups()[1]
+        else:
+            urlpref = self.url
         url = '/' + url if not url[0]=='/' else url
         url = url[:-1] if url[-1]=='/' else url
         try:
@@ -47,7 +54,7 @@ class GeminiClient:
                           'accept':settings.MIME['PSJSON']}
         if not schema:
             headers=None
-        url = self.url + url
+        url = urlpref + url
         return url, schema, headers
 
     def _add_gemini_auth(self, post_dict, loc="properties"):

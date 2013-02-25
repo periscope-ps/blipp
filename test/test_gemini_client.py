@@ -39,6 +39,12 @@ class GeminiClientTests(unittest2.TestCase):
         self.assertEqual(u, "fakeurl/nodes?hostname=blarg")
         self.assertEqual(s, settings.SCHEMAS["nodes"])
 
+    def test_url_schema_headers5(self):
+        url = "https://dev.incntre.iu.edu/nodes?hostname=blarg"
+        u, s, h = self.gc._url_schema_headers(url)
+        self.assertEqual(u, "https://dev.incntre.iu.edu/nodes?hostname=blarg")
+        self.assertEqual(s, settings.SCHEMAS["nodes"])
+
 
     def test_do_req(self):
         bg.http = mock.Mock()
