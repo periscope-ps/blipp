@@ -10,8 +10,9 @@ logger = settings.get_logger('conf')
 
 
 class ServiceConfigure(object):
-    def __init__(self, file_loc=None, unis_url=None,
-                 service_id=None, node_id=None, service_name=None):
+    def __init__(self, file_loc=None, unis_url=None, service_id=None,
+                 node_id=None, service_name=None, query_service=True):
+        self.query_service = query_service
         if not unis_url and not file_loc:
             err_string = \
                 "ServiceConfigure initialized with "\
@@ -76,7 +77,7 @@ class ServiceConfigure(object):
         r = None
         if config.get("id", None):
             r = self.unis.get("/services/" + config["id"])
-        if not r:
+        if not r and self.query_service:
             logger.warn('_setup_service',
                         msg="service id not specified or not found "\
                             "unis instance ...querying for service")

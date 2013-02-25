@@ -24,6 +24,9 @@ def get_options():
                       dest="node_id",
                       help="This machine's id in UNIS",
                       default=None)
+    parser.add_option("-q", "--no-query-service",
+                  action="store_false", dest="query_service", default=True,
+                  help="don't query UNIS for service... if not specifed, always create new")
 
     (options, args) = parser.parse_args()
     return options
@@ -35,7 +38,7 @@ def main(options=None):
     bconf = BlippConfigure(file_loc=options.config_file,
                            unis_url=options.unis_url,
                            service_id=options.service_id, service_name='blipp',
-                           node_id=options.node_id)
+                           node_id=options.node_id, query_service=options.query_service)
 
     bconf.refresh_config()
     config = bconf.config
