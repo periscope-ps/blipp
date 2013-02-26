@@ -21,17 +21,24 @@
 		"cmd_line_probe":{
 		    "collection_schedule":"simple",
 		    "schedule_params":{"every": 5},
-		    "kwargs":{
-			"command": "ping -c 1 www.google.com",
-		    	"regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
-			"eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
-				       "rtt": "ps:tools:blipp:linux:net:ping:rtt"}
-		    }
+		    "targets":[
+			{"kwargs":{
+			    "command": "ping -c 1 www.google.com",
+		    	    "regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+			    "eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+					   "rtt": "ps:tools:blipp:linux:net:ping:rtt"}}},
+			{"schedule_params":{"every":60},
+			 "reporting_params":1,
+			 "kwargs":{
+			     "command": "iperf -c localhost -t 5 -y c",
+			     "regex": ",(?P<bandwidth>\\d+)$",
+			     "eventTypes": {"bandwidth": "ps:tools:blipp:linux:net:iperf:bandwidth"}}}
+		    ]
 		}
 	    }
-	},
-	"summary": {
-	    "metadata": []
 	}
+    },
+    "summary": {
+	"metadata": []
     }
 }
