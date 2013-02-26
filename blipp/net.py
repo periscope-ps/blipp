@@ -5,7 +5,6 @@ from unis_client import UNISInstance
 import settings
 from utils import full_event_types, blipp_import_method
 import re
-from pprint import pprint
 
 logger = settings.get_logger('net')
 class Proc:
@@ -138,56 +137,60 @@ class Probe:
         return self._vals_to_int(data)
 
     def get_interface_subjects(self):
-        netdev = self._proc.open('net', 'dev')
-        faces = []
         subjects = {}
         unis_ports = self.get_interfaces_in_unis()
+
+        for face in netifaces.interfaces():
+            local_port_dict = self._build_port_dict(face)
+            portRef = self._find_or_post_port(unis_ports, local_port_dict, self.port_match_method)
+            if isinstance(portRef, str) or isinstance(portRef, unicode):
+                subjects[face]=portRef
+            else:
+                logger.warn('get_interface_subjects',
+                            msg="subject for face %s is of an unexpected type %s, portRef=%s"%(face,
+                                                                                               type(portRef),
+                                                                                               portRef))
+                subjects[face]="unexpected type"
+        return subjects
+
+    def _build_port_dict(self, port_name):
         type_map = {'ipv4': netifaces.AF_INET,
                     'ipv6': netifaces.AF_INET6,
                     'mac': netifaces.AF_LINK}
-        for line in netdev:
-            line = line.split()
-            if line[0].count(":"):
-                faces.append(line[0][:line[0].index(":")])
 
-        for face in faces:
-            post_dict = {}
-            try:
-                capacity = ethtool.get_speed(face)
-            except OSError:
-                capacity = 0
+        post_dict = {}
+        try:
+            capacity = ethtool.get_speed(port_name)
+        except OSError:
+            capacity = 0
 
             # assume each port is a layer2 port for the main 'address'
-            try:
-                l2_addr = netifaces.ifaddresses(face)[type_map['mac']]
-                if len(l2_addr):
-                    addr = {"type": "mac", "address": l2_addr[0]['addr']}
-                    post_dict['address'] = addr.strip().replace(':', '').lower()
-            except:
-                pass
+        try:
+            l2_addr = netifaces.ifaddresses(port_name)[type_map['mac']]
+            if len(l2_addr):
+                addr = {"type": "mac", "address": l2_addr[0]['addr']}
+                post_dict['address'] = addr.strip().replace(':', '').lower()
+        except:
+            pass
 
             # add all the other address info we can find
-            post_dict['properties'] = {}
-            for t in type_map:
-                try:
-                    addrs = netifaces.ifaddresses(face)[type_map[t]]
-                    for a in addrs:
-                        addr = {"type": t, "address": a['addr']}
-                        post_dict['properties'][t] = addr
-                except Exception as e:
-                    logger.exc('get_interface_subjects', e)
+        post_dict['properties'] = {}
+        for t in type_map:
+            try:
+                addrs = netifaces.ifaddresses(port_name)[type_map[t]]
+                for a in addrs:
+                    addr = {"type": t, "address": a['addr']}
+                    post_dict['properties'][t] = addr
+            except Exception as e:
+                logger.exc('get_interface_subjects', e)
 
             # TODO some sort of verification here that capacity is right
-            post_dict['name'] = face
-            post_dict['capacity'] = capacity
+        post_dict['name'] = port_name
+        post_dict['capacity'] = capacity
 
             # hack in a 'nodeRef' so we can find port from rspec
-            post_dict['nodeRef'] = settings.URN_STRING[:-1]
-
-            portRef = self._find_or_post_port(unis_ports, post_dict, self.port_match_method)
-            if isinstance(portRef, str):
-                subjects[face]=portRef
-        return subjects
+        post_dict['nodeRef'] = settings.URN_STRING[:-1]
+        return post_dict
 
     def get_interfaces_in_unis(self):
         node = self._get_unis().get_node()
@@ -201,7 +204,13 @@ class Probe:
         for port in ports:
             if matching_method(port, local_port):
                 return port["selfRef"]
-        return self._get_unis().post_port(local_port)
+        post = self._get_unis().post_port(local_port)
+        if post:
+            return post["selfRef"]
+        else:
+            logger.warn('_find_or_post_port',
+                        msg="post seems to have failed... subject for %s will be wrong" % local_port['name'])
+            return "failed"
 
 
 

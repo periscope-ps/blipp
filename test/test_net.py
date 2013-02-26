@@ -1,21 +1,28 @@
 import unittest2
 import mock
-from blipp.net import Probe
+import blipp.net
+import net_consts
 
 class NetProbeTests(unittest2.TestCase):
     def setUp(self):
-        Probe.get_interface_subjects=mock.Mock()
-        Probe.get_interface_subjects.return_value = {"lo": "unisurlforlo",
+        mock_gu = mock.Mock()
+        mock_unis = mock.Mock()
+        gn = mock.Mock()
+        pp = mock.Mock()
+        mock_gu.return_value = mock_unis
+        mock_unis.get_node.return_value = gn
+        mock_unis.post_port = pp
+        blipp.net.Probe._get_unis = mock_gu
+        gn.get.return_value = []
+        pp.return_value = None
+
+        self.net_probe = blipp.net.Probe()
+        self.net_probe.subjects = {"lo": "unisurlforlo",
                                                      "pan0": "unisurlforpan0",
                                                      "wlan0": "unisurlforwlan0",
                                                      "eth0": "unisurlforeth0"}
-        self.net_probe = Probe()
-        self.dev_string = ''' face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-    lo:16437577  120248    0    0    0     0          0         0 16437577  120248    0    0    0     0       0          0
-  eth0:12267757  166430    0    0    0     0          0      2832 30458998  143263    0    0    0     0       0          0
- wlan0:5029574829 7333434    0    0    0     0          0         0 887097774 4036590    0    0    0     0       0          0
-  pan0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
-'''
+        self.net_probe._get_unis = mock.Mock()
+        self.dev_string = net_consts.dev_string
 
     def test_get_dev_data(self):
         data = self.net_probe._get_dev_data(self.dev_string)
@@ -46,19 +53,7 @@ class NetProbeTests(unittest2.TestCase):
         self.assertEqual(ddata, data)
 
     def test_get_snmp_data(self):
-        netsnmp = '''Ip: Forwarding DefaultTTL InReceives InHdrErrors InAddrErrors ForwDatagrams InUnknownProtos InDiscards InDelivers OutRequests OutDiscards OutNoRoutes ReasmTimeout ReasmReqds ReasmOKs ReasmFails FragOKs FragFails FragCreates
-Ip: 2 64 5449663 1723 786 0 0 0 5279316 4258836 4 16375 0 0 0 0 0 0 0
-Icmp: InMsgs InErrors InDestUnreachs InTimeExcds InParmProbs InSrcQuenchs InRedirects InEchos InEchoReps InTimestamps InTimestampReps InAddrMasks InAddrMaskReps OutMsgs OutErrors OutDestUnreachs OutTimeExcds OutParmProbs OutSrcQuenchs OutRedirects OutEchos OutEchoReps OutTimestamps OutTimestampReps OutAddrMasks OutAddrMaskReps
-Icmp: 32861 1658 32663 24 0 0 0 39 135 0 0 0 0 17212 0 17033 0 0 0 0 140 39 0 0 0 0
-IcmpMsg: InType0 InType3 InType8 InType11 OutType0 OutType3 OutType8
-IcmpMsg: 135 32663 39 24 39 17033 140
-Tcp: RtoAlgorithm RtoMin RtoMax MaxConn ActiveOpens PassiveOpens AttemptFails EstabResets CurrEstab InSegs OutSegs RetransSegs InErrs OutRsts
-Tcp: 1 200 120000 -1 157584 174 17508 10834 7 4660605 3841483 20035 1 20939
-Udp: InDatagrams NoPorts InErrors OutDatagrams RcvbufErrors SndbufErrors
-Udp: 509585 1264 0 374940 0 0
-UdpLite: InDatagrams NoPorts InErrors OutDatagrams RcvbufErrors SndbufErrors
-UdpLite: 0 0 0 0 0 0
-'''
+        netsnmp = net_consts.netsnmp
         data = self.net_probe._get_snmp_data(netsnmp)
         ddata = {'datagrams_in': 509585,
                  'datagrams_out': 374940,
@@ -66,3 +61,89 @@ UdpLite: 0 0 0 0 0 0
                  'tcp_segments_in': 4660605,
                  'tcp_segments_out': 3841483}
         self.assertEqual(data, ddata)
+
+    def test_get_interfaces_in_unis(self):
+        mock_unis = mock.Mock()
+        self.net_probe._get_unis.return_value = mock_unis
+        mock_unis.get_node.return_value = net_consts.node1
+        mock_unis.get.return_value = net_consts.port1
+        expected = [net_consts.port1, net_consts.port1, net_consts.port1]
+        ret = self.net_probe.get_interfaces_in_unis()
+        self.assertEqual(ret, expected)
+
+    def test_find_or_post_port(self):
+        mmethod = mock.Mock()
+        ports = [net_consts.port1]
+        local_port = net_consts.local_port
+        mmethod.return_value = True
+        ret = self.net_probe._find_or_post_port(ports, local_port, mmethod)
+        expected = net_consts.port1["selfRef"]
+        self.assertEqual(ret, expected)
+
+    def test_find_or_post_port2(self):
+        mmethod = mock.Mock()
+        mock_unis = mock.Mock()
+        self.net_probe._get_unis.return_value = mock_unis
+        ports = [net_consts.port1]
+        local_port = net_consts.local_port
+        mmethod.return_value = False
+        mock_unis.post_port.return_value = net_consts.local_port_resp
+
+        ret = self.net_probe._find_or_post_port(ports, local_port, mmethod)
+
+        expected = net_consts.local_port_resp["selfRef"]
+        self.assertEqual(ret, expected)
+
+    def test_find_or_post_port3(self):
+        mmethod = mock.Mock()
+        mock_unis = mock.Mock()
+        self.net_probe._get_unis.return_value = mock_unis
+        ports = [net_consts.port1]
+        local_port = net_consts.local_port
+        mmethod.return_value = False
+        mock_unis.post_port.return_value = None
+
+        ret = self.net_probe._find_or_post_port(ports, local_port, mmethod)
+
+        expected = "failed"
+        self.assertEqual(ret, expected)
+
+    def test_get_interface_subjects(self):
+        blipp.net.netifaces = mock.Mock()
+        blipp.net.netifaces.interfaces.return_value = ["wlan0"]
+        self.net_probe.get_interfaces_in_unis = mock.Mock()
+        self.net_probe._build_port_dict = mock.Mock()
+        self.net_probe._build_port_dict.return_value = net_consts.local_port
+        self.net_probe._find_or_post_port = mock.Mock()
+        self.net_probe._find_or_post_port.return_value = "aportref"
+
+        expected = {"wlan0":"aportref"}
+        ret = self.net_probe.get_interface_subjects()
+        self.assertEqual(expected, ret)
+
+    def test_get_interface_subjects2(self):
+        blipp.net.netifaces = mock.Mock()
+        blipp.net.netifaces.interfaces.return_value = ["wlan0"]
+        self.net_probe.get_interfaces_in_unis = mock.Mock()
+        self.net_probe._build_port_dict = mock.Mock()
+        self.net_probe._build_port_dict.return_value = net_consts.local_port
+        self.net_probe._find_or_post_port = mock.Mock()
+        self.net_probe._find_or_post_port.return_value = u'aportref'
+
+        expected = {"wlan0":u'aportref'}
+        ret = self.net_probe.get_interface_subjects()
+        self.assertEqual(expected, ret)
+
+    def test_get_interface_subjects3(self):
+        blipp.net.netifaces = mock.Mock()
+        blipp.net.netifaces.interfaces.return_value = ["wlan0"]
+        self.net_probe.get_interfaces_in_unis = mock.Mock()
+        self.net_probe._build_port_dict = mock.Mock()
+        self.net_probe._build_port_dict.return_value = net_consts.local_port
+        self.net_probe._find_or_post_port = mock.Mock()
+        self.net_probe._find_or_post_port.return_value = 32
+
+        expected = {"wlan0":"unexpected type"}
+        ret = self.net_probe.get_interface_subjects()
+        self.assertEqual(expected, ret)
+
