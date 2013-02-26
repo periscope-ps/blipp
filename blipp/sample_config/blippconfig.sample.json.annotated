@@ -5,7 +5,7 @@
 // This conf file schema deviates from the service schema only in that it
 // may not require all fields that the schema does
 {
-    "status": "ON", // blipp doesn't respect this 02/03/13
+    "status": "ON", // blipp doesn't respect this 02/25/13
     "id": 12345678990, // UNIS adds, or blipp will use for lookup if not provided at cmd line
     "selfRef": "https://example.com/services/1234567890", // blipp doesn't use this... unis adds it
     "accessPoint": "", // not relevant to blipp (yet?)
@@ -19,14 +19,17 @@
 	"rel":"full"
     }
     "properties": {
-	"geni": {"slice_uuid": "someuuid387234deadbeef"},
+	"geni": {"slice_uuid": "someuuid387234deadbeef"}, // slice uuid used for geni auth
 	"configurations": {
 	    "unis_url":"http://dev.incntre.iu.edu",
 	    "config_file": "/usr/local/etc/blippconfig.json",
 	    "unis_poll_interval": 300, // reload config from unis every 300 seconds
-	    "use_ssl": false, // empty is false... anything else is true
-	    "ssl_cert": "cert_file",
-	    "ssl_key": "key_file",
+	    "use_ssl": false, // JSON boolean value
+	    "ssl_cert": "cert_file", // location of cert for auth
+	    "ssl_key": "key_file", // location of key for auth
+	    // if a string, blipp will attempt to verify the server cert against the CA file
+	    // if set to None or "", blipp will not attempt to do verification
+	    // if true, web browser style certificate verification is done (handled by python requests)
 	    "ssl_cafile": "ca_file",
 	    "probe_defaults": { // default config for each probe... will be overridden by
 		                // anything specified within the probe specific config below
@@ -41,7 +44,7 @@
 		"collection_ttl":1500000, // collection ttl (seconds) for collection in MS
 		"ms_url":"http://dev.incntre.iu.edu" // MS can be specified per probe
 	    },
-	    // may be used for gemini integration - not implemented
+	    // blipp will look for ms_instance and auth_uuid in node.info
 	    "gemini_node_info":"/usr/local/etc/node.info",
 	    // used by net probe - set dynamically in defaults
 	    // based on socket.gethostname() by settings
@@ -49,7 +52,6 @@
 	    // used for queries while setting up configuration - set dynamically in defaults
 	    "hostname": "bar",
 	    "location":{"institution": "GENI"}, // used to post node to unis if necessary
-	    // this is above... do we need it here? look through code to see what's going on
 	    "probes":{ // the keys under probes are the filenames of probes without the ".py"
 		       // their values are dictionaries which contain default config for all instances
 		       // of that probe. The different instances are in a list of dictionaries
@@ -81,11 +83,17 @@
 		},
 		"net":{
 		    "status":"off", // not used yet
-		    "kwargs":{"proc_dir":"/proc",
-			      // the net probe needs to be passed unis url
-			      // so that it can lookup ports and add them if necessary
-			      "unis_url":"http://www.dev.incntre.iu.edu",
-			      "subject":"http://www.dev.incntre.iu.edu/nodes/hikerbear"}
+		    "kwargs":{}
+		}
+		"cmd_line_probe":{ // a more generic way to do ping... or anything else
+		    "kwargs":{
+			"command": "ping -c 1 www.google.com", // some command to be executed
+			// a regex to extract data from the output of command
+		    	"regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+			// map regex captures to event Types
+			"eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+				       "rtt": "ps:tools:blipp:linux:net:ping:rtt"}
+		    }
 		}
 	    }
 	}
