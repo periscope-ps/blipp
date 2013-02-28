@@ -1,5 +1,5 @@
 {
-    "status": "ON",
+    "status": "OFF",
     "serviceType": "http://some_schema_domain/blipp",
     "name": "blipp",
     "ttl": 100000,

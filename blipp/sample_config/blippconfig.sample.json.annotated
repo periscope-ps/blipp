@@ -5,7 +5,7 @@
 // This conf file schema deviates from the service schema only in that it
 // may not require all fields that the schema does
 {
-    "status": "ON", // blipp doesn't respect this 02/25/13
+    "status": "ON", // blipp check's for OFF... anything else is ON
     "id": 12345678990, // UNIS adds, or blipp will use for lookup if not provided at cmd line
     "selfRef": "https://example.com/services/1234567890", // blipp doesn't use this... unis adds it
     "accessPoint": "", // not relevant to blipp (yet?)

@@ -29,11 +29,11 @@ class ArbiterTests(unittest2.TestCase):
 
     def test_reload_all2(self):
         self.arb.reload_all()
-        self.arb.start_new_probe = mock.Mock()
-        self.arb.stop_probe = mock.Mock()
+        self.arb._start_new_probe = mock.Mock()
+        self.arb._stop_probe = mock.Mock()
         self.arb.reload_all()
-        self.assertTrue(not self.arb.start_new_probe.called)
-        self.assertTrue(not self.arb.stop_probe.called)
+        self.assertTrue(not self.arb._start_new_probe.called)
+        self.assertTrue(not self.arb._stop_probe.called)
 
     def test_reload_all3(self):
         self.arb.reload_all()
@@ -42,7 +42,7 @@ class ArbiterTests(unittest2.TestCase):
             while proc.is_alive(): pass
             break
 
-        self.arb.check_procs()
+        self.arb._check_procs()
         self.assertTrue(len(self.arb.proc_to_config)==3)
         self.arb.reload_all()
         self.assertTrue(len(self.arb.proc_to_config)==4)
@@ -50,11 +50,22 @@ class ArbiterTests(unittest2.TestCase):
     def test_reload_all4(self):
         self.arb.reload_all()
         self.bconf.config["properties"]["configurations"]["probes"]["ping"]["schedule_params"] = {"every":9}
-        self.arb.start_new_probe = mock.Mock()
-        self.arb.stop_probe = mock.Mock()
+        self.arb._start_new_probe = mock.Mock()
+        self.arb._stop_probe = mock.Mock()
         self.arb.reload_all()
-        self.assertEqual(self.arb.start_new_probe.call_count, 1)
-        self.assertEqual(self.arb.stop_probe.call_count, 1)
+        self.assertEqual(self.arb._start_new_probe.call_count, 1)
+        self.assertEqual(self.arb._stop_probe.call_count, 1)
+
+    def test_reload_all5(self):
+        # test status off functionality
+        self.arb.config = mock.Mock()
+        self.arb.config.get.return_value = False
+        self.arb._stop_all = mock.Mock()
+        self.arb.reload_all()
+        self.assertEqual(self.arb.proc_to_config, {})
+        self.assertEqual(self.arb.stopped_procs, {})
+        self.assertTrue(self.arb._stop_all.called)
+
 
 
     def tearDown(self):
@@ -68,8 +79,6 @@ def loop(anarg):
             if anarg.recv()=="stop":
                 break
         time.sleep(.1)
-
-
 
 
 if __name__ == '__main__':
