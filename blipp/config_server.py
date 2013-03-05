@@ -9,6 +9,7 @@ import json
 import time
 from config_server_api import RELOAD, GET_CONFIG, POLL_CONFIG
 
+
 logger = settings.get_logger('config_server')
 
 class ConfigServer:
