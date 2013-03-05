@@ -74,4 +74,4 @@ class PingError(Exception):
         self.stderr = stderr
 
     def __str__(self):
-        return "Exception in ping probe: " + output[1]
+        return "Exception in ping probe: " + self.stderr

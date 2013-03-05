@@ -4,7 +4,7 @@ from probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
 from schedules.builtins import simple
 from copy import copy
-
+from config_server import ConfigServer
 
 logger = settings.get_logger('probe_arbiter')
 PROBE_GRACE_PERIOD = 10
@@ -70,9 +70,9 @@ class Arbiter():
 
 def main(config):
     a = Arbiter(config)
+    s = ConfigServer(config)
     check_interval = config["properties"]["configurations"]["unis_poll_interval"]
     for x in simple(check_interval):
         a.reload_all()
-        time.sleep(max(x-time.time(), 1)) # can't check more than once/second
-
-
+        while time.time()<x:
+            s.listen(x-time.time())
