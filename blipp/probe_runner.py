@@ -13,7 +13,7 @@ class ProbeRunner:
     def run(self, conn):
         for next in self.scheduler:
             if conn.poll():
-                if conn.recv("stop"):
+                if conn.recv() == "stop":
                     self._cleanup()
                     break
             time.sleep(max(next-time.time(), 0))
