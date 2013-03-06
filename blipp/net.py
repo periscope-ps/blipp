@@ -212,5 +212,3 @@ class Probe:
                         msg="post seems to have failed... subject for %s will be wrong" % local_port['name'])
             return "failed"
 
-
-

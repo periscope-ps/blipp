@@ -74,5 +74,5 @@ def main(config):
     check_interval = config["properties"]["configurations"]["unis_poll_interval"]
     for x in simple(check_interval):
         a.reload_all()
-        while time.time()<x:
-            s.listen(x-time.time())
+        while s.listen(x-time.time()):
+            pass
