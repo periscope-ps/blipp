@@ -22,18 +22,6 @@ class BlippCmd(cmd.Cmd):
         self.cwd_list = []
         cmd.Cmd.__init__(self)
 
-    # def default(self, line):
-    #     '''Just send whatever you type straight to the config_server'''
-    #     socket.send(line)
-    #     msg = socket.recv()
-    #     print msg
-
-    # def do_getrunning(self, line):
-    #     '''Get config from blipp whether cached or not'''
-    #     socket.send(GET_CONFIG)
-    #     msg = socket.recv()
-    #     print msg
-
     def do_cd(self, path):
         '''Change the current level of view of the config to be at <key>
         cd <key>'''
@@ -116,7 +104,6 @@ class BlippCmd(cmd.Cmd):
         val = self._val_from_input(line[1])
         self.cwc[line[0]] = val
 
-<<<<<<< HEAD
     def complete_set(self, text, l, b, e):
         if b==4:
             return [ x for x,y in self.cwc.iteritems()
@@ -146,44 +133,10 @@ class BlippCmd(cmd.Cmd):
         print msg
 
     def do_put(self, none):
-        '''Push current configuration to unis
+        '''push current configuration to unis
         put'''
         if not self.unis:
             print col.FAIL + "ERROR: no unis?" + col.ENDC
-=======
-    def do_getrunning(self, line):
-        '''Get config from blipp whether cached or not'''
-        socket.send(GET_CONFIG)
-        msg = socket.recv()
-        print msg
-
-    def do_show(self, none):
-        '''Get config from blipp if there are no changes since last get'''
-        socket.send(POLL_CONFIG)
-        msg = socket.recv()
-        if not msg:
-            print pprint.pformat(self.config)
-        else:
-            self.config = json.loads(msg)
-            print pprint.pformat(self.config)
-            self.unis = UNISInstance(self.config)
-
-    def do_set(self, line):
-        '''set a key in local config'''
-        line = line.split()
-        val = self._val_from_input(line[1])
-        self.config[line[0]] = val
-
-    def do_reload(self, none):
-        '''force blipp to call reload_all() and refresh its running state with config in unis'''
-        socket.send(RELOAD)
-        msg = socket.recv()
-        print msg
-
-    def do_put(self, none):
-        if not self.unis:
-            print "ERROR: no unis?"
->>>>>>> blippcmd more or less working... annoying to modify anything below the top level, but proof of concept is there
             return
         self.unis.put("/services/" + self.config["id"], self.config)
 
@@ -191,12 +144,9 @@ class BlippCmd(cmd.Cmd):
         return True
 
     def _val_from_input(self, input):
-<<<<<<< HEAD
         '''Take user input, and try to convert it to JSON appropriate
         python values.
         '''
-=======
->>>>>>> blippcmd more or less working... annoying to modify anything below the top level, but proof of concept is there
         val = input
         try:
             val = int(input)
@@ -212,7 +162,6 @@ class BlippCmd(cmd.Cmd):
             return val[1:-1]
         return val
 
-<<<<<<< HEAD
     def _set_cwc(self):
         '''Set the current working configuration to what it should be
         based on the cwd_list. If the path doesn't exist, set cwc to
