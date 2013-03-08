@@ -133,7 +133,7 @@ class BlippCmd(cmd.Cmd):
         print msg
 
     def do_put(self, none):
-        '''push current configuration to unis
+        '''Push current configuration to unis
         put'''
         if not self.unis:
             print col.FAIL + "ERROR: no unis?" + col.ENDC
