@@ -17,7 +17,7 @@ class ConfigServer:
         self.conf_obj = conf_obj
         self.changed = True
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind("ipc:///tmp/blipp")
+        self.socket.bind("ipc:///tmp/blipp_socket_zcWcfO0ydo")
 
     def listen(self, timeout):
         cur_time = time.time()

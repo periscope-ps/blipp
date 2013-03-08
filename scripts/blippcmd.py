@@ -1,13 +1,17 @@
+'''
+Usage:
+blippcmd [<ipc_file>]
+'''
+from docopt import docopt
 import cmd
 import zmq
-from blipp.config_server_api import POLL_CONFIG, GET_CONFIG, RELOAD
+from blipp.config_server_api import POLL_CONFIG, RELOAD
 from blipp.unis_client import UNISInstance
 import json
 import pprint
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-socket.connect("ipc:///tmp/blipp")
 
 class BlippCmd(cmd.Cmd):
     def __init__(self):
@@ -106,8 +110,11 @@ class BlippCmd(cmd.Cmd):
         '''Set a key in local config
         set <key> <value>'''
         line = line.split()
+        if len(line)<2:
+            print "Usage: set <key> <value>"
+            return
         val = self._val_from_input(line[1])
-        self.config[line[0]] = val
+        self.cwc[line[0]] = val
 
     def complete_set(self, text, l, b, e):
         if b==4:
@@ -138,7 +145,7 @@ class BlippCmd(cmd.Cmd):
         print msg
 
     def do_put(self, none):
-        '''push current configuration to unis
+        '''Push current configuration to unis
         put'''
         if not self.unis:
             print col.FAIL + "ERROR: no unis?" + col.ENDC
@@ -149,6 +156,9 @@ class BlippCmd(cmd.Cmd):
         return True
 
     def _val_from_input(self, input):
+        '''Take user input, and try to convert it to JSON appropriate
+        python values.
+        '''
         val = input
         try:
             val = int(input)
@@ -165,6 +175,10 @@ class BlippCmd(cmd.Cmd):
         return val
 
     def _set_cwc(self):
+        '''Set the current working configuration to what it should be
+        based on the cwd_list. If the path doesn't exist, set cwc to
+        the top level and clear the cwd_list.
+        '''
         try:
             self.cwc, self.cwd_list = self._conf_for_list()
         except ConfigurationError:
@@ -172,6 +186,10 @@ class BlippCmd(cmd.Cmd):
             self.cwd_list = []
 
     def _conf_for_list(self, cwd_list=None):
+        '''Takes in a list representing a path through the config
+        returns a tuple containing the current working config, and the
+        "collapsed" final path (meaning it has no .. entries.
+        '''
         if not cwd_list:
             cwd_list = self.cwd_list
         cwc_stack = []
@@ -213,4 +231,10 @@ class col:
     ENDC = '\033[39m' # BLACK
 
 if __name__ == '__main__':
+    arguments = docopt(__doc__, version='blippcmd 0.1')
+    if arguments["<ipc_file>"]:
+        ipc_file = arguments["<ipc_file>"]
+    else:
+        ipc_file = "/tmp/blipp_socket_zcWcfO0ydo"
+    socket.connect("ipc://" + ipc_file)
     BlippCmd().cmdloop()
