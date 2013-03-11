@@ -66,13 +66,13 @@
 		    "reporting_params":10,
 		    "collection_size":3000000,
 		    "collection_ttl":1200000,
-		    "kwargs":{"remote_host":"google.com", // the kwargs dict is passed directly to the probe
+		    "kwargs":{"address":"google.com", // the kwargs dict is passed directly to the probe
 			                                  // so each probe can have specific parameters
 			      "timeout":2,
 			      "packet_size":56,
 			      "byte_pattern":"0xAAAA"},
-		    "targets":[{"kwargs":{"remote_host":"129.62.33.22", "timeout":3}, "collection_ttl":30000},
-			       {"kwargs":{"remote_host":"bing.com"}}]
+		    "targets":[{"kwargs":{"address":"129.62.33.22", "timeout":3}, "collection_ttl":30000},
+			       {"kwargs":{"address":"bing.com"}}]
 		},
 		"cpu":{
 		    "collection_schedule":"simple",
