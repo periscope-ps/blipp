@@ -30,6 +30,7 @@ setup(
         "requests",
         "netlogger>=4.3.0",
         "netifaces",
+        "pyzmq"
     ],
     dependency_links=[
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",

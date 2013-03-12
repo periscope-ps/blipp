@@ -20,7 +20,7 @@ class ProbeRunner:
             self.collect()
 
     def collect(self):
-        logger.debug('collect', name=self.config['name'], kwargs=self.config['kwargs'])
+        logger.debug('collect', name=self.config['name'])
         data = self.probe.get_data()
         ts = time.time()
         self.collector.insert(self._normalize(data), ts)
@@ -50,5 +50,5 @@ class ProbeRunner:
         self.collector = Collector(config)
 
     def _cleanup(self):
-        logger.debug('_cleanup', name=self.config['name'], kwargs=self.config['kwargs'])
+        logger.debug('_cleanup', name=self.config['name'])
         self.collector.report()
