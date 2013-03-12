@@ -59,7 +59,7 @@ class ArbiterTests(unittest2.TestCase):
     def test_reload_all5(self):
         # test status off functionality
         self.arb.config = mock.Mock()
-        self.arb.config.get.return_value = False
+        self.arb.config.get.return_value = "OFF"
         self.arb._stop_all = mock.Mock()
         self.arb.reload_all()
         self.assertEqual(self.arb.proc_to_config, {})

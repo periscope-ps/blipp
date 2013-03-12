@@ -1,5 +1,6 @@
 SAMPLE_CONFIG = \
     {
+    "status": "ON",
     "ttl": 300,
     "name": "blipp",
 #   "id": "1234567890",
