@@ -31,24 +31,44 @@ EVENT_TYPES={
     "kernel":"ps:tools:blipp:linux:memory:utilization:kernel"
     }
 
-
 class Probe:
     """Get memory statistics.
     """
-
     def __init__(self, config={}):
         self.config = config
         kwargs = config.get("kwargs", {})
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
 
-
     def get_data(self):
         bean_counts = self._proc.exists("user_beancounters")
+        meminfo = self._proc.open("meminfo")
         ans = {}
-        if bean_counts:
-            total=0
-            used=0
-            page_size_kb=resource.getpagesize()/1024
+        page_size_kb=resource.getpagesize()/1024
+        total = 0
+        free = 0
+        for line in meminfo.readlines():
+            linel=line.split()
+            if not linel:
+                continue
+            if linel[0].startswith("MemFree"):
+                ans.update({"free":int(linel[1])})
+                free=int(linel[1])
+            elif linel[0].startswith("Buffers"):
+                ans.update({"buffer":int(linel[1])})
+            elif linel[0].startswith("Cached"):
+                ans.update({"cache":int(linel[1])})
+            elif linel[0].startswith("MemTotal"):
+                total=int(linel[1])
+            elif linel[0].startswith("Slab"):
+                ans.update({"kernel":int(linel[1])})
+        ans.update({"used":(total-free)})
+
+        if bean_counts: # we are on a vm
+            del ans["kernel"]
+            del ans["cache"]
+            del ans["buffer"]
+            # don't delete free - turns out its pretty tough to get a notion of free
+            # in an openvz container, so we'll report free for the whole machine
             for line in bean_counts:
                 linel=line.split()
                 if "kmemsize" in linel:
@@ -57,32 +77,6 @@ class Probe:
                 elif "physpages" in linel:
                     loc = linel.index("physpages")+1
                     ans.update({"used":int(linel[loc])*page_size_kb})
-                    used = int(linel[loc])*page_size_kb
-                elif "vmguarpages" in linel:
-                    loc = linel.index("vmguarpages")+3
-                    total = int(linel[loc])
-#                    # the "barrier" field of vmguarpages
-#                    # is the number of pages that apps in
-#                    # the vm are guaranteed to be able to
-#                    # allocate, but the may be able to
-#                    # allocate more depending on the amount
-#                    # of physical memory available
-            ans.update({"free":total-used})
-        else:
-            meminfo = self._proc.open("meminfo")
-            for line in meminfo.readlines():
-                linel=line.split()
-                if linel[0].startswith("MemFree"):
-                    ans.update({"free":int(linel[1])})
-                    free=int(linel[1])
-                elif linel[0].startswith("Buffers"):
-                    ans.update({"buffer":int(linel[1])})
-                elif linel[0].startswith("Cached"):
-                    ans.update({"cache":int(linel[1])})
-                elif linel[0].startswith("MemTotal"):
-                    total=int(linel[1])
-                elif linel[0].startswith("Slab"):
-                    ans.update({"kernel":int(linel[1])})
-            ans.update({"used":(total-free)})
+
         ans = full_event_types(ans, EVENT_TYPES)
         return ans

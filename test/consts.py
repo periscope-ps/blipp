@@ -183,3 +183,72 @@ bootstrap_local_config = {
 	}
     }
 }
+meminfo = """
+MemTotal:        8127964 kB
+MemFree:          525460 kB
+Buffers:          358700 kB
+Cached:          4390548 kB
+SwapCached:          768 kB
+Active:          4015276 kB
+Inactive:        3044436 kB
+Active(anon):    1950768 kB
+Inactive(anon):   367044 kB
+Active(file):    2064508 kB
+Inactive(file):  2677392 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:       5105656 kB
+SwapFree:        5104120 kB
+Dirty:                96 kB
+Writeback:             0 kB
+AnonPages:       2309808 kB
+Mapped:           173400 kB
+Shmem:              7360 kB
+Slab:             401292 kB
+SReclaimable:     371660 kB
+SUnreclaim:        29632 kB
+KernelStack:        4672 kB
+PageTables:        42628 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     9169636 kB
+Committed_AS:    5341024 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      330620 kB
+VmallocChunk:   34359380988 kB
+HardwareCorrupted:     0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+DirectMap4k:     2021376 kB
+DirectMap2M:     6301696 kB"""
+
+user_beancounters = """Version: 2.5
+       uid  resource                     held              maxheld              barrier                limit              failcnt
+        7:  kmemsize                 61925780             64507904  9223372036854775807  9223372036854775807                    0
+            lockedpages                     0                    0  9223372036854775807  9223372036854775807                    0
+            privvmpages                312066               321621  9223372036854775807  9223372036854775807                    0
+            shmpages                      640                 1296  9223372036854775807  9223372036854775807                    0
+            dummy                           0                    0                    0                    0                    0
+            numproc                        34                   84  9223372036854775807  9223372036854775807                    0
+            physpages                 1173286              1180545  9223372036854775807  9223372036854775807                    0
+            vmguarpages                     0                    0  9223372036854775807  9223372036854775807                    0
+            oomguarpages                12375                17889  9223372036854775807  9223372036854775807                    0
+            numtcpsock                     10                   74  9223372036854775807  9223372036854775807                    0
+            numflock                        2                   10  9223372036854775807  9223372036854775807                    0
+            numpty                          1                    2  9223372036854775807  9223372036854775807                    0
+            numsiginfo                      0                   27  9223372036854775807  9223372036854775807                    0
+            tcpsndbuf                  182080              1398784  9223372036854775807  9223372036854775807                    0
+            tcprcvbuf                  163840              7966208  9223372036854775807  9223372036854775807                    0
+            othersockbuf                14016                41184  9223372036854775807  9223372036854775807                    0
+            dgramrcvbuf                     0                 8768  9223372036854775807  9223372036854775807                    0
+            numothersock                   94                   99  9223372036854775807  9223372036854775807                    0
+            dcachesize               57694551             57798312             60817408             67108864                    0
+            numfile                       360                  600  9223372036854775807  9223372036854775807                    0
+            dummy                           0                    0                    0                    0                    0
+            dummy                           0                    0                    0                    0                    0
+            dummy                           0                    0                    0                    0                    0
+            numiptent                      20                   20  9223372036854775807  9223372036854775807                    0"""
