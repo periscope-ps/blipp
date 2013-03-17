@@ -151,16 +151,16 @@ class BlippCmd(cmd.Cmd):
     def do_EOF(self, line):
         return True
 
-    def _val_from_input(self, input):
+    def _val_from_input(self, inp):
         '''Take user input, and try to convert it to JSON appropriate
         python values.
         '''
-        val = input
+        val = inp
         try:
-            val = int(input)
+            val = int(inp)
             return val
         except Exception:
-            val = input
+            val = inp
         if val == "false":
             return False
         if val == "true":
