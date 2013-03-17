@@ -8,6 +8,7 @@ import zmq
 from blipp.config_server_api import POLL_CONFIG, RELOAD
 from blipp.unis_client import UNISInstance
 import json
+import shlex
 import pprint
 
 context = zmq.Context()
@@ -97,7 +98,7 @@ class BlippCmd(cmd.Cmd):
     def do_set(self, line):
         '''Set a key in local config
         set <key> <value>'''
-        line = line.split()
+        line = shlex.split(line)
         if len(line)<2:
             print "Usage: set <key> <value>"
             return
@@ -139,6 +140,13 @@ class BlippCmd(cmd.Cmd):
             print col.FAIL + "ERROR: no unis?" + col.ENDC
             return
         self.unis.put("/services/" + self.config["id"], self.config)
+
+    def do_mkdir(self, name):
+        '''Create an empty config dict with key <name> at the current
+        level
+        mkdir <name>
+        '''
+        self.cwc[name] = {}
 
     def do_EOF(self, line):
         return True
