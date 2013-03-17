@@ -2,7 +2,6 @@ import time
 import settings
 from probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
-from schedules.builtins import simple
 from copy import copy
 from config_server import ConfigServer
 
