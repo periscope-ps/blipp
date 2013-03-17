@@ -76,7 +76,7 @@
 		},
 		"cpu":{
 		    "collection_schedule":"simple",
-		    "schedule_params":1,
+		    "schedule_params": {"every": 1},
 		    "kwargs":{"proc_dir":"/proc"}
 		    // could theoretically have list of targets with different schedules or something,
 		    // but it'd be a bit silly for the cpu probe
