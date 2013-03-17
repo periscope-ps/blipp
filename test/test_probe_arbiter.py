@@ -66,7 +66,14 @@ class ArbiterTests(unittest2.TestCase):
         self.assertEqual(self.arb.stopped_procs, {})
         self.assertTrue(self.arb._stop_all.called)
 
-
+    def test_cleanup_stopped_probes(self):
+        '''regression test - make sure cleanup stopped probes doesn't
+        try to delete from the dict it's iterating over'''
+        key1 = mock.Mock()
+        key1.is_alive.return_value = False
+        key2 = mock.Mock()
+        self.arb.stopped_procs = {(key1, "conn1"): 333000222, (key1, "conn2"): 333111222, (key2, "conn3"): 333222222}
+        self.arb._cleanup_stopped_probes()
 
     def tearDown(self):
         for proc, conn in self.arb.proc_to_config.keys():

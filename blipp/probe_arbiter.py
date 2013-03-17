@@ -3,6 +3,8 @@ import settings
 from probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
 from schedules.builtins import simple
+from copy import copy
+
 
 logger = settings.get_logger('probe_arbiter')
 PROBE_GRACE_PERIOD = 10
@@ -48,7 +50,8 @@ class Arbiter():
 
     def _cleanup_stopped_probes(self):
         now = time.time()
-        for k,v in self.stopped_procs.iteritems():
+        sp = copy(self.stopped_procs)
+        for k,v in sp.iteritems():
             if not k[0].is_alive():
                 k[0].join()
                 del self.stopped_procs[k]
