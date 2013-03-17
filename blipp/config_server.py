@@ -1,8 +1,6 @@
-#
-# Server for blipp configuration
-# and control
-#
-#
+'''
+Server for blipp configuration and control via cmd line interface.
+'''
 import zmq
 import settings
 import json
@@ -24,14 +22,15 @@ class ConfigServer:
         cur_time = time.time()
         finish_time = cur_time + timeout
         while cur_time < finish_time:
-            if self.socket.poll(finish_time - cur_time):
+            logger.info("listen", msg="polling for %d"%(finish_time-cur_time))
+            if self.socket.poll((finish_time - cur_time)*1000):
                 message = self.socket.recv()
                 ret = self._handle_message(message)
                 self.socket.send(ret)
                 if RELOAD in message:
-                    break
+                    return True
             cur_time = time.time()
-        return False
+        return True
 
     def _handle_message(self, message):
         com, s, args = message.partition(' ')
@@ -41,19 +40,6 @@ class ConfigServer:
                 return json.dumps(self.conf_obj.config)
         elif RELOAD in com:
             return "reloading"
-
-        # try:
-        #     attr = getattr(self.conf_obj, com)
-        # except AttributeError:
-        #     return "Error: No attribute '%s' in configuration object" % com
-        # if hasattr(attr, "__call__"):
-        #     try:
-        #         return pprint.pformat(attr(*args, **kwargs))
-        #     except Exception as e:
-        #         logger.exc('_handle_message', e)
-        #         return "Exception %s, message '%s'" % (e.__class__, e.message)
-        # else:
-        #     return pprint.pformat(attr)
 
     def _parse_args(self, args):
         ret_args = []

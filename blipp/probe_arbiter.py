@@ -20,7 +20,7 @@ class Arbiter():
         self._cleanup_stopped_probes()
         if self.config.get("status", "ON").upper() == "OFF":
             self._stop_all()
-            return
+            return time.time()
         self._check_procs()
         new_pc_list = self.config.expand_probe_config()
         our_pc_list = self.proc_to_config.values()
@@ -31,6 +31,7 @@ class Arbiter():
         for proc_conn, pc in self.proc_to_config.iteritems():
             if not pc in new_pc_list:
                 self._stop_probe(proc_conn)
+        return time.time()
 
     def _start_new_probe(self, pc):
         pr = ProbeRunner(pc)
@@ -71,9 +72,10 @@ class Arbiter():
 def main(config):
     a = Arbiter(config)
     s = ConfigServer(config)
+    last_reload_time = 0
     check_interval = config["properties"]["configurations"]["unis_poll_interval"]
-    for x in simple(check_interval):
-        a.reload_all()
-        while s.listen(x-time.time()):
-            pass
+    while s.listen(last_reload_time + check_interval - time.time()):
+        last_reload_time = a.reload_all()
+        check_interval = config["properties"]["configurations"]["unis_poll_interval"]
+        logger.info("main", msg="check interval %d"%check_interval)
 
