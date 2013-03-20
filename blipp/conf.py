@@ -108,7 +108,9 @@ class ServiceConfigure(object):
             logger.warn('_setup_service', msg="id not unique... taking first result")
             r = r[0]
         merge_dicts(config, r)
-        self.unis.put("/services/" + config["id"], data=config)
+        if config != r:
+            logger.info("_setup_service", msg="local config changed... pushing new config to UNIS")
+            self.unis.put("/services/" + config["id"], data=config)
 
     def _get_file_config(self, filepath):
         try:
