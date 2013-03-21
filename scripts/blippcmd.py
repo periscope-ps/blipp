@@ -226,6 +226,11 @@ class col:
     FAIL = '\033[31m' # RED
     ENDC = '\033[39m' # BLACK
 
+def main():
+    ipc_file = "/tmp/blipp_socket_zcWcfO0ydo"
+    socket.connect("ipc://" + ipc_file)
+    BlippCmd().cmdloop()
+
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='blippcmd 0.1')
     if arguments["<ipc_file>"]:

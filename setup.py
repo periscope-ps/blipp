@@ -19,7 +19,7 @@ version = "0.1.dev"
 setup(
     name="blipp",
     version=version,
-    packages=["blipp", "blipp.schedules"],
+    packages=["blipp", "scripts", "blipp.schedules"],
     package_data={},
     author="Matthew Jaffee",
     author_email="matthew.jaffee@gmail.com",
@@ -30,7 +30,8 @@ setup(
         "requests",
         "netlogger>=4.3.0",
         "netifaces",
-        "pyzmq"
+        "pyzmq",
+        "docopt"
     ],
     dependency_links=[
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",
@@ -38,6 +39,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'blippd = blipp.start_blipp:main',
+            'blippcmd = scripts.blippcmd:main'
         ]
     },
 )
