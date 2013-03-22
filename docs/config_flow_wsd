@@ -1,0 +1,60 @@
+title Blipp Data Flow
+
+note over BLiPP: read command line
+note over BLiPP: add config file
+note over BLiPP: add defaults
+note over BLiPP UNIS: setup node
+BLiPP->+UNIS: if have a node_id get node
+UNIS->-BLiPP: return node conf or not found
+BLiPP->+UNIS: query for node with URN (constructed from hostname)
+UNIS->-BLiPP: return list of matches
+BLiPP->+UNIS: if no matches, create new node
+UNIS->-BLiPP: return created node
+
+note over BLiPP UNIS: setup service
+BLiPP->+UNIS: check given service id against UNIS
+UNIS->-BLiPP: return service or not found
+BLiPP->+UNIS: if not service query based on node
+UNIS->-BLiPP: return list of results
+BLiPP->+UNIS: if no matches create new service with config found so far
+UNIS->-BLiPP: return created service
+note over BLiPP: add UNIS config
+note over BLiPP: expand config into list of probe configs
+note over BLiPP: start probes
+note over BLiPP: probes collect data and send to collectors
+BLiPP->UNIS: collector posts metadata to UNIS
+BLiPP->MS: collectors create collections in MS
+BLiP->MS: collectors send data to the MS
+
+
+
+
+
+
+title Blipp Data Flow
+
+note over Blipp: read command line
+note over Blipp: add config file
+note over Blipp: add defaults
+note over Blipp UNIS: setup node
+Blipp->+UNIS: if have a node_id get node
+UNIS->-Blipp: return node conf or not found
+Blipp->+UNIS: query for node with URN (constructed from hostname)
+UNIS->-Blipp: return list of matches
+Blipp->+UNIS: if no matches, create new node
+UNIS->-Blipp: return created node
+
+note over Blipp UNIS: setup service
+Blipp->+UNIS: check given service id against UNIS
+UNIS->-Blipp: return service or not found
+Blipp->+UNIS: if not service query based on node
+UNIS->-Blipp: return list of results
+Blipp->+UNIS: if no matches create new service with config found so far
+UNIS->-Blipp: return created service
+note over Blipp: add UNIS config
+note over Blipp: expand config into list of probe configs
+note over Blipp: start probes
+note over Blipp: probes collect data and send to collectors
+Blipp->UNIS: collector posts metadata to UNIS
+Blipp->MS: collectors create collections in MS
+Blipp->MS: collectors send data to the MS

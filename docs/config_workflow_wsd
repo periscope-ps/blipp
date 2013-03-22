@@ -1,0 +1,17 @@
+title Gemini Configuration Workflow
+Blipp->UNIS: get initial configuration
+note over Blipp: start probes
+note right of Blipp: poll interval passes
+Web UI->UNIS: user sets configuration
+Blipp->UNIS: poll for configuration
+note over Blipp: reload probes as necessary
+note right of Blipp: poll interval passes
+Blipp->UNIS: poll for configuration
+note over Blipp: nothing has changed
+note right of Blipp: poll interval passes
+Web UI->UNIS: user changes configuration
+Blipp->UNIS: poll for configuration
+note over Blipp
+   see changed config,
+   reload probes as necessary
+end note
