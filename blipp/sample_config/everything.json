@@ -1,0 +1,44 @@
+{
+    "status": "ON",
+    "name": "blipp",
+    "ttl": 100000,
+    "description": "test config that runs a bunch of probes",
+    "properties": {
+	"configurations": {
+	    "unis_url":"http://dev.incntre.iu.edu",
+	    "unis_poll_interval": 300,
+	    "probe_defaults": {
+		"collection_schedule":"builtins.simple",
+		"schedule_params":{"every": 2},
+		"reporting_params": 2,
+		"collection_size":10000000,
+		"collection_ttl":1500000,
+		"ms_url":"http://dev.incntre.iu.edu"
+	    },
+	    "location":{"institution": "GENI"},
+	    "probes":{
+		"cpu":{
+		    "collection_schedule":"simple",
+		    "schedule_params": {"every": 1},
+		    "reporting_params": 2
+		},
+		"net":{
+		    "kwargs":{}
+		},
+		"mem":{
+		},
+		"cmd_line_probe":{
+		    "kwargs":{
+			"command": "ping -c 1 www.google.com",
+		    	"regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+			"eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+				       "rtt": "ps:tools:blipp:linux:net:ping:rtt"}
+		    }
+		}
+	    }
+	},
+	"summary": {
+	    "metadata": []
+	}
+    }
+}
