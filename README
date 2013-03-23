@@ -1,5 +1,18 @@
-define which probes you'd like to run in the list PROBES in settings.py. Their
-names are just their filenames without the ".py".
+BLiPP - A scheduling framework for monitoring
+Primary Author: Matthew Jaffee
+
+To install,
+$ python setup.py install
+should be sufficient. This creates an executable called blippd and puts it on your path. Running blippd should give a run down of the arguments it takes.
+
+You'll need a UNIS and MS instance for BLiPP to be very useful. Currently, development instances are running at http://dev.incntre.iu.edu - these could be cleared at any time, so don't use them for anything critical!
+
+You can get UNIS and the MS yourself at https://github.com/periscope-ps/unis (they are the same codebase).
+
+More information on all three of these components can be found at https://github.com/GENI-GEMINI/GEMINI/wiki
+
+
+
 
 you need to install my version of python-ethtool which just adds a get_speed
 function so that the capacity of each interface can be reported. I added a dummy
@@ -46,7 +59,7 @@ static PyObject *get_speed(PyObject *self __unused, PyObject *args)
           PyErr_SetString(PyExc_OSError, strerror(errno));
           return NULL;
         }
-	
+
 	close(fd);
         return PyInt_FromLong((long) edata.speed);
 }
