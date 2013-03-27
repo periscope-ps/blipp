@@ -29,7 +29,7 @@ class Collector:
                 self._insert_datum(mids[subject][metric], ts, value)
 
         self.num_collected += 1
-        if self.num_collected >= self.config.get("reporting_params", 10):
+        if self.num_collected >= self.config["reporting_params"]:
             self.report()
             self.num_collected = 0
 
