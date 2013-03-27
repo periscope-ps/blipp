@@ -1,0 +1,14 @@
+{
+    "properties": {
+	"configurations": {
+	    "probe_defaults": {
+	        "unis_url": "http://dev.incntre.iu.edu",
+		"ms_url": "http://dev.incntre.iu.edu",
+		"collection_schedule": "builtins.simple",
+		"schedule_params": {"every": 5}
+	    },
+	    "probes":{
+	    }
+	}
+    }
+}
