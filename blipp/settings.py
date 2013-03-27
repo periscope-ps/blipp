@@ -27,41 +27,38 @@ MIME = {
     }
 
 HOSTNAME = socket.gethostname() ### this needs to get the fqdn for DOMAIN to be right down below
-GEMINI_NODE_INFO="/usr/local/etc/node.info"
+
 try:
     DOMAIN = HOSTNAME.split('.', 1)[1]
 except Exception:
     DOMAIN = HOSTNAME
 URN_STRING = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
-DEFAULT_COLLECTION_SIZE=10000000 # ~10 megabytes
-DEFAULT_COLLECTION_TTL=1500000 # ~17 days
 
 STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],
     "status": "ON",
-    "name": "blipp",
-    "description": "default blipp service description",
+    "name": "blipp", #TODO remove this - not required
     "serviceType": "http://some_schema_domain/blipp",
     "properties": {
         "configurations": {
             "unis_poll_interval":300,
             "use_ssl": "",
-	    "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
-	    "ssl_key": "/usr/local/etc/certs/mp_key.pem",
 	    "ssl_cafile": "",
             "hostname": HOSTNAME,
             "host_urn": URN_STRING,
-            "location":{},
             "probe_defaults": {
                 "collection_size": 10000000, # ~10 megabytes
-                "collection_ttl": 1500000 # ~17 days
+                "collection_ttl": 1500000, # ~17 days
+                "reporting_params": 1
                 }
             }
         }
     }
+
 nconf = {}
 AUTH_UUID = None
 MS_URL = None
+GEMINI_NODE_INFO="/usr/local/etc/node.info"
 try:
     with open(GEMINI_NODE_INFO, 'r') as cfile:
         for line in cfile:
@@ -77,8 +74,11 @@ try:
             pass
 except IOError:
     pass
+
 if AUTH_UUID:
     STANDALONE_DEFAULTS["properties"].update({"geni": {"slice_uuid":AUTH_UUID}})
+if MS_URL:
+    STANDALONE_DEFAULTS["properties"]["configurations"]["probe_defaults"].update({"ms_url": MS_URL})
 
 
 ##################################################################
