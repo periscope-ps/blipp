@@ -27,6 +27,7 @@ setup(
     url="https://github.com/periscope-ps/periscope",
 
     install_requires=[
+        "validictory",
         "requests",
         "netlogger>=4.3.0",
         "netifaces",

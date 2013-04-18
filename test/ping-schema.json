@@ -1,0 +1,81 @@
+{
+    "$schema": "http://json-schema.org/draft-03/hyper-schema#",
+    "id": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130416/ping#",
+    "name": "ping",
+    "title": "BLiPP ping probe configuration",
+    "description": "A schema defining configuration to run ping within BLiPP using the cmd_line_probe",
+    "type": "object",
+    "properties": {
+	"$schema": {
+	    "default": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130416/ping#",
+	    "type": "string",
+	    "required": false
+	},
+	"probe_module": {
+	    "default": "cmd_line_probe",
+	    "type": "string",
+	    "required": false
+	},
+	"command": {
+	    "default": "ping -W $TIMEOUT -s $PACKET_SIZE -t $TTL -p $PATTERN -M $HINT -Q $TOS $EXTRAARGS $ADDRESS",
+	    "type": "string",
+	    "required": false
+	},
+	"regex": {
+	    "default": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+	    "type": "string",
+	    "required": false
+	},
+	"eventTypes": {
+	    "required": false,
+	    "default": {
+		"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+		"rtt": "ps:tools:blipp:linux:net:ping:rtt"
+	    },
+	    "type": "object",
+	    "additionalProperties": true
+	},
+	"timeout": {
+	    "type": "integer",
+	    "min": 1,
+	    "default": 2,
+	    "required": false
+	},
+	"packet_size": {
+	    "required": false,
+	    "type": "integer",
+	    "default": 56
+	},
+	"ttl": {
+	    "required": false,
+	    "type": "integer",
+	    "min": 0,
+	    "max": 255,
+	    "default": 60
+	},
+	"pattern": {
+	    "required": false,
+	    "type": "string",
+	    "default": "00"
+	},
+	"hint": {
+	    "required": false,
+	    "type": "string",
+	    "default": "dont"
+	},
+	"tos": {
+	    "required": false,
+	    "type": "string",
+	    "default": "0"
+	},
+	"extraargs": {
+	    "required": false,
+	    "type": "string",
+	    "default": ""
+	},
+	"address": {
+	    "required": true,
+	    "type": "string"
+	}
+    }
+}
