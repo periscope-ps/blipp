@@ -7,13 +7,12 @@ class Probe:
 
     def __init__(self, config={}):
         self.config = config
-        kwargs = config.get("kwargs", {})
-        self.command = str(kwargs.get("command"))
-        self.data_regex = re.compile(str(kwargs["regex"]))
-        self.EVENT_TYPES = kwargs["eventTypes"]
+        self.command = self._substitute_command(config.get("command"), self.config)
+        self.data_regex = re.compile(str(config["regex"]))
+        self.EVENT_TYPES = config["eventTypes"]
 
     def get_data(self):
-        proc = subprocess.Popen(shlex.split(self.command),
+        proc = subprocess.Popen(self.command,
                                 stdout = subprocess.PIPE,
                                 stderr = subprocess.PIPE)
         output = proc.communicate()
@@ -29,6 +28,21 @@ class Probe:
         if not matches:
             raise NonMatchingOutputError(stdout)
         return matches.groupdict()
+
+    def _substitute_command(self, command, config):
+        ''' command in form "ping $ADDRESS"
+        config should have substitutions like "address": "example.com"
+        '''
+        command = shlex.split(command)
+        ret = []
+        for item in command:
+            if item[0] == '$':
+                if config.has_key(item[1:].lower()):
+                    sub = config[item[1:].lower()]
+                    item = sub
+            if item:
+                ret.append(str(item))
+        return ret
 
 
 class NonMatchingOutputError(Exception):
