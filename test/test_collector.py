@@ -5,7 +5,7 @@ from blipp.collector import Collector
 
 class CollectorTests(unittest2.TestCase):
     def setUp(self):
-        self.collector = Collector({"unis_url": "NONE"})
+        self.collector = Collector({"unis_url": "NONE", "reporting_params": 2})
 
     def test_insert(self):
         c = self.collector
@@ -26,6 +26,3 @@ class CollectorTests(unittest2.TestCase):
         for mid in c.mid_to_data.keys():
             self.assertTrue(mid in [1234, 2234, 3234, 4234])
         self.assertEqual(c.mid_to_data[3234][0]["value"], "valsubj2met3")
-
-
-
