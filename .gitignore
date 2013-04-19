@@ -4,3 +4,6 @@ blipp/blippprof
 #*
 .tox
 blipp.egg-info
+*.prof
+*#
+.#*
