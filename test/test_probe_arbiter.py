@@ -49,7 +49,7 @@ class ArbiterTests(unittest2.TestCase):
 
     def test_reload_all4(self):
         self.arb.reload_all()
-        self.bconf.config["properties"]["configurations"]["probes"]["ping"]["schedule_params"] = {"every":9}
+        self.bconf.config["properties"]["configurations"]["probes"]["ping1"]["schedule_params"] = {"every":9}
         self.arb._start_new_probe = mock.Mock()
         self.arb._stop_probe = mock.Mock()
         self.arb.reload_all()

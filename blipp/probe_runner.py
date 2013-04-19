@@ -20,7 +20,7 @@ class ProbeRunner:
             self.collect()
 
     def collect(self):
-        logger.debug('collect', name=self.config['name'])
+        logger.debug('collect', name=self.config['name'], module=self.config["probe_module"])
         data = self.probe.get_data()
         ts = time.time()
         self.collector.insert(self._normalize(data), ts)
@@ -35,8 +35,8 @@ class ProbeRunner:
 
     def setup(self):
         config = self.config
-        logger.info('setup', name=config["name"])
-        probe_mod = blipp_import(config["name"])
+        logger.info('setup', name=config["name"], module=config["probe_module"])
+        probe_mod = blipp_import(config["probe_module"])
         self.probe = probe_mod.Probe(config)
 
         if "." in config["collection_schedule"]:

@@ -25,39 +25,88 @@ SAMPLE_CONFIG = \
                     "collection_ttl":1500000,
                     "ms_url":"http://dev.incntre.iu.edu"},
                 "probes": {
-                    "ping": {
+                    "ping1": {
+                        "probe_module": "ping",
                         "collection_schedule": "simple",
-                        "schedule_params": {"every": 10},
+                        "schedule_params": {"every": 5},
                         "reporting_schedule": "simple",
                         "reporting_params": [6],
                         "ms_url": "someurl",
-                        "kwargs": {"remote_host": "google.com",
+                        "collection_ttl": 30000,
+                        "kwargs": {"remote_host": "129.62.33.22",
+                                   "timeout": 3,
+                                   "packet_size": 56,
+                                   "byte_pattern": "0xAAAA"}
+                    },
+                    "ping2": {
+                        "probe_module": "ping",
+                        "collection_schedule": "simple",
+                        "schedule_params": {"every": 10},
+                        "reporting_schedule": "simple",
+                        "reporting_params": [7],
+                        "ms_url": "someurl",
+                        "kwargs": {"remote_host": "bing.com",
                                    "timeout": 2,
                                    "packet_size": 56,
-                                   "byte_pattern": "0xAAAA"},
-                        "targets": [{"kwargs": {"remote_host": "129.62.33.22",
-                                                "timeout": 3},
-                                     "collection_ttl": 30000,
-                                     "schedule_params": {"every": 5}},
-                                    {"kwargs": {"remote_host": "bing.com"}, "reporting_params": [7]}]
-                        },
-                    "cpu": {"collection_schedule": "simple",
-                            "schedule_params": 1,
-                            "kwargs": {"proc_dir": "/proc"}},
-                    "net": {"status": "off",
-                            "kwargs": {"proc_dir": "/proc",
-                                 "unis_url": "http://www.dev.incntre.iu.edu",
-                                 "subject":
-                                     "http://www.dev.incntre.iu.edu/nodes/hikerbear"}
-                            }
+                                   "byte_pattern": "0xAAAA"}
+                    },
+                    "cpu": {
+                        "probe_module": "cpu",
+                        "collection_schedule": "simple",
+                        "schedule_params": 1,
+                        "kwargs": {"proc_dir": "/proc"}
+                    },
+                    "net": {
+                        "probe_module": "net",
+                        "status": "off",
+                        "kwargs": {"proc_dir": "/proc",
+                                   "unis_url": "http://www.dev.incntre.iu.edu",
+                                   "subject":
+                                   "http://www.dev.incntre.iu.edu/nodes/hikerbear"}
                     }
                 }
             }
+            }
     }
 
+PING_SCHEMA = {
+    "name": "pingschema",
+    "address": "iu.edu",
+    u"probe_module": u"cmd_line_probe",
+    "domain":"testdomain.net",
+    "unis_url":"http://dev.incntre.iu.edu",
+    "runningOn": {"href": "http://dev.incntre.iu.edu/nodes/anode",
+                  "rel": "full"},
+    "collection_schedule": "simple",
+    "schedule_params": {"every": 10},
+    "reporting_schedule": "simple|num_measurements...etc",
+    "reporting_params": ['arg1', 2],
+    "collection_size": 10000000,
+    "collection_ttl": 1500000,
+    "ms_url": "http://dev.incntre.iu.edu",
+    "use_ssl": "",
+    "ssl_cert": "cert_file",
+    "ssl_key": "key_file",
+    "ssl_cafile": "ca_file",
+    "properties": {},
+    '$schema': 'file://ping-schema.json',
+    u'command': u'ping -W $TIMEOUT -s $PACKET_SIZE -t $TTL -p $PATTERN -M $HINT -Q $TOS $EXTRAARGS $ADDRESS',
+    u'regex': u'ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ',
+    u'eventTypes': {
+        u'ttl': u'ps:tools:blipp:linux:net:ping:ttl',
+        u'rtt': u'ps:tools:blipp:linux:net:ping:rtt'
+    },
+    u'timeout': 2,
+    u'packet_size': 56,
+    u'ttl': 60,
+    u'pattern': u'00',
+    u'hint': u'dont',
+    u'tos': u'0',
+    u'extraargs': u'',
+}
 
-
-PING_1 = {"name": "ping",
+PING_1 = {"name": "ping1",
+          "probe_module": "ping",
           "domain":"testdomain.net",
           "unis_url":"http://dev.incntre.iu.edu",
           "runningOn": {"href": "http://dev.incntre.iu.edu/nodes/anode",
@@ -79,7 +128,8 @@ PING_1 = {"name": "ping",
                      "packet_size": 56,
                      "byte_pattern": "0xAAAA"}}
 
-PING_2 = {"name": "ping",
+PING_2= {"name": "ping2",
+              "probe_module": "ping",
           "domain":"testdomain.net",
           "unis_url":"http://dev.incntre.iu.edu",
           "runningOn": {"href": "http://dev.incntre.iu.edu/nodes/anode",

@@ -62,6 +62,14 @@ def merge_dicts(adict, overriding):
         else:
             adict[k] = v
 
+def merge_into(base, defaults):
+    for k,v in defaults.items():
+        if isinstance(v, dict) and isinstance(base.get(k, None), dict):
+            merge_into(base.setdefault(k, {}), v)
+        elif not base.has_key(k):
+            base[k] = v
+
+
 def reconcile_config(defaults, master):
     ans = deepcopy(defaults)
     for key, val in master.iteritems():
