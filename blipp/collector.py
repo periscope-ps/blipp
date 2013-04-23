@@ -2,6 +2,7 @@ from ms_client import MSInstance
 from unis_client import UNISInstance
 import settings
 logger = settings.get_logger('collector')
+from utils import blipp_import
 
 
 class Collector:
@@ -17,13 +18,14 @@ class Collector:
         self.mid_to_data = {}
         self.unis = UNISInstance(config)
         self.num_collected = 0
+        self.measurement = self._post_measurement()
 
     def insert(self, data, ts):
         mids = self.mids
         for subject, met_val in data.iteritems():
             for metric, value in met_val.iteritems():
                 if not metric in mids.get(subject, {}):
-                    r = self.unis.post_metadata(subject, metric, self.config)
+                    r = self.unis.post_metadata(subject, metric, self.measurement)
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
                 self._insert_datum(mids[subject][metric], ts, value)
@@ -43,6 +45,20 @@ class Collector:
                  for mid, data in self.mid_to_data.iteritems() ]
         self.ms.post_data(data)
         self._clear_data()
+
+    def _post_measurement(self):
+        probe_mod = blipp_import(self.config["probe_module"])
+        if "EVENT_TYPES" in probe_mod.__dict__:
+            eventTypes = probe_mod.EVENT_TYPES.values()
+        else:
+            eventTypes = self.config["eventTypes"].values()
+        measurement = {}
+        measurement["service"] = self.config["serviceRef"]
+        measurement["configuration"] = self.config
+        measurement["eventTypes"] = eventTypes
+        r = self.unis.post("/measurements", measurement)
+        return r
+
 
     def _clear_data(self):
         for mid in self.mid_to_data:

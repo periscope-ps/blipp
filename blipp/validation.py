@@ -6,11 +6,11 @@ def validate_add_defaults(data, schema):
 
 def add_defaults(data, schema):
     # assume data is valide with schema
-    if not schema.has_key("properties"):
+    if not "properties" in schema:
         return
     for key, inner_schema in schema["properties"].items():
-        if not data.has_key(key):
-            if inner_schema.has_key("default"):
+        if not key in data:
+            if "default" in inner_schema:
                 data[key] = inner_schema["default"]
         elif inner_schema["type"] == "object":
             add_defaults(data[key], inner_schema)

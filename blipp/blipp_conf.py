@@ -25,7 +25,7 @@ class BlippConfigure(ServiceConfigure):
             probe["name"] = name
             probe.update(pconf)
             merge_into(probe, defaults)
-            if probe.has_key("$schema"):
+            if "$schema" in probe:
                 try:
                     schema = self.schema_cache.get(probe["$schema"])
                     validate_add_defaults(probe, schema)
@@ -39,6 +39,8 @@ class BlippConfigure(ServiceConfigure):
     def make_defaults(self):
         defaults = {}
         defaults["runningOn"] = self.config["runningOn"]
+        if "selfRef" in self.config:
+            defaults["serviceRef"] = self.config["selfRef"]
         props = deepcopy(self.config["properties"])
         del props["configurations"]
         defaults["properties"] = props

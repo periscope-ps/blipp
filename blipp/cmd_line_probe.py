@@ -2,12 +2,15 @@ import subprocess
 import re
 from utils import full_event_types
 import shlex
+import settings
+
+logger = settings.get_logger('cmd_line_probe')
 
 class Probe:
 
     def __init__(self, config={}):
         self.config = config
-        self.command = self._substitute_command(config.get("command"), self.config)
+        self.command = self._substitute_command(str(config.get("command")), self.config)
         self.data_regex = re.compile(str(config["regex"]))
         self.EVENT_TYPES = config["eventTypes"]
 
@@ -37,7 +40,7 @@ class Probe:
         ret = []
         for item in command:
             if item[0] == '$':
-                if config.has_key(item[1:].lower()):
+                if item[1:].lower() in config:
                     sub = config[item[1:].lower()]
                     item = sub
             if item:

@@ -66,7 +66,7 @@ def merge_into(base, defaults):
     for k,v in defaults.items():
         if isinstance(v, dict) and isinstance(base.get(k, None), dict):
             merge_into(base.setdefault(k, {}), v)
-        elif not base.has_key(k):
+        elif not k in base:
             base[k] = v
 
 
@@ -88,6 +88,9 @@ def query_string_from_dict(adict, prefix=""):
     if prefix:
         prefix += "."
     for k,v in adict.items():
+        # a hack: UNIS doesn't like queries that have a '$' in the key for some reason
+        if "$" in k:
+            continue
         if isinstance(v, dict):
             retstring += query_string_from_dict(v, prefix + str(k))
         else:
@@ -96,9 +99,9 @@ def query_string_from_dict(adict, prefix=""):
             elif isinstance(v, int):
                 retstring += prefix + str(k) + "=number:" + str(v) + "&"
             elif isinstance(v, str):
-                retstring+= prefix + str(k) + "=" + v + "&"
+                retstring += prefix + str(k) + "=" + v + "&"
             elif isinstance(v, unicode):
-                retstring+= prefix + str(k) + "=" + v + "&"
+                retstring += prefix + str(k) + "=" + v + "&"
             else:
                 print "ATTEMPT TO QUERY ON NON SUPPORTED TYPE:"
                 print v

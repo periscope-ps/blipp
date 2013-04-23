@@ -2,6 +2,7 @@ import settings
 import time
 from collector import Collector
 from utils import blipp_import
+import pprint
 
 logger = settings.get_logger('probe_runner')
 
@@ -28,14 +29,13 @@ class ProbeRunner:
     def _normalize(self, data):
         if isinstance(data.itervalues().next(), dict):
             return data
-        # TODO convert metric reported by probe to appropriate eventType
         subject = self.config["runningOn"]["href"]
         return dict({subject: data})
 
 
     def setup(self):
         config = self.config
-        logger.info('setup', name=config["name"], module=config["probe_module"])
+        logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(self.config))
         probe_mod = blipp_import(config["probe_module"])
         self.probe = probe_mod.Probe(config)
 

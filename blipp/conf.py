@@ -62,10 +62,8 @@ class ServiceConfigure(object):
                               data={
                         "$schema": settings.SCHEMAS["nodes"],
                         "name": hostname,
-                        "urn": urn,
-                        "description": config["description"],
-                        "location":\
-                            config["properties"]["configurations"]["location"]})
+                        "urn": urn})
+
         config["properties"]["configurations"]["node_id"] = r["id"]
         config["runningOn"] = {
             "href": r["selfRef"],

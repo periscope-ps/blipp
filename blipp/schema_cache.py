@@ -6,7 +6,7 @@ class SchemaCache:
         self.schemas = {}
 
     def get(self, schema_url):
-        if self.schemas.has_key(schema_url):
+        if schema_url in self.schemas:
             return self.schemas[schema_url]
         else:
             return self._fetch_schema(schema_url)
