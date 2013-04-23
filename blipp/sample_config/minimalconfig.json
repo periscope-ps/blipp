@@ -3,7 +3,7 @@
 	"configurations": {
 	    "unis_url": "http://localhost:8888",
 	    "probe_defaults": {
-		"ms_url": "http://dev.incntre.iu.edu",
+		"ms_url": "http://localhost:8888",
 		"collection_schedule": "builtins.simple",
 		"schedule_params": {"every": 5}
 	    },

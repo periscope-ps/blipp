@@ -22,7 +22,11 @@ class Probe:
 
         if not output[0]:
             raise CmdError(output[1])
-        data = self._extract_data(output[0])
+        try:
+            data = self._extract_data(output[0])
+        except NonMatchingOutputError:
+            logger.warn("get_data", name=self.config["name"], msg="Non matching output - returning no data")
+            return {}
         data = full_event_types(data, self.EVENT_TYPES)
         return data
 

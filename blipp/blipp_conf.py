@@ -45,7 +45,7 @@ class BlippConfigure(ServiceConfigure):
         del props["configurations"]
         defaults["properties"] = props
         for k,v in self.config["properties"]["configurations"].items():
-            if k is not "probe_defaults" and k is not "probes":
+            if (str(k) != "probe_defaults") and (str(k) != "probes"):
                 defaults[k] = v
         for k,v in self.config["properties"]["configurations"]["probe_defaults"].items():
             defaults[k] = v

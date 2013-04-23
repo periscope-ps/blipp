@@ -32,7 +32,7 @@ class UNISInstance:
             del data["ts"]
         return self.gc.do_req('put', url, data)
 
-    def post_metadata(self, subject, metric, config):
+    def post_metadata(self, subject, metric, measurement):
         post_dict = {
             "subject": {
                 "href": subject,
@@ -41,7 +41,7 @@ class UNISInstance:
             "eventType":metric,
             "parameters": {
                 "datumSchema": settings.SCHEMAS["datum"],
-                "config": config
+                "measurement": measurement
                 }
             }
 

@@ -25,7 +25,7 @@ class Collector:
         for subject, met_val in data.iteritems():
             for metric, value in met_val.iteritems():
                 if not metric in mids.get(subject, {}):
-                    r = self.unis.post_metadata(subject, metric, self.measurement)
+                    r = self.unis.post_metadata(subject, metric, self.measurement["selfRef"])
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
                 self._insert_datum(mids[subject][metric], ts, value)

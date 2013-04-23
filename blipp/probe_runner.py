@@ -24,7 +24,8 @@ class ProbeRunner:
         logger.debug('collect', name=self.config['name'], module=self.config["probe_module"])
         data = self.probe.get_data()
         ts = time.time()
-        self.collector.insert(self._normalize(data), ts)
+        if data:
+            self.collector.insert(self._normalize(data), ts)
 
     def _normalize(self, data):
         if isinstance(data.itervalues().next(), dict):
@@ -48,6 +49,7 @@ class ProbeRunner:
         self.scheduler = self.scheduler(**config["schedule_params"])
 
         self.collector = Collector(config)
+
 
     def _cleanup(self):
         logger.debug('_cleanup', name=self.config['name'])
