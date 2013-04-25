@@ -5,12 +5,26 @@
 	    "probe_defaults": {
 		"ms_url": "http://localhost:8888",
 		"collection_schedule": "builtins.simple",
-		"schedule_params": {"every": 5}
+		"schedule_params": {"every": 5},
+		"reporting_params": 5
 	    },
 	    "probes":{
+		"cpu_probe1": {
+		    "probe_module": "cpu"
+		},
 		"ping_schema_probe": {
 		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130419/ping",
-		    "address": "www.google.com"
+		    "address": "www.google.com",
+		    "collection_schedule": "adaptive.simple_avoid",
+		    "schedule_params": {"every":10, "duration":1},
+		    "resources":[
+			{
+			    "ref": "a",
+			    "usage": {
+				"bandwidth": 20
+			    }
+			}
+		    ]
 		}
 	    }
 	}

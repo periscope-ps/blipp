@@ -77,4 +77,3 @@ def main(config):
         last_reload_time = a.reload_all()
         check_interval = config["properties"]["configurations"]["unis_poll_interval"]
         logger.info("main", msg="check interval %d"%check_interval)
-

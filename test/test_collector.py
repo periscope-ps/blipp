@@ -5,7 +5,8 @@ from blipp.collector import Collector
 
 class CollectorTests(unittest2.TestCase):
     def setUp(self):
-        self.collector = Collector({"unis_url": "NONE", "reporting_params": 2})
+        Collector._post_measurement = Mock()
+        self.collector = Collector({"unis_url": "NONE", "reporting_params": 2, "measurement":"dummymeasurementstring"})
 
     def test_insert(self):
         c = self.collector

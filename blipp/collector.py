@@ -18,14 +18,14 @@ class Collector:
         self.mid_to_data = {}
         self.unis = UNISInstance(config)
         self.num_collected = 0
-        self.measurement = self._post_measurement()
+        self._post_measurement()
 
     def insert(self, data, ts):
         mids = self.mids
         for subject, met_val in data.iteritems():
             for metric, value in met_val.iteritems():
                 if not metric in mids.get(subject, {}):
-                    r = self.unis.post_metadata(subject, metric, self.measurement["selfRef"])
+                    r = self.unis.post_metadata(subject, metric, self.config["measurement"])
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
                 self._insert_datum(mids[subject][metric], ts, value)
@@ -57,7 +57,7 @@ class Collector:
         measurement["configuration"] = self.config
         measurement["eventTypes"] = eventTypes
         r = self.unis.post("/measurements", measurement)
-        return r
+        self.config["measurement"] = r["selfRef"]
 
 
     def _clear_data(self):
