@@ -5,7 +5,8 @@ from schema_cache import SchemaCache
 from validation import validate_add_defaults
 import settings
 
-logger = settings.get_logger('blipp_conf')
+# should be blipp_conf, but netlogger doesn't like that for some reason
+logger = settings.get_logger('confblipp')
 
 class BlippConfigure(ServiceConfigure):
     def __init__(self, file_loc=None, unis_url=None, service_id=None,

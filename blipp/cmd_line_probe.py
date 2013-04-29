@@ -24,8 +24,8 @@ class Probe:
             raise CmdError(output[1])
         try:
             data = self._extract_data(output[0])
-        except NonMatchingOutputError:
-            logger.warn("get_data", name=self.config["name"], msg="Non matching output - returning no data")
+        except NonMatchingOutputError as e:
+            logger.exc("get_data", e)
             return {}
         data = full_event_types(data, self.EVENT_TYPES)
         return data
@@ -39,16 +39,25 @@ class Probe:
     def _substitute_command(self, command, config):
         ''' command in form "ping $ADDRESS"
         config should have substitutions like "address": "example.com"
+        Note; now more complex
         '''
         command = shlex.split(command)
         ret = []
         for item in command:
             if item[0] == '$':
-                if item[1:].lower() in config:
-                    sub = config[item[1:].lower()]
-                    item = sub
-            if item:
-                ret.append(str(item))
+                if item[1:] in config:
+                    val = config[item[1:]]
+                    if isinstance(val, bool):
+                        if val:
+                            ret.append(item[1:])
+                    elif item[1]=="-":
+                        ret.append(item[1:])
+                        ret.append(str(val))
+                    else:
+                        ret.append(str(val))
+            elif item:
+                ret.append(item)
+        logger.info('substitute_command', cmd=ret, name=self.config['name'])
         return ret
 
 

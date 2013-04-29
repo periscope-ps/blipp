@@ -13,7 +13,6 @@ class ProbeRunner:
 
     def run(self, conn):
         for nextt in self.scheduler:
-            logger.debug("run", nextt=str(nextt))
             if conn.poll():
                 if conn.recv() == "stop":
                     self._cleanup()

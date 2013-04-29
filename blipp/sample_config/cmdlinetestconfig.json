@@ -1,44 +1,25 @@
 {
     "status": "ON",
-    "serviceType": "http://some_schema_domain/blipp",
-    "name": "blipp",
-    "ttl": 100000,
-    "location":{"institution": "IUJaffee"},
-    "description": "jaffee, local blipp testing from hikerbear",
     "properties": {
 	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu",
-	    "probe_defaults":
-	    {"collection_schedule":"builtins.simple",
-	     "schedule_params":{"every": 20},
-	     "reporting_params":4,
-	     "collection_size":10000000,
-	     "collection_ttl":1500000,
-	     "ms_url":"http://dev.incntre.iu.edu"},
-	    "domain":"jaffeetestdomain",
-	    "hostname":"hikerbear",
+	    "unis_url":"http://localhost:8888",
+	    "probe_defaults": {
+		"collection_schedule":"builtins.simple",
+		"schedule_params": {"every": 5},
+		"reporting_params":4,
+		"ms_url":"http://localhost:8888"
+	    },
 	    "probes":{
-		"cmd_line_probe":{
-		    "collection_schedule":"simple",
-		    "schedule_params":{"every": 5},
-		    "targets":[
-			{"kwargs":{
-			    "command": "ping -c 1 www.google.com",
-		    	    "regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
-			    "eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
-					   "rtt": "ps:tools:blipp:linux:net:ping:rtt"}}},
-			{"schedule_params":{"every":60},
-			 "reporting_params":1,
-			 "kwargs":{
-			     "command": "iperf -c localhost -t 5 -y c",
-			     "regex": ",(?P<bandwidth>\\d+)$",
-			     "eventTypes": {"bandwidth": "ps:tools:blipp:linux:net:iperf:bandwidth"}}}
-		    ]
+		"ping1":{
+		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
+		    "address": "www.google.com"
+		},
+		"iperf1": {
+		    "schedule_params": {"every": 30},
+		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/iperf",
+		    "--client": "localhost"
 		}
 	    }
 	}
-    },
-    "summary": {
-	"metadata": []
     }
 }
