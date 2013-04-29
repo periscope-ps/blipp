@@ -11,7 +11,7 @@ class Probe:
     def __init__(self, config={}):
         self.config = config
         self.command = self._substitute_command(str(config.get("command")), self.config)
-        self.data_regex = re.compile(str(config["regex"]))
+        self.data_regex = re.compile(str(config["regex"]), flags=re.S|re.M)
         self.EVENT_TYPES = config["eventTypes"]
 
     def get_data(self):

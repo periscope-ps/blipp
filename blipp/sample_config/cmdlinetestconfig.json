@@ -18,6 +18,12 @@
 		    "schedule_params": {"every": 30},
 		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/iperf",
 		    "--client": "localhost"
+		},
+		"owping1": {
+		    "schedule_params": {"every": 30},
+		    "reporting_params": 1,
+		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/owping",
+		    "testpeer": "localhost"
 		}
 	    }
 	}
