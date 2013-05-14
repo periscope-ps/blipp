@@ -25,7 +25,11 @@ class ProbeRunner:
         data = self.probe.get_data()
         ts = time.time()
         if data:
-            self.collector.insert(self._normalize(data), ts)
+            if isinstance(data, list):
+                for dat in data:
+                    self.collector.insert(self._normalize(data), ts)
+            else:
+                self.collector.insert(self._normalize(data), ts)
 
     def _normalize(self, data):
         if isinstance(data.itervalues().next(), dict):

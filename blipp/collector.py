@@ -23,6 +23,9 @@ class Collector:
     def insert(self, data, ts):
         mids = self.mids
         for subject, met_val in data.iteritems():
+            if "ts" in met_val:
+                ts = met_val["ts"]
+                del met_val["ts"]
             for metric, value in met_val.iteritems():
                 if not metric in mids.get(subject, {}):
                     r = self.unis.post_metadata(subject, metric, self.config["measurement"])
