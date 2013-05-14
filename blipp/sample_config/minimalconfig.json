@@ -1,29 +1,16 @@
 {
     "properties": {
 	"configurations": {
-	    "unis_url": "http://localhost:8888",
+	    "unis_url": "$$$UNIS",
 	    "probe_defaults": {
-		"ms_url": "http://localhost:8888",
-		"collection_schedule": "builtins.simple",
-		"schedule_params": {"every": 5},
-		"reporting_params": 5
+		"ms_url": "$$$MS",
 	    },
 	    "probes":{
-		"cpu_probe1": {
-		    "probe_module": "cpu"
-		},
-		"ping_schema_probe": {
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130419/ping",
-		    "address": "www.google.com",
+		"adaptive_probe": {
+		    "probe_module": "dummy",
 		    "collection_schedule": "adaptive.simple_avoid",
-		    "schedule_params": {"every":10, "duration":1},
+		    "schedule_params": {"every":300, "duration":10},
 		    "resources":[
-			{
-			    "ref": "a",
-			    "usage": {
-				"bandwidth": 20
-			    }
-			}
 		    ]
 		}
 	    }
