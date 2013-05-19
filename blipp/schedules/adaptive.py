@@ -14,12 +14,19 @@ def simple_avoid(config=None, **kwargs):
         duration = config["schedule_params"]["duration"]
         unis = blipp.unis_client.UNISInstance(config)
         num_to_schedule = 100
-        measurement = unis.get(config["measurement"])
+        measurement = unis.get("/measurements?configuration.name=" +
+                               config["name"] +
+                               "&service=" +
+                               config["serviceRef"])[0]
 
         # Wait until resources have been added
         while "resources" not in measurement["configuration"]:
             time.sleep(every/2)
-            measurement = unis.get(config["measurement"])
+            measurement = unis.get("/measurements?configuration.name=" +
+                               config["name"] +
+                               "&service=" +
+                               config["serviceRef"])[0]
+
 
         # Get all measurements with resource conflicts
         conflicting_measurements = get_conflicting_measurements(unis, measurement)
@@ -67,12 +74,20 @@ def polite_avoid(config=None, **kwargs):
         duration = config["schedule_params"]["duration"]
         unis = blipp.unis_client.UNISInstance(config)
         num_to_schedule = 100
-        measurement = unis.get(config["measurement"])
+        measurement = unis.get("/measurements?configuration.name=" +
+                            config["name"] +
+                            "&service=" +
+                            config["serviceRef"])[0]
+
 
         # Wait until resources have been added
         while "resources" not in measurement["configuration"]:
             time.sleep(every/2)
-            measurement = unis.get(config["measurement"])
+            measurement = unis.get("/measurements?configuration.name=" +
+                               config["name"] +
+                               "&service=" +
+                               config["serviceRef"])[0]
+
 
         # Get all measurements with resource conflicts
         conflicting_measurements = get_conflicting_measurements(unis, measurement)

@@ -28,7 +28,7 @@ class Collector:
                 del met_val["ts"]
             for metric, value in met_val.iteritems():
                 if not metric in mids.get(subject, {}):
-                    r = self.unis.post_metadata(subject, metric, self.config["measurement"])
+                    r = self.unis.post_metadata(subject, metric, self.measurement)
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
                 self._insert_datum(mids[subject][metric], ts, value)
@@ -60,7 +60,7 @@ class Collector:
         measurement["configuration"] = self.config
         measurement["eventTypes"] = eventTypes
         r = self.unis.post("/measurements", measurement)
-        self.config["measurement"] = r["selfRef"]
+        self.measurement = r["selfRef"]
 
 
     def _clear_data(self):

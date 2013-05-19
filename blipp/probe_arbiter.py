@@ -4,6 +4,7 @@ from probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
 from copy import copy
 from config_server import ConfigServer
+import pprint
 
 logger = settings.get_logger('probe_arbiter')
 PROBE_GRACE_PERIOD = 10
@@ -25,14 +26,20 @@ class Arbiter():
         our_pc_list = self.proc_to_config.values()
         for pc in new_pc_list:
             if not pc in our_pc_list:
+                if settings.DEBUG:
+                    self._print_pc_diff(pc, our_pc_list)
                 self._start_new_probe(pc)
 
         for proc_conn, pc in self.proc_to_config.iteritems():
             if not pc in new_pc_list:
+                if settings.DEBUG:
+                    self._print_pc_diff(pc, new_pc_list)
                 self._stop_probe(proc_conn)
         return time.time()
 
     def _start_new_probe(self, pc):
+        logger.info("_start_new_probe", name=pc["name"])
+        logger.debug("_start_new_probe", config=pprint.pformat(pc))
         pr = ProbeRunner(pc)
         parent_conn, child_conn = Pipe()
         probe_proc = Process(target = pr.run, args = (child_conn,))
@@ -40,6 +47,8 @@ class Arbiter():
         self.proc_to_config[(probe_proc, parent_conn)] = pc
 
     def _stop_probe(self, proc_conn_tuple):
+        logger.info('_stop_probe',
+                    msg="sending stop to " + self.proc_to_config[proc_conn_tuple]["name"])
         proc_conn_tuple[1].send("stop")
         self.stopped_procs[proc_conn_tuple] = time.time()
 
@@ -66,6 +75,20 @@ class Arbiter():
                 proc.join()
                 logger.warn('_check_procs', msg="a probe has exited", exitcode=proc.exitcode)
                 self.proc_to_config.pop((proc, conn))
+
+    def _print_pc_diff(self, pc, new_pc_list):
+        for npc in new_pc_list:
+            if npc["name"] == pc["name"]:
+                for key in npc.keys():
+                    if key in pc.keys():
+                        if not pc[key] == npc[key]:
+                            logger.debug("reload_all", msg=key + " newval:" + npc[key] + " oldval:" + pc[key])
+                    else:
+                        logger.debug("reload_all", msg="new key/val: " + key + ": " + npc[key])
+                for key in pc.keys():
+                    if key not in npc.keys():
+                        logger.debug("reload_all", msg="deleted key/val: " + key + " :" + pc[key])
+
 
 
 def main(config):

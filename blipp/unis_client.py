@@ -62,9 +62,9 @@ class UNISInstance:
         if "$schema" not in post_dict:
             post_dict.update({"$schema":settings.SCHEMAS['ports']})
         if "urn" not in post_dict:
-            post_dict.update({"urn":settings.URN_STRING + "port=" + \
+            post_dict.update({"urn":settings.HOST_URN + "port=" + \
                               post_dict.get("name", "")})
-        if "location" not in post_dict:
+        if "location" not in post_dict and "location" in self.config:
             post_dict.update({"location": self.config["location"]})
         port_post = self.gc.do_req("post", "/ports", data=post_dict)
         # Update the node to have these ports as well

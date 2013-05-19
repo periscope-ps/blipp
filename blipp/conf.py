@@ -24,8 +24,8 @@ class ServiceConfigure(object):
             "properties": {
                 "configurations": {
                     "unis_url": unis_url,
-                    "node_id": node_id,
                     "config_file": file_loc}}}
+        self.node_id = node_id
         delete_nones(self.cmd_cfg)
         self.config = deepcopy(settings.STANDALONE_DEFAULTS)
         merge_dicts(self.config, self.cmd_cfg)
@@ -43,9 +43,9 @@ class ServiceConfigure(object):
     def _setup_node(self):
         config = self.config
         logger.debug('_setup_node', config=pprint.pformat(config))
-        hostname = config["properties"]["configurations"].get("hostname", None)
-        urn = config["properties"]["configurations"].get("host_urn", None)
-        node_id = config["properties"]["configurations"].get("node_id", None)
+        hostname = settings.HOSTNAME
+        urn = settings.HOST_URN
+        node_id = self.node_id
         if node_id:
             r = self.unis.get("/nodes/" + str(node_id))
             if not r:
@@ -63,8 +63,8 @@ class ServiceConfigure(object):
                         "$schema": settings.SCHEMAS["nodes"],
                         "name": hostname,
                         "urn": urn})
+            self.node_id = r["id"]
 
-        config["properties"]["configurations"]["node_id"] = r["id"]
         config["runningOn"] = {
             "href": r["selfRef"],
             "rel": "full"}

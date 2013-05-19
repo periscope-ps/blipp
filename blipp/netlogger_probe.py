@@ -6,6 +6,10 @@ import re
 class Probe:
     def __init__(self, config={}):
         self.logfile = open(config["logfile"])
+        self.app_name = config.get("appname", "")
+        self.et_string = "ps:tools:blipp:netlogger:"
+        if self.app_name:
+            self.et_string += self.app_name + ":"
 
     def get_data(self):
         lines = self.logfile.read()
@@ -20,7 +24,7 @@ class Probe:
                 else:
                     val = self._numberize(pair[2])
                 if val:
-                    aret[pair[0]] = val
+                    aret[self.et_string + pair[0]] = val
             ret.append(aret)
         return ret
 

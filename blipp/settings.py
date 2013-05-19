@@ -32,20 +32,17 @@ try:
     DOMAIN = HOSTNAME.split('.', 1)[1]
 except Exception:
     DOMAIN = HOSTNAME
-URN_STRING = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
+HOST_URN = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
 
 STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],
     "status": "ON",
-    "name": "blipp", #TODO remove this - not required
     "serviceType": "http://some_schema_domain/blipp",
     "properties": {
         "configurations": {
             "unis_poll_interval":300,
             "use_ssl": "",
 	    "ssl_cafile": "",
-            "hostname": HOSTNAME,
-            "host_urn": URN_STRING,
             "probe_defaults": {
                 "collection_size": 10000000, # ~10 megabytes
                 "collection_ttl": 1500000, # ~17 days
@@ -120,4 +117,3 @@ def get_logger(namespace=NETLOGGER_NAMESPACE):
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
         config_logger()
     return nllog.get_logger(namespace)
-

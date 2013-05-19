@@ -189,7 +189,7 @@ class Probe:
         post_dict['capacity'] = capacity
 
             # hack in a 'nodeRef' so we can find port from rspec
-        post_dict['nodeRef'] = settings.URN_STRING[:-1]
+        post_dict['nodeRef'] = settings.HOST_URN[:-1]
         return post_dict
 
     def get_interfaces_in_unis(self):
@@ -211,4 +211,3 @@ class Probe:
             logger.warn('_find_or_post_port',
                         msg="post seems to have failed... subject for %s will be wrong" % local_port['name'])
             return "failed"
-

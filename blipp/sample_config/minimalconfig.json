@@ -1,17 +1,26 @@
 {
     "properties": {
 	"configurations": {
-	    "unis_url": "$$$UNIS",
+	    "unis_url": "http://localhost:8885",
+	    "unis_poll_interval": 18,
 	    "probe_defaults": {
-		"ms_url": "$$$MS",
+		"ms_url": "http://localhost:8885",
+		"collection_schedule": "builtins.simple",
+		"schedule_params": {"every": 10}
 	    },
 	    "probes":{
-		"adaptive_probe": {
-		    "probe_module": "dummy",
-		    "collection_schedule": "adaptive.simple_avoid",
-		    "schedule_params": {"every":300, "duration":10},
-		    "resources":[
-		    ]
+		"cpu_probe": {
+		    "probe_module": "cpu"
+		},
+		"net_probe": {
+		    "probe_module": "net"
+		},
+		"mem_probe": {
+		    "probe_module": "mem"
+		},
+		"ping_schema_probe": {
+		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
+		    "address": "iu.edu"
 		}
 	    }
 	}
