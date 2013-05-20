@@ -7,13 +7,16 @@ import pytz
 import time
 import re
 from pprint import pprint
+import settings
+logger = settings.get_logger('adaptive')
 
 def simple_avoid(config=None, **kwargs):
     while True:
+        start_scheduler = time.time()
         every = config["schedule_params"]["every"]
         duration = config["schedule_params"]["duration"]
         unis = blipp.unis_client.UNISInstance(config)
-        num_to_schedule = 100
+        num_to_schedule = config["schedule_params"].get('num_to_schedule', 10)
         measurement = unis.get("/measurements?configuration.name=" +
                                config["name"] +
                                "&service=" +
@@ -29,7 +32,8 @@ def simple_avoid(config=None, **kwargs):
 
 
         # Get all measurements with resource conflicts
-        conflicting_measurements = get_conflicting_measurements(unis, measurement)
+        conflicting_measurements = get_conflicting_measurements(unis,
+                                                                measurement)
 
         # Get list of conflicting time objects sorted by start time
         conflicting_times = get_conflicting_times(conflicting_measurements)
@@ -41,10 +45,12 @@ def simple_avoid(config=None, **kwargs):
         now = pytz.utc.localize(now)
 
         # build schedule, avoiding all conflicting time slots
+        start_building = time.time()
         schedule = []
         for t in conflicting_times:
             while (t["start"] - now) > td_duration:
-                schedule.append({"start":datetime_to_dtstring(now), "end":datetime_to_dtstring(now+td_duration)})
+                schedule.append({"start":datetime_to_dtstring(now),
+                                 "end":datetime_to_dtstring(now+td_duration)})
                 now += td_every
                 if len(schedule) >= num_to_schedule:
                     break
@@ -56,15 +62,20 @@ def simple_avoid(config=None, **kwargs):
             e = datetime_to_dtstring(now+td_duration)
             schedule.append({"start":s, "end":e})
             now += td_every
-
+        logger.debug('simple_avoid', msg="finish building schedule",
+                     duration=time.time()-start_building)
         # update schedule in UNIS
         measurement["scheduled_times"] = schedule
         del measurement["ts"]
         unis.put("/measurements/" + measurement["id"], data=measurement)
 
+        logger.debug("simple_avoid", msg="finish generation",
+                     duration=time.time()-start_scheduler)
+
         # generate finishing times
         for t in schedule:
-            yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+            yield calendar.timegm(
+                dateutil.parser.parse(t["start"]).utctimetuple())
         # when the schedule is exhausted, loop back to the top and recalculate
 
 def polite_avoid(config=None, **kwargs):
@@ -90,14 +101,16 @@ def polite_avoid(config=None, **kwargs):
 
 
         # Get all measurements with resource conflicts
-        conflicting_measurements = get_conflicting_measurements(unis, measurement)
+        conflicting_measurements = get_conflicting_measurements(unis,
+                                                                measurement)
         # Get list of conflicting time objects sorted by start time
         conflicting_times = get_conflicting_times(conflicting_measurements)
 
         now = datetime.datetime.utcnow()
         now = pytz.utc.localize(now)
 
-        schedule = build_basic_schedule(now, every, duration, num_to_schedule, conflicting_times)
+        schedule = build_basic_schedule(now, every, duration,
+                                        num_to_schedule, conflicting_times)
 
         # detect congestion and drop a time if we're doing fairly well
         full_schedule = conflicting_times + schedule
@@ -119,9 +132,11 @@ def polite_avoid(config=None, **kwargs):
 
         # generate finishing times
         for t in schedule:
-            yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+            yield calendar.timegm(
+                dateutil.parser.parse(t["start"]).utctimetuple())
 
-def build_basic_schedule(start, every, duration, num_to_schedule, conflicting_times):
+def build_basic_schedule(start, every,
+                         duration, num_to_schedule, conflicting_times):
     # get duration, every and current time in appropriate formats
     td_duration = datetime.timedelta(seconds=duration)
     td_every = datetime.timedelta(seconds=every)
@@ -174,8 +189,10 @@ def drop_at_random(schedule):
 def get_conflicting_measurements(unis, measurement):
     conflicting_measurements = []
     for resource in measurement["configuration"]["resources"]:
-        meas_for_resource = unis.get("/measurements?resources.ref=" + resource["ref"])
-        filter(lambda m: False if m["id"] == measurement["id"] else True, meas_for_resource)
+        meas_for_resource = unis.get(
+            "/measurements?resources.ref=" + resource["ref"])
+        filter(lambda m: False if m["id"] == measurement["id"] else True,
+               meas_for_resource)
         conflicting_measurements.extend(meas_for_resource)
     return conflicting_measurements
 

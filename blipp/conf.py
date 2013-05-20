@@ -35,6 +35,9 @@ class ServiceConfigure(object):
             self.config["properties"]["configurations"].get("config_file", None))
         merge_dicts(self.config, file_cfg)
         merge_dicts(self.config, self.cmd_cfg)
+        if not self.node_id:
+            self.node_id = self.config["properties"]["configurations"].get(
+                "node_id", None)
         if self.config["properties"]["configurations"].get("unis_url"):
             self.unis = UNISInstance(self.config)
             self._setup_node()
