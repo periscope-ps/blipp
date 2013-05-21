@@ -14,8 +14,8 @@ $ sudo apt-get install python-setuptools python-dev
 #+END_SRC
 
 Now run the setup script in top level of the repository. You can use
---prefix or --install-dir to install it somewhere other than the
-default location. The default generally requires using sudo.
+=--prefix= or =--install-dir= to install it somewhere other than the
+default location. The default usually requires using sudo.
 #+BEGIN_SRC
 $ python setup.py install
 #+END_SRC
@@ -27,22 +27,22 @@ then re-running the setup script as above.
 $ sudo apt-get install python-zmq
 #+END_SRC
 
-When complete, you should have an executable called blippd and puts it
-on your path. Running =blippd --help= should give a run down of the
-arguments it takes.
+When complete, you should have an executable called blippd on your
+path. Running =blippd --help= should give a run down of the arguments
+it takes.
 
 For development purposes, you may want to run blipp directly from the
 repository (with any changes you've made to the code). To do this, run
 #+BEGIN_SRC
 $ python blipp/start_blipp.py --help
 #+END_SRC
-With whatever options you like.
+...with whatever options you like.
 
 * Configuration
 Configuration happens in a json file, there are some examples in the
 =blipp/sample_config= subdirectory. Here is a fairly short example
 with some comments (which need to be removed before using).
-#+BEGIN_SRC
+#+BEGIN_SRC javascript
 {
     "properties": {
 	"configurations": {
