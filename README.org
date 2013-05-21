@@ -1,0 +1,142 @@
+* BLiPP - A scheduling framework for monitoring
+Primary Author: Matthew Jaffee
+
+BLiPP is a part of the Periscope measurement framework which also
+includes UNIS and the MS. You can find more information about all
+these components [[https://github.com/GENI-GEMINI/GEMINI/wiki][here]].
+
+
+* Installation Instructions
+** For Debian, but should adapt to any linux flavor
+First, you'll need a few basic things
+```
+$ sudo apt-get install python-setuptools python-dev
+```
+
+Now run the setup script in top level of the repository. You can use
+--prefix or --install-dir to install it somewhere other than the
+default location. The default generally requires using sudo.
+```
+$ python setup.py install
+```
+
+You might run into some issue complaining about gcc or zmq or
+something; try installing python-zmq with your package manager and
+then re-running the setup script as above.
+```
+$ sudo apt-get install python-zmq
+```
+
+When complete, you should have an executable called blippd and puts it
+on your path. Running =blippd --help= should give a run down of the
+arguments it takes.
+
+For development purposes, you may want to run blipp directly from the
+repository (with any changes you've made to the code). To do this, run
+```
+$ python blipp/start_blipp.py --help
+```
+With whatever options you like.
+
+* Configuration
+Configuration happens in a json file, there are some examples in the
+=blipp/sample_config= subdirectory. Here is a fairly short example
+with some comments (which need to be removed before using).
+``` javascript
+{
+    "properties": {
+	"configurations": {
+	    "unis_url": "http://dev.incntre.iu.edu",
+	    "unis_poll_interval": 300, // poll UNIS every 300s for new configuration
+	    "probe_defaults": { // defaults which are used by every probe below unless overridden
+		"ms_url": "http://localhost:8885",
+		"collection_schedule": "builtins.simple", // Different scheduling methods under blipp/schedules
+		"schedule_params": {"every": 10} // parameters passed to the scheduling method (collect every 10 seconds)
+	    },
+	    "probes":{ // here is where you define the different types of data you want to collect
+		"some_name": { // give each probe a unique name
+		    "probe_module": "cpu" // BLiPP will load the file cpu.py for this probe
+		},
+		"net_probe_name": {
+		    "probe_module": "net" // net, cpu, and mem don't need much configuration
+		},
+		"another_probe_name": {
+		    "probe_module": "mem"
+		},
+		"ping_schema_probe": { // this probe loads it's default configuration from a schema
+		    // in this case, it grabs the ping schema which defines the probe module to use,
+		    // and a lot of default configuration, the only required field to fill out is the
+		    // address to ping which in this case is "iu.edu"
+		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
+		    "address": "iu.edu"
+		}
+	    }
+	}
+    }
+}
+```
+
+You'll need a UNIS and MS instance for BLiPP to be very
+useful. Currently, development instances are running at
+http://dev.incntre.iu.edu - these could be cleared at any time, so
+don't use them for anything critical!
+
+You can get UNIS and the MS yourself at
+https://github.com/periscope-ps/unis (they are the same codebase).
+
+More information on all three of these components can be found at
+https://github.com/GENI-GEMINI/GEMINI/wiki
+
+
+* OPTIONAL
+If you want capacity of interfaces to be properly reported, you need
+to install my version of python-ethtool which just adds a get_speed
+function so that the capacity of each interface can be reported. I
+added a dummy ethtool.py that just returns -42 in case its too
+annoying to get working for testing purposes. For now I'm just going
+to include the code for the function and you can insert it into the
+python-ethtool code yourself and reinstall it.
+
+Directions:
+python-ethtool
+needed to sudo apt-get install libnl-dev
+http://dsommers.fedorapeople.org/python-ethtool/python-ethtool-0.7.tar.bz2
+http://dsommers.fedorapeople.org/python-ethtool/python-ethtool-libnl-1.0-support.patch
+from the python-ethtool dir: $ patch -p1 < ../python-ethtool-libnl-1.0-support.patch
+*** add in get_speed function to ethtool.c
+#+BEGIN_SRC
+static PyObject *get_speed(PyObject *self __unused, PyObject *args)
+{
+	struct ifreq ifr;
+	int fd, err;
+	struct ethtool_cmd edata;
+	char *devname;
+	if (!PyArg_ParseTuple(args, "s", &devname))
+		return NULL;
+
+	/* Setup our control structures. */
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(&ifr.ifr_name[0], devname, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = 0;
+	ifr.ifr_data = &edata;
+	edata.cmd = ETHTOOL_GSET;
+
+
+	/* Open control socket. */
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) {
+          PyErr_SetString(PyExc_OSError, strerror(errno));
+          return NULL;
+	}
+
+	/* Get current settings. */
+	err = ioctl(fd, SIOCETHTOOL, &ifr);
+        if (err < 0) {
+          PyErr_SetString(PyExc_OSError, strerror(errno));
+          return NULL;
+        }
+
+	close(fd);
+        return PyInt_FromLong((long) edata.speed);
+}
+#+END_SRC
