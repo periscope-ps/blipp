@@ -10,7 +10,7 @@ these components [[https://github.com/GENI-GEMINI/GEMINI/wiki][here]].
 ** For Debian, but should adapt to any linux flavor
 First, you'll need a few basic things
 #+BEGIN_SRC
-$ sudo apt-get install python-setuptools python-dev
+$ sudo apt-get install python-setuptools python-dev python-pip
 #+END_SRC
 
 Now run the setup script in top level of the repository. You can use
@@ -25,6 +25,12 @@ something; try installing python-zmq with your package manager and
 then re-running the setup script as above.
 #+BEGIN_SRC
 $ sudo apt-get install python-zmq
+#+END_SRC
+
+If there are any other complaints about missing components such as
+=validictory=, try
+#+BEGIN_SRC
+$ pip install validictory
 #+END_SRC
 
 When complete, you should have an executable called blippd on your
