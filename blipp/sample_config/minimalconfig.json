@@ -2,16 +2,14 @@
     "properties": {
 	"configurations": {
 	    "unis_url": "http://localhost:8888",
-	    "unis_poll_interval": 300,
 	    "probe_defaults": {
 		"ms_url": "http://localhost:8888",
 		"collection_schedule": "builtins.simple",
 		"schedule_params": {"every": 10}
 	    },
 	    "probes":{
-		"ping_schema_probe": {
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
-		    "address": "iu.edu"
+		"minimal_cpu_probe": {
+		    "probe_module": "cpu"
 		}
 	    }
 	}

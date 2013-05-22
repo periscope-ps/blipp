@@ -6,8 +6,8 @@
 // may not require all fields that the schema does
 {
     "status": "ON", // blipp check's for OFF... anything else is ON
-    "id": 12345678990, // UNIS adds, or blipp will use for lookup if not provided at cmd line
-    "selfRef": "https://example.com/services/1234567890", // blipp doesn't use this... unis adds it
+    "id": 12345678990, // UNIS adds this
+    "selfRef": "https://dev.incntre.iu.edu/services/a733g252367890", // blipp doesn't use this... unis adds it
     "accessPoint": "", // not relevant to blipp (yet?)
     "serviceType": "http://some_schema_domain/blipp", // required to post - blipp puts in automatically
     "name": "blipp", // blipp uses this to query unis if no service_id is provided
@@ -37,21 +37,13 @@
 		                                         // builtins for method "simple"
 		"schedule_params":{"every": 10},         // keyword args passed to schedule method
 		                                         // in this case, collect every 10 s
-		"reporting_schedule": "simple|num_measurements...etc", // not implemented yet
 		"reporting_params": 10, // send data every 10 measurements collected
-		"metadata_cache_dir":"/usr/local/etc/blippcache", // not yet implemented, name may change
 		"collection_size":10000000, // collection size (bytes) to be created in MS
 		"collection_ttl":1500000, // collection ttl (seconds) for collection in MS
 		"ms_url":"http://dev.incntre.iu.edu" // MS can be specified per probe
 	    },
 	    // blipp will look for ms_instance and auth_uuid in node.info
 	    "gemini_node_info":"/usr/local/etc/node.info",
-	    // used by net probe - set dynamically in defaults
-	    // based on socket.gethostname() by settings
-	    "host_urn": "urn:ogf:network:domain=foo:node=bar",
-	    // used for queries while setting up configuration - set dynamically in defaults
-	    "hostname": "bar",
-	    "location":{"institution": "GENI"}, // used to post node to unis if necessary
 	    "probes":{ // the keys under probes are the filenames of probes without the ".py"
 		       // their values are dictionaries which contain default config for all instances
 		       // of that probe. The different instances are in a list of dictionaries
@@ -67,11 +59,10 @@
 		    "reporting_params":10,
 		    "collection_size":3000000,
 		    "collection_ttl":30000,
-		    "kwargs":{"address":"129.62.33.22", // the kwargs dict is passed directly to the probe
-			                                  // so each probe can have specific parameters
-			      "timeout":3,
-			      "packet_size":56,
-			      "byte_pattern":"0xAAAA"}
+		    "address":"129.62.33.22",
+		    "timeout":3,
+		    "packet_size":56,
+		    "byte_pattern":"0xAAAA"
 		},
 		"ping2":{
 		    "probe_module": "ping",
@@ -82,30 +73,24 @@
 		    "reporting_params":10,
 		    "collection_size":3000000,
 		    "collection_ttl":1200000,
-		    "kwargs": {"address":"bing.com", // the kwargs dict is passed directly to the probe
-			                                  // so each probe can have specific parameters
-			      "timeout":2,
-			      "packet_size":56,
-			      "byte_pattern":"0xAAAA"
-			      }
+		    "address":"bing.com",
+		    "timeout":2,
+		    "packet_size":56,
+		    "byte_pattern":"0xAAAA"
 		},
 		"cpu1":{
 		    "probe_module": "cpu",
 		    "collection_schedule":"simple",
 		    "schedule_params": {"every": 1},
-		    "kwargs":{"proc_dir":"/proc"}
-		    // could theoretically have list of targets with different schedules or something,
-		    // but it'd be a bit silly for the cpu probe
 		},
 		"net1":{
 		    "probe_module": "net",
 		    "status":"off", // not used yet
-		    "kwargs":{}
 		},
 		"ping3":{ // a more generic way to do ping... or anything else
 		    "probe_module": "cmd_line_probe",
 		    "command": "ping -c 1 $address", // some command to be executed
-		    // a regex to extract data from the output of command
+		    // a Python regex to extract data from the output of command
 		    "regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
 		    // map regex captures to event Types
 		    "eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
@@ -116,7 +101,7 @@
 		    // another way to specify measurements - the
 		    // schema at the url provided has default values
 		    // including what probe_module to use, and other
-		    // configuration options specifying any of them
+		    // configuration options. Specifying any of them
 		    // can override the default value
 		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130416/ping",
 		    "address": "iu.edu"

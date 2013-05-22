@@ -1,29 +1,19 @@
 {
-    "status": "ON",
     "properties": {
 	"configurations": {
-	    "unis_url":"http://localhost:8888",
+	    "unis_url": "http://localhost:8888",
 	    "probe_defaults": {
-		"collection_schedule":"builtins.simple",
-		"schedule_params": {"every": 5},
-		"reporting_params":4,
-		"ms_url":"http://localhost:8888"
+		"ms_url": "http://localhost:8888",
+		"collection_schedule": "builtins.simple",
+		"schedule_params": {"every": 10}
 	    },
 	    "probes":{
-		"ping1":{
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
-		    "address": "www.google.com"
-		},
-		"iperf1": {
-		    "schedule_params": {"every": 30},
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/iperf",
-		    "--client": "localhost"
-		},
-		"owping1": {
-		    "schedule_params": {"every": 30},
-		    "reporting_params": 1,
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/owping",
-		    "testpeer": "localhost"
+		"test_cmd_line_probe": {
+		    "probe_module": "cmd_line_probe",
+		    "command": "ping -c 1 www.iu.edu",
+		    "regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+		    "eventTypes": {"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+				   "rtt": "ps:tools:blipp:linux:net:ping:rtt"}
 		}
 	    }
 	}
