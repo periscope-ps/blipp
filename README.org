@@ -44,6 +44,11 @@ $ python blipp/start_blipp.py --help
 #+END_SRC
 ...with whatever options you like.
 
+Usually you'll probably want to point it at a configuration file like this:
+#+BEGIN_SRC
+$ python blipp/start_blipp.py -c /path/to/config.json
+#+END_SRC
+
 * Configuration
 Configuration happens in a json file, there are some examples in the
 =blipp/sample_config= subdirectory. Here is a fairly short example
