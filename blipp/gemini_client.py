@@ -22,7 +22,7 @@ class GeminiClient:
                 self._add_gemini_auth(data, loc)
         if config.get("use_ssl", None):
             r = http.make_request(rtype, url, headers, json.dumps(data),
-                                  config['ssl_cert'], config['ssl_key'],
+                                  config.get('ssl_cert', None), config.get('ssl_key', None),
                                   config['ssl_cafile'])
         else:
             r = http.make_request(rtype, url, headers, json.dumps(data))
