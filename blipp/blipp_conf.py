@@ -18,9 +18,14 @@ class BlippConfigure(ServiceConfigure):
                                              node_id, service_name, query_service)
 
     def expand_probe_config(self):
+        '''
+        Take's BLiPP's configuration, and creates a separate config
+        dictionary for each probe, merging in defaults such as the
+        scheduler if they are not defined within the probe.
+        '''
         probes = self.config["properties"]["configurations"]["probes"]
         expanded_probes = []
-        defaults = self.make_defaults()
+        defaults = self._make_defaults()
         for name, pconf in probes.items():
             probe = {}
             probe["name"] = name
@@ -37,7 +42,7 @@ class BlippConfigure(ServiceConfigure):
 
         return expanded_probes
 
-    def make_defaults(self):
+    def _make_defaults(self):
         defaults = {}
         defaults["runningOn"] = self.config["runningOn"]
         if "selfRef" in self.config:

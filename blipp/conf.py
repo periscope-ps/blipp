@@ -10,6 +10,13 @@ logger = settings.get_logger('conf')
 
 
 class ServiceConfigure(object):
+    '''
+    ServiceConfigure is meant to be a generic class for any service
+    which registers itself to, and gets configuration from UNIS. It
+    was originally developed for BLiPP, but BLiPP specific features
+    should be in the BlippConfigure class which extends
+    ServiceConfigure.
+    '''
     def __init__(self, file_loc=None, unis_url=None, service_id=None,
                  node_id=None, service_name=None, query_service=True):
         self.query_service = query_service
@@ -130,6 +137,10 @@ class ServiceConfigure(object):
             return default
 
     def __getitem__(self, key):
+        '''
+        This allows an object which is an instance of this class to behave
+        like a dictionary when queried with [] syntax
+        '''
         return self.config[key]
 
 

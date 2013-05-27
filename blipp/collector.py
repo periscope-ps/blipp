@@ -8,7 +8,12 @@ from utils import blipp_import
 class Collector:
     """Collects reported measurements and aggregates them for
     sending to MS at appropriate intervals.
+
+    Also does a bunch of other stuff which should probably be handled by separate classes.
+    Creates all the metadata objects, and the measurement object in UNIS for all data inserted.
+    Depends directly on the MS and UNIS... output could be far more modular.
     """
+
     def __init__(self, config):
         self.config = config
         self.collections_created = False
@@ -21,6 +26,9 @@ class Collector:
         self._post_measurement()
 
     def insert(self, data, ts):
+        '''
+        Called (by probe_runner) to insert new data into this collector object.
+        '''
         mids = self.mids
         for subject, met_val in data.iteritems():
             if "ts" in met_val:
@@ -44,6 +52,9 @@ class Collector:
         self.mid_to_data[mid].append(item)
 
     def report(self):
+        '''
+        Send all data collected so far, then clear stored data.
+        '''
         data = [ dict({"mid":mid, "data":data})
                  for mid, data in self.mid_to_data.iteritems() ]
         self.ms.post_data(data)
