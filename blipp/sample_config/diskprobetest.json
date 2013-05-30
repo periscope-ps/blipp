@@ -1,0 +1,27 @@
+{
+    "properties": {
+	"configurations": {
+	    "unis_url": "http://localhost:8888",
+	    "unis_poll_interval": 300,
+	    "probe_defaults": {
+		"ms_url": "http://localhost:8888",
+		"collection_schedule": "builtins.simple",
+		"schedule_params": {"every": 10}
+	    },
+	    "probes":{
+  		"test_cmd_line_probe": {
+      		"probe_module": "cmd_line_probe",
+      		"command": "ping -c 1 espn.go.com",
+      		"regex": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
+      		"eventTypes": {
+          		"ttl": "ps:tools:blipp:linux:net:ping:ttl",
+          		"rtt": "ps:tools:blipp:linux:net:ping:rtt"
+          	}
+      	},
+      	"test_disk_probe": {
+      		"probe_module": "disk"
+      	}
+  		}
+  }
+  }
+  }
