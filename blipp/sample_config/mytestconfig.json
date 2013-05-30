@@ -18,13 +18,13 @@
 		"iperf_schema": {
 		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/iperf",
 		    "--client": "someone_running_iperf_server.com"
-		}
+		},
 		"cpu":{
 		    "probe_module": "cpu",
 		    "collection_schedule":"simple",
 		    "schedule_params": {
 			"every": 5
-		    },
+		    }
 		},
 		"net":{
 		    "probe_module": "net"
