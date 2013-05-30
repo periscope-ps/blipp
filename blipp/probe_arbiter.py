@@ -112,12 +112,16 @@ class Arbiter():
                 for key in npc.keys():
                     if key in pc.keys():
                         if not pc[key] == npc[key]:
-                            logger.debug("reload_all", msg=key + " newval:" + npc[key] + " oldval:" + pc[key])
+                            logger.debug("reload_all",
+                                         msg=key +
+                                         " newval:" +
+                                         str(npc[key]) +
+                                         " oldval:" + str(pc[key]))
                     else:
-                        logger.debug("reload_all", msg="new key/val: " + key + ": " + npc[key])
+                        logger.debug("reload_all", msg="new key/val: " + key + ": " + str(npc[key]))
                 for key in pc.keys():
                     if key not in npc.keys():
-                        logger.debug("reload_all", msg="deleted key/val: " + key + " :" + pc[key])
+                        logger.debug("reload_all", msg="deleted key/val: " + key + " :" + str(pc[key]))
 
 
 

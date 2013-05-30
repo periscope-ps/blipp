@@ -8,20 +8,20 @@ class CmdLineProbeTests(unittest2.TestCase):
     def test_init(self):
         # basically tests _substitute_command
         config = {
-            '$schema': 'http://unis.incntre.iu.edu/schema/blippmeasurements/20130416/ping#',
+            '$schema': 'http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping#',
             'address': 'iu.edu',
-            'command': 'ping -W $TIMEOUT -s $PACKET_SIZE -t $TTL -p $PATTERN -M $HINT -Q $TOS $EXTRAARGS $ADDRESS',
+            'command': 'ping -c 1 $-W $-s $-t $-p $-M $-Q $address',
             'eventTypes': {'rtt': 'ps:tools:blipp:linux:net:ping:rtt',
                            'ttl': 'ps:tools:blipp:linux:net:ping:ttl'},
-            'extraargs': '',
-            'hint': 'dont',
-            'packet_size': 56,
-            'pattern': '00',
-            'ttl': 60,
+            '-M': 'dont',
+            '-s': 56,
+            '-p': '00',
+            '-t': 60,
             'probe_module': 'cmd_line_probe',
+            'name': "my_test_ping_probe",
             'regex': 'ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ',
-            'timeout': 2,
-            'tos': '0'}
+            '-W': 2,
+            '-Q': '0'}
         cmd_probe = cmd_line_probe.Probe(config)
-        expected = shlex.split("ping -W 2 -s 56 -t 60 -p 00 -M dont -Q 0 iu.edu")
+        expected = shlex.split("ping -c 1 -W 2 -s 56 -t 60 -p 00 -M dont -Q 0 iu.edu")
         self.assertEqual(cmd_probe.command, expected)
