@@ -85,9 +85,4 @@ class Probe:
 
         return result
 
-#myProbe = Probe()
-#myProbe.get_data()
-#myProbe.__init__()
-#result = myProbe.get_data() #get the list of dict entries
-#entry = result['sda'] #get the entry for sda
-#print entry['ms_writing'] #print ms_writing
+
