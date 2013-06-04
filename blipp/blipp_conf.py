@@ -23,8 +23,12 @@ class BlippConfigure(ServiceConfigure):
         dictionary for each probe, merging in defaults such as the
         scheduler if they are not defined within the probe.
         '''
-        probes = self.config["properties"]["configurations"]["probes"]
         expanded_probes = []
+        try:
+            probes = self.config["properties"]["configurations"]["probes"]
+        except KeyError:
+            return expanded_probes
+
         defaults = self._make_defaults()
         for name, pconf in probes.items():
             probe = {}
