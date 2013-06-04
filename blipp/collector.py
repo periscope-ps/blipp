@@ -47,7 +47,7 @@ class Collector:
             self.num_collected = 0
 
     def _insert_datum(self, mid, ts, val):
-        item = dict({"ts": ts * 1000000,
+        item = dict({"ts": ts * 10e5,
                      "value":val})
         self.mid_to_data[mid].append(item)
 
@@ -55,9 +55,11 @@ class Collector:
         '''
         Send all data collected so far, then clear stored data.
         '''
-        data = [ dict({"mid":mid, "data":data})
-                 for mid, data in self.mid_to_data.iteritems() ]
-        self.ms.post_data(data)
+        post_data = []
+        for mid, data in self.mid_to_data.iteritems():
+            if len(data):
+                post_data.append({"mid":mid, "data":data})
+        self.ms.post_data(post_data)
         self._clear_data()
 
     def _post_measurement(self):
@@ -65,7 +67,12 @@ class Collector:
         if "EVENT_TYPES" in probe_mod.__dict__:
             eventTypes = probe_mod.EVENT_TYPES.values()
         else:
-            eventTypes = self.config["eventTypes"].values()
+            try:
+                eventTypes = self.config["eventTypes"].values()
+            except KeyError:
+                logger.warn("_post_measurement", msg="No eventTypes present")
+                eventTypes = []
+
         measurement = {}
         measurement["service"] = self.config["serviceRef"]
         measurement["configuration"] = self.config

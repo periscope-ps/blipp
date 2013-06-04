@@ -33,8 +33,8 @@ class ProbeRunner:
         ts = time.time()
         if data:
             if isinstance(data, list):
-                for dat in data:
-                    self.collector.insert(self._normalize(data), ts)
+                for d in data:
+                    self.collector.insert(self._normalize(d), ts)
             else:
                 self.collector.insert(self._normalize(data), ts)
 

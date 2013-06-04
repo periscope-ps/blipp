@@ -1,33 +1,44 @@
+import settings
 import shlex
 import dateutil.parser
 import calendar
 import re
 
+logger = settings.get_logger("netlogger_probe")
+
 class Probe:
     def __init__(self, config={}):
-        self.logfile = open(config["logfile"])
+        self.logfile = None
+        try:
+            self.logfile = open(config["logfile"])
+        except KeyError:
+            logger.warn("__init__", msg="Config does not specify logfile!")
+        except IOError:
+            logger.warn("__init___", msg="Could not open logfile: %s" % config["logfile"])
+
         self.app_name = config.get("appname", "")
         self.et_string = "ps:tools:blipp:netlogger:"
         if self.app_name:
             self.et_string += self.app_name + ":"
 
     def get_data(self):
-        lines = self.logfile.read()
-        ret = []
-        for line in lines:
-            line = shlex.split(line)
-            aret = {}
-            for pair in line:
-                pair = pair.partition("=")
-                if pair[0] == "ts":
-                    val = self.date_to_unix(pair[2])
-                else:
-                    val = self._numberize(pair[2])
-                if val:
-                    aret[self.et_string + pair[0]] = val
-            ret.append(aret)
-        return ret
-
+        if self.logfile:
+            ret = []
+            for line in self.logfile:
+                line = shlex.split(line)
+                for pair in line:
+                    pair = pair.partition("=")
+                    if pair[0] == "ts":
+                        ts = self.date_to_unix(pair[2])
+                    if pair[0] == "VAL":
+                        val = self._numberize(pair[2])
+                    if pair[0] == "event":
+                        event = self.et_string + pair[2]
+                    
+                ret.append({"ts": ts, event: val})
+            return ret
+        else:
+            logger.error("get_data", msg="No logfile available")
 
     def _numberize(self, astr):
         ret = None
@@ -49,9 +60,5 @@ class Probe:
         fraction = re.search("\.([0-9]{1,6})", datestr)
         if fraction:
             fraction = fraction.group(1)
-            while len(fraction) < 6:
-                fraction += "0"
-            fraction = int(fraction)
-        unix_seconds *= 1000000
-        unix_seconds += fraction
+            unix_seconds += float(fraction)/10e5
         return unix_seconds
