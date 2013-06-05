@@ -5,13 +5,13 @@
 	    "probe_defaults": {
 		"ms_url": "http://localhost:8888",
 		"collection_schedule": "builtins.simple",
-		"schedule_params": {"every": 5}
+		"schedule_params": {"every": 10}
 	    },
 	    "probes":{
 		"nl_probe": {
 		    "probe_module": "netlogger_probe",
 		    "logfile": "/tmp/nl.log",
-		    "reporting_params": 5
+		    "reporting_params": 10
 		}
 	    }
 	}

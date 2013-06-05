@@ -14,7 +14,7 @@ class Probe:
         except KeyError:
             logger.warn("__init__", msg="Config does not specify logfile!")
         except IOError:
-            logger.warn("__init___", msg="Could not open logfile: %s" % config["logfile"])
+            logger.warn("__init__", msg="Could not open logfile: %s" % config["logfile"])
 
         self.app_name = config.get("appname", "")
         self.et_string = "ps:tools:blipp:netlogger:"
@@ -24,6 +24,7 @@ class Probe:
     def get_data(self):
         if self.logfile:
             ret = []
+            self.logfile.seek(self.logfile.tell())
             for line in self.logfile:
                 line = shlex.split(line)
                 for pair in line:
