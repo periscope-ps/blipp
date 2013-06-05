@@ -47,10 +47,12 @@ STANDALONE_DEFAULTS = {
                 "collection_size": 10000000, # ~10 megabytes
                 "collection_ttl": 1500000, # ~17 days
                 "reporting_params": 1
-                }
+            },
+            "probes": {
             }
         }
     }
+}
 
 nconf = {}
 AUTH_UUID = None

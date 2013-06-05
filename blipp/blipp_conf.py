@@ -24,10 +24,7 @@ class BlippConfigure(ServiceConfigure):
         scheduler if they are not defined within the probe.
         '''
         expanded_probes = []
-        try:
-            probes = self.config["properties"]["configurations"]["probes"]
-        except KeyError:
-            return expanded_probes
+        probes = self.config["properties"]["configurations"]["probes"]
 
         defaults = self._make_defaults()
         for name, pconf in probes.items():
