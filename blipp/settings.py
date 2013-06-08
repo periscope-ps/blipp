@@ -86,7 +86,7 @@ if MS_URL:
 import logging
 from netlogger import nllog
 
-DEBUG = False
+DEBUG = True
 TRACE = False
 NETLOGGER_NAMESPACE = "blipp"
 

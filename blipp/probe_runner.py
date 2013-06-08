@@ -10,7 +10,7 @@ class ProbeRunner:
     '''
     Class to handle a single probe. Creates the scheduler, collector,
     and probe module associated with this probe. The run method should
-    be called as a subprocess (by probe_arbiter) and passed a
+    be called as a subprocess (by arbiter) and passed a
     connection object so that it can receive a "stop" if necessary.
     '''
 

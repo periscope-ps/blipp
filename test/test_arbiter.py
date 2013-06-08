@@ -1,7 +1,7 @@
 import unittest2
 import mock
 from blipp.blipp_conf import BlippConfigure
-from blipp import probe_arbiter
+from blipp import arbiter
 import consts
 import time
 
@@ -13,11 +13,11 @@ class ArbiterTests(unittest2.TestCase):
         self.bconf.config = consts.SAMPLE_CONFIG
         self.bconf.refresh_config = mock.Mock()
         self.probe_runner = mock.Mock()
-        probe_arbiter.ProbeRunner = self.probe_runner
+        arbiter.ProbeRunner = self.probe_runner
         self.pr = mock.Mock()
         self.probe_runner.return_value = self.pr
         self.pr.run = loop
-        self.arb = probe_arbiter.Arbiter(self.bconf)
+        self.arb = arbiter.Arbiter(self.bconf)
 
     def test_reload_all(self):
         self.arb.reload_all()
