@@ -6,7 +6,7 @@ from copy import copy
 from config_server import ConfigServer
 import pprint
 
-logger = settings.get_logger('probe_arbiter')
+logger = settings.get_logger('arbiter')
 PROBE_GRACE_PERIOD = 10
 
 class Arbiter():
