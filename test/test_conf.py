@@ -1,13 +1,13 @@
 import unittest2
-
-from blipp.conf import IncompleteConfigError, ServiceConfigure
+import mock
+from blipp.conf import ServiceConfigure
 
 
 class ServiceConfigureTests(unittest2.TestCase):
     def setUp(self):
         print "ServiceConfigureTests setup"
-        self.sconf = ServiceConfigure(file_loc="/usr/local/conf.conf",
-                                      unis_url="http://example.com")
+        ServiceConfigure._get_file_config = mock.Mock()
+        ServiceConfigure._get_file_config.return_value = {}
 
     def test__init__(self):
         print "ServiceConfigureTests init"
@@ -22,4 +22,3 @@ class ServiceConfigureTests(unittest2.TestCase):
 
 if __name__ == '__main__':
     unittest2.main()
-

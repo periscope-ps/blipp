@@ -8,8 +8,9 @@ import time
 
 class ArbiterTests(unittest2.TestCase):
     def setUp(self):
-        self.bconf = BlippConfigure(file_loc="/usr/local/conf.conf",
-                                      unis_url="http://example.com")
+        self.bconf = BlippConfigure(initial_config={"properties":
+                                                    {"configurations":
+                                                     {"unis_url": "http://example.com"}}})
         self.bconf.config = consts.SAMPLE_CONFIG
         self.bconf.refresh_config = mock.Mock()
         self.probe_runner = mock.Mock()
