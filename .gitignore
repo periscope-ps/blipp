@@ -4,6 +4,8 @@ blipp/blippprof
 #*
 .tox
 blipp.egg-info
+build/
+dist/
 *.prof
 *#
 .#*
