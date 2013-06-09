@@ -1,10 +1,7 @@
 from unis_client import UNISInstance
 import settings
-import json
-import traceback
-from copy import deepcopy
 import pprint
-from utils import merge_dicts, delete_nones
+from utils import merge_dicts
 
 logger = settings.get_logger('conf')
 
@@ -17,45 +14,24 @@ class ServiceConfigure(object):
     should be in the BlippConfigure class which extends
     ServiceConfigure.
     '''
-    def __init__(self, file_loc=None, unis_url=None, service_id=None,
-                 node_id=None, service_name=None, query_service=True):
-        self.query_service = query_service
-        if not unis_url and not file_loc:
-            err_string = \
-                "ServiceConfigure initialized with "\
-                "neither unis_url nor file_loc"
-            raise IncompleteConfigError(err_string)
-        self.cmd_cfg = {
-            "id": service_id,
-            "name": service_name,
-            "properties": {
-                "configurations": {
-                    "unis_url": unis_url,
-                    "config_file": file_loc}}}
+    def __init__(self, initial_config={}, node_id=None):
+        self.node_setup = False
+        self.service_setup = False
         self.node_id = node_id
-        delete_nones(self.cmd_cfg)
-        self.config = deepcopy(settings.STANDALONE_DEFAULTS)
-        merge_dicts(self.config, self.cmd_cfg)
+        self.config = initial_config
+        self.unis = UNISInstance(self.config)
 
     def refresh_config(self):
-        file_cfg = self._get_file_config(
-            self.config["properties"]["configurations"].get("config_file", None))
-        merge_dicts(self.config, file_cfg)
-        merge_dicts(self.config, self.cmd_cfg)
-        if not self.node_id:
-            self.node_id = self.config["properties"]["configurations"].get(
-                "node_id", None)
-        if self.config["properties"]["configurations"].get("unis_url"):
-            self.unis = UNISInstance(self.config)
-            self._setup_node()
+        if not self.node_setup:
+            self._setup_node(self.node_id)
+        if not self.service_setup:
             self._setup_service()
 
-    def _setup_node(self):
+    def _setup_node(self, node_id):
         config = self.config
         logger.debug('_setup_node', config=pprint.pformat(config))
         hostname = settings.HOSTNAME
         urn = settings.HOST_URN
-        node_id = self.node_id
         if node_id:
             r = self.unis.get("/nodes/" + str(node_id))
             if not r:
@@ -78,6 +54,7 @@ class ServiceConfigure(object):
         config["runningOn"] = {
             "href": r["selfRef"],
             "rel": "full"}
+        self.node_setup = True
 
     def _setup_service(self):
         config = self.config
@@ -85,7 +62,7 @@ class ServiceConfigure(object):
         r = None
         if config.get("id", None):
             r = self.unis.get("/services/" + config["id"])
-        if not r and self.query_service:
+        if not r:
             logger.warn('_setup_service',
                         msg="service id not specified or not found "\
                             "unis instance ...querying for service")
@@ -99,7 +76,8 @@ class ServiceConfigure(object):
                 r = self.unis.get('/services/' + rlist[i]["id"])
                 if r:
                     if isinstance(r, list):
-                        logger.warn('_setup_service', msg="id not unique... taking first result")
+                        logger.warn('_setup_service',
+                                    msg="id not unique... taking first result")
                         r = r[0]
                     config["id"] = r["id"]
                     logger.info('_setup_service',
@@ -113,22 +91,18 @@ class ServiceConfigure(object):
             r = self.unis.post("/services", data=config)
             merge_dicts(config, r)
         if isinstance(r, list):
-            logger.warn('_setup_service', msg="id not unique... taking first result")
+            logger.warn('_setup_service',
+                        msg="id not unique... taking first result")
             r = r[0]
-        merge_dicts(config, r)
+        merge_dicts(r, config)
+        self.config = r
         if config != r:
-            logger.info("_setup_service", msg="local config changed... pushing new config to UNIS")
+            logger.info("_setup_service",
+                        msg="Local configuration differs from UNIS - updating UNIS")
             self.unis.put("/services/" + config["id"], data=config)
+        self.service_setup = True
 
-    def _get_file_config(self, filepath):
-        try:
-            with open(filepath) as f:
-                conf = f.read()
-                return json.loads(conf)
-        except Exception as e:
-            logger.error('_get_file_config', error=str(e), file_name=filepath)
-            logger.debug('_get_file_config', trace=traceback.format_exc())
-            return {}
+
 
     def get(self, key, default=None):
         try:
@@ -142,11 +116,3 @@ class ServiceConfigure(object):
         like a dictionary when queried with [] syntax
         '''
         return self.config[key]
-
-
-class IncompleteConfigError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return str(self.msg)

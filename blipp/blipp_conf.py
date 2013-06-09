@@ -9,13 +9,11 @@ import settings
 logger = settings.get_logger('confblipp')
 
 class BlippConfigure(ServiceConfigure):
-    def __init__(self, file_loc=None, unis_url=None, service_id=None,
-                 node_id=None, service_name=None, query_service=True):
-        if service_name==None:
-            service_name="blipp"
+    def __init__(self, initial_config={}, node_id=None):
+        if "name" not in initial_config:
+            initial_config['name']="blipp"
         self.schema_cache = SchemaCache()
-        super(BlippConfigure, self).__init__(file_loc, unis_url, service_id,
-                                             node_id, service_name, query_service)
+        super(BlippConfigure, self).__init__(initial_config, node_id)
 
     def expand_probe_config(self):
         '''

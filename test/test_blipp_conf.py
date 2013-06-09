@@ -6,8 +6,9 @@ from copy import deepcopy
 
 class BlippConfigureTests(unittest2.TestCase):
     def setUp(self):
-        self.sconf = BlippConfigure(file_loc="/usr/local/conf.conf",
-                                      unis_url="http://example.com")
+        self.sconf = BlippConfigure(initial_config={"properties":
+                                                    {"configurations":
+                                                     {"unis_url": "http://example.com"}}})
         self.sconf.config = deepcopy(consts.SAMPLE_CONFIG)
 
     def test_expand_probe_config(self):
