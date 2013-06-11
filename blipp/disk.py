@@ -79,8 +79,6 @@ class Probe:
 
         return result #return dict entries for each device
 
-    #def calc_reads(self, dataSet, driveType):
-        #drive = dataSet[driveType]
     def calc_reads(self, drive):
         numReads = float(drive['reads'])
         readTime = float(drive['ms_reading'])
@@ -90,8 +88,6 @@ class Probe:
             readAvg = 0
         return readAvg
 
-    #def calc_writes(self, dataSet, driveType):
-        #drive = dataSet[driveType]
     def calc_writes(self, drive):
         numWrites = float(drive['writes'])
         writeTime = float(drive['ms_writing'])
@@ -119,24 +115,33 @@ class Probe:
             #f.write(partitions[key]['dev'])
             thisPartition = self.partition_info(partitions[key])
             ref = self._find_or_post_node(thisPartition)
+            #f.write("%s" %ref['id'])
             hereCount += 1
             data['write'] = self.calc_writes(partitions[key])
             data['read'] = self.calc_reads(partitions[key])
-            result[key] = full_event_types(data, EVENT_TYPES)
-            #result[key]['selfRef'] = "test"
-            #f.write("%s" %data)
+            newKey = ref['selfRef']
+                
+            #result[key] = full_event_types(data, EVENT_TYPES)
+            result[newKey] = full_event_types(data, EVENT_TYPES)
 
-        f.write("%s" %result)
+        #f.write("%s" %result)
         return result
 
     def _find_or_post_node(self, partition={}):
-        #f = open('./tempFile.txt', 'r+')
-        #sampleNode = {'name': 'testNode', 'other': 'othertest'}
-        #sampleNode['properties'] = {}
-        #sampleNode['properties']['path'] = "/dev/sda5"
-        #postedNode = self.unis.post("/nodes", sampleNode)
-        #f.write(postedNode["selfRef"])
-        ref = self.unis.post("/nodes", partition)
+        f = open('./tempFile.txt', 'r+')
+        exists = False
+)
+        nodeList = self._get_unis().get('nodes', [])
+        #f.write("%s" %nodeList)
+        for node in nodeList:
+            if node['name'] == partition['name']:
+                ref = node
+                exists = True
+                f.write("got a match")
+
+        if not exists:
+            ref = self.unis.post("/nodes", partition)
+
         return ref
 
 
