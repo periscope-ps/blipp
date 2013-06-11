@@ -69,6 +69,87 @@ SAMPLE_CONFIG = \
             }
     }
 
+SAMPLE_STRIPPED =     {
+    "status": "ON",
+    "ttl": 300,
+    "name": "blipp",
+#   "id": "1234567890",
+    "serviceType": "http://some_schema_domain/blipp",
+    "runningOn": {
+            "href": "http://dev.incntre.iu.edu/nodes/anode",
+            "rel": "full"},
+    "properties": {
+            "configurations": {
+                "unis_url":"http://dev.incntre.iu.edu",
+                "use_ssl": "",
+                "ssl_cert": "cert_file",
+                "ssl_key": "key_file",
+                "ssl_cafile": "ca_file",
+                "domain":"testdomain.net"
+            }
+    }
+}
+
+STRIPPED_PROBES = {
+    "ping1": {
+        "collection_size":10000000,
+        "probe_module": "ping",
+        "collection_schedule": "simple",
+        "schedule_params": {"every": 5},
+        "reporting_schedule": "simple",
+        "reporting_params": [6],
+        "ms_url": "someurl",
+        "collection_ttl": 30000,
+        "kwargs": {"remote_host": "129.62.33.22",
+                   "timeout": 3,
+                   "packet_size": 56,
+                   "byte_pattern": "0xAAAA"}
+    },
+    "ping2": {
+        "collection_size":10000000,
+        "collection_ttl":1500000,
+        "probe_module": "ping",
+        "collection_schedule": "simple",
+        "schedule_params": {"every": 10},
+        "reporting_schedule": "simple",
+        "reporting_params": [7],
+        "ms_url": "someurl",
+        "kwargs": {"remote_host": "bing.com",
+                   "timeout": 2,
+                   "packet_size": 56,
+                   "byte_pattern": "0xAAAA"}
+    },
+    "cpu": {
+        "reporting_schedule":"simple|num_measurements...etc",
+        "reporting_params":["arg1", 2],
+        "collection_size":10000000,
+        "collection_ttl":1500000,
+        "ms_url":"http://dev.incntre.iu.edu",
+        "probe_module": "cpu",
+        "collection_schedule": "simple",
+        "schedule_params": 1,
+        "kwargs": {"proc_dir": "/proc"}
+    },
+    "net": {
+        "collection_schedule":"simple",
+        "schedule_params": {"every": 10},
+        "reporting_schedule":"simple|num_measurements...etc",
+        "reporting_params":["arg1", 2],
+        "collection_size":10000000,
+        "collection_ttl":1500000,
+        "ms_url":"http://dev.incntre.iu.edu",
+        "probe_module": "net",
+        "status": "off",
+        "kwargs": {"proc_dir": "/proc",
+                   "unis_url": "http://www.dev.incntre.iu.edu",
+                   "subject":
+                   "http://www.dev.incntre.iu.edu/nodes/hikerbear"}
+    }
+}
+
+
+
+
 PING_SCHEMA = {
     "name": "pingschema",
     "address": "iu.edu",

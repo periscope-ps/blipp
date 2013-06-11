@@ -46,8 +46,8 @@ def main(options=None):
         merge_dicts(conf, fconf)
 
     bconf = BlippConfigure(initial_config=conf, node_id=options['--node-id'])
-
-    bconf.refresh_config()
+    bconf.initialize()
+    bconf.refresh()
 
     config = bconf.config
     logger.info('main', config=pprint.pformat(config))

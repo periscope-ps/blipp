@@ -5,9 +5,10 @@ import re
 
 logger = settings.get_logger('gemini_client')
 
-class GeminiClient:
-    def __init__(self, config, url):
-        self.config = config
+class PeriscopeClient:
+    def __init__(self, service_entry, url):
+        self.service_entry = service_entry
+        self.config = service_entry["properties"]["configurations"]
         self.url = url
 
     def do_req(self, rtype, url, data=None, headers=None):
@@ -58,9 +59,9 @@ class GeminiClient:
         return url, schema, headers
 
     def _add_gemini_auth(self, post_dict, loc="properties"):
-        if "geni" in self.config.get("properties", {}):
+        if "geni" in self.service_entry.get("properties", {}):
             geni = post_dict.setdefault(loc, {}).setdefault("geni", {})
-            geni.update(self.config["properties"]["geni"])
+            geni.update(self.service_entry["properties"]["geni"])
 
 
     def get(self, url, data=None, headers=None):

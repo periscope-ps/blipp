@@ -14,8 +14,10 @@ class ProbeRunner:
     connection object so that it can receive a "stop" if necessary.
     '''
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, service, measurement):
+        self.measurement = measurement
+        self.config = measurement['configuration']
+        self.service = service
         self.setup()
 
     def run(self, conn):
@@ -41,15 +43,15 @@ class ProbeRunner:
     def _normalize(self, data):
         if isinstance(data.itervalues().next(), dict):
             return data
-        subject = self.config["runningOn"]["href"]
+        subject = self.service["runningOn"]["href"]
         return dict({subject: data})
 
 
     def setup(self):
         config = self.config
-        logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(self.config))
+        logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
         probe_mod = blipp_import(config["probe_module"])
-        self.probe = probe_mod.Probe(config)
+        self.probe = probe_mod.Probe(self.service, self.measurement)
 
         if "." in config["collection_schedule"]:
             sched_file, sched_name = config["collection_schedule"].split('.')
@@ -59,7 +61,7 @@ class ProbeRunner:
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(config=config, **config["schedule_params"])
 
-        self.collector = Collector(config)
+        self.collector = Collector(self.service, self.measurement)
 
 
     def _cleanup(self):

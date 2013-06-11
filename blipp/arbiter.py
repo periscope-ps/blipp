@@ -27,45 +27,45 @@ class Arbiter():
 
     '''
 
-    def __init__(self, config):
-        self.config = config # BlippConfigure object
-        self.proc_to_config = {} # {(proc, conn): probe_config_dict, ...}
+    def __init__(self, config_obj):
+        self.config_obj = config_obj # BlippConfigure object
+        self.proc_to_measurement = {} # {(proc, conn): measurement_dict, ...}
         self.stopped_procs = {} # {(proc, conn): time_stopped, ...}
 
     def reload_all(self):
-        self.config.refresh_config()
+        self.config_obj.refresh()
         self._cleanup_stopped_probes()
-        if self.config.get("status", "ON").upper() == "OFF":
+        if self.config_obj.get("status", "ON").upper() == "OFF":
             self._stop_all()
             return time.time()
         self._check_procs()
-        new_pc_list = self.config.expand_probe_config()
-        our_pc_list = self.proc_to_config.values()
-        for pc in new_pc_list:
-            if not pc in our_pc_list:
+        new_m_list = self.config_obj.get_measurements()
+        our_m_list = self.proc_to_measurement.values()
+        for m in new_m_list:
+            if not m in our_m_list:
                 if settings.DEBUG:
-                    self._print_pc_diff(pc, our_pc_list)
-                self._start_new_probe(pc)
+                    self._print_pc_diff(m, our_m_list)
+                self._start_new_probe(m)
 
-        for proc_conn, pc in self.proc_to_config.iteritems():
-            if not pc in new_pc_list:
+        for proc_conn, pc in self.proc_to_measurement.iteritems():
+            if not pc in new_m_list:
                 if settings.DEBUG:
-                    self._print_pc_diff(pc, new_pc_list)
+                    self._print_pc_diff(pc, new_m_list)
                 self._stop_probe(proc_conn)
         return time.time()
 
-    def _start_new_probe(self, pc):
-        logger.info("_start_new_probe", name=pc["name"])
-        logger.debug("_start_new_probe", config=pprint.pformat(pc))
-        pr = ProbeRunner(pc)
+    def _start_new_probe(self, m):
+        logger.info("_start_new_probe", name=m["configuration"]["name"])
+        logger.debug("_start_new_probe", config=pprint.pformat(m))
+        pr = ProbeRunner(self.config_obj.config, m)
         parent_conn, child_conn = Pipe()
         probe_proc = Process(target = pr.run, args = (child_conn,))
         probe_proc.start()
-        self.proc_to_config[(probe_proc, parent_conn)] = pc
+        self.proc_to_measurement[(probe_proc, parent_conn)] = m
 
     def _stop_probe(self, proc_conn_tuple):
         logger.info('_stop_probe',
-                    msg="sending stop to " + self.proc_to_config[proc_conn_tuple]["name"])
+                    msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["name"])
         proc_conn_tuple[1].send("stop")
         self.stopped_procs[proc_conn_tuple] = time.time()
 
@@ -74,7 +74,7 @@ class Arbiter():
         Stop all probes... called when service status is OFF.
         '''
         logger.info('_stop_all')
-        for proc, conn in self.proc_to_config.keys():
+        for proc, conn in self.proc_to_measurement.keys():
             self._stop_probe((proc, conn))
 
     def _cleanup_stopped_probes(self):
@@ -98,16 +98,16 @@ class Arbiter():
         '''
         Join probes that have died or exited.
         '''
-        for proc, conn in self.proc_to_config.keys():
+        for proc, conn in self.proc_to_measurement.keys():
             if not proc.is_alive():
                 proc.join()
                 logger.warn('_check_procs', msg="a probe has exited", exitcode=proc.exitcode)
-                self.proc_to_config.pop((proc, conn))
+                self.proc_to_measurement.pop((proc, conn))
 
-    def _print_pc_diff(self, pc, new_pc_list):
+    def _print_pc_diff(self, pc, new_m_list):
         # a helper function for printing the difference between old and new probe configs
         # can be useful for debugging
-        for npc in new_pc_list:
+        for npc in new_m_list:
             if npc["name"] == pc["name"]:
                 for key in npc.keys():
                     if key in pc.keys():

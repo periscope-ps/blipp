@@ -2,7 +2,6 @@ from ms_client import MSInstance
 from unis_client import UNISInstance
 import settings
 logger = settings.get_logger('collector')
-from utils import blipp_import
 
 
 class Collector:
@@ -14,16 +13,17 @@ class Collector:
     Depends directly on the MS and UNIS... output could be far more modular.
     """
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, service, measurement):
+        self.config = measurement["configuration"]
+        self.service = service
+        self.measurement = measurement
         self.collections_created = False
-        self.ms = MSInstance(config)
+        self.ms = MSInstance(service, measurement)
         self.mids = {} # {subject1: {metric1:mid, metric2:mid}, subj2: {...}}
         # {mid: [{"ts": ts, "value": val}, {"ts": ts, "value": val}]}
         self.mid_to_data = {}
-        self.unis = UNISInstance(config)
+        self.unis = UNISInstance(service)
         self.num_collected = 0
-        self._post_measurement()
 
     def insert(self, data, ts):
         '''
@@ -61,25 +61,6 @@ class Collector:
                 post_data.append({"mid":mid, "data":data})
         self.ms.post_data(post_data)
         self._clear_data()
-
-    def _post_measurement(self):
-        probe_mod = blipp_import(self.config["probe_module"])
-        if "EVENT_TYPES" in probe_mod.__dict__:
-            eventTypes = probe_mod.EVENT_TYPES.values()
-        else:
-            try:
-                eventTypes = self.config["eventTypes"].values()
-            except KeyError:
-                logger.warn("_post_measurement", msg="No eventTypes present")
-                eventTypes = []
-
-        measurement = {}
-        measurement["service"] = self.config["serviceRef"]
-        measurement["configuration"] = self.config
-        measurement["eventTypes"] = eventTypes
-        r = self.unis.post("/measurements", measurement)
-        self.measurement = r["selfRef"]
-
 
     def _clear_data(self):
         for mid in self.mid_to_data:

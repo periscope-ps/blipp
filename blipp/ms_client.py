@@ -1,13 +1,15 @@
 import settings
-from gemini_client import GeminiClient
+from periscope_client import PeriscopeClient
+
 logger = settings.get_logger('ms_client')
 
-
 class MSInstance:
-    def __init__(self, config):
-        self.config = config
-        self.ms_url=config.get("ms_url", None)
-        self.gc = GeminiClient(config, self.ms_url)
+    def __init__(self, service_entry, measurement):
+        self.service_entry = service_entry
+        self.sconfig = service_entry["properties"]["configurations"]
+        self.mconfig = measurement["configuration"]
+        self.ms_url=self.mconfig.get("ms_url", None)
+        self.pc = PeriscopeClient(self.service_entry, self.ms_url)
         self.mids = set()
 
     def _def_headers(self, ctype):
@@ -17,25 +19,25 @@ class MSInstance:
         return def_headers
 
     def post_events(self, mid, size, ttl):
-        data = dict({"metadata_URL": self.config['unis_url'] + "/metadata/" + mid,
+        data = dict({"metadata_URL": self.sconfig['unis_url'] + "/metadata/" + mid,
                      "collection_size": size,
                      "ttl": ttl
                      })
         headers = self._def_headers("datum")
-        return self.gc.do_req('post', '/events', data, headers)
+        return self.pc.do_req('post', '/events', data, headers)
 
     def post_data(self, data):
         mids = [ x["mid"] for x in data ]
         self._check_mids(mids)
         headers = self._def_headers("data")
-        return self.gc.do_req('post', '/data', data, headers)
+        return self.pc.do_req('post', '/data', data, headers)
 
     def _check_mids(self, mids):
-        coll_size = self.config["collection_size"]
-        coll_ttl = self.config["collection_ttl"]
+        coll_size = self.mconfig["collection_size"]
+        coll_ttl = self.mconfig["collection_ttl"]
         for mid in mids:
             if mid not in self.mids:
-                if not self.gc.get("/events?mids=" + str(mid)):
+                if not self.pc.get("/events?mids=" + str(mid)):
                     if self.post_events(mid, coll_size, coll_ttl):
                         self.mids.add(mid)
                 else:
