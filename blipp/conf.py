@@ -15,17 +15,20 @@ class ServiceConfigure(object):
     ServiceConfigure.
     '''
     def __init__(self, initial_config={}, node_id=None):
-        self.node_setup = False
-        self.service_setup = False
         self.node_id = node_id
         self.config = initial_config
         self.unis = UNISInstance(self.config)
 
-    def refresh_config(self):
-        if not self.node_setup:
-            self._setup_node(self.node_id)
-        if not self.service_setup:
-            self._setup_service()
+    def initialize(self):
+        self._setup_node(self.node_id)
+        self._setup_service()
+
+    def refresh(self):
+        r = self.unis.get("/services/" + self.config["id"])
+        if not r:
+            logger.warn('refresh', msg="refresh failed")
+        else:
+            self.config = r
 
     def _setup_node(self, node_id):
         config = self.config

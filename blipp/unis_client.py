@@ -1,36 +1,32 @@
 import settings
-from gemini_client import GeminiClient
-from utils import reconcile_config, query_string_from_dict
-from copy import deepcopy
+from utils import query_string_from_dict
 import urllib
+from periscope_client import PeriscopeClient
 
 logger = settings.get_logger('unis_client')
 
 class UNISInstance:
-    def __init__(self, config):
-        if not "unis_url" in config: #it's a full service config - not a probe config
-            confignoprops = deepcopy(config)
-            del confignoprops["properties"]["configurations"]
-            config = reconcile_config(confignoprops, config["properties"]["configurations"])
-        self.config = config
-        unis_url=config['unis_url']
+    def __init__(self, service_entry={}):
+        self.service_entry = service_entry
+        self.config = service_entry["properties"]["configurations"]
+        unis_url=self.config["unis_url"]
         if unis_url and unis_url[-1]=="/":
             unis_url = unis_url[:-1]
-        self.gc = GeminiClient(config, unis_url)
+        self.pc = PeriscopeClient(service_entry, unis_url)
 
     def post(self, url, data={}):
-        return self.gc.do_req('post', url, data)
+        return self.pc.do_req('post', url, data)
 
     def get(self, url, data=None):
-        return self.gc.do_req('get', url, data)
+        return self.pc.do_req('get', url, data)
 
     def delete(self, url, data=None):
-        return self.gc.do_req('delete', url, data)
+        return self.pc.do_req('delete', url, data)
 
     def put(self, url, data=None):
         if "ts" in data:
             del data["ts"]
-        return self.gc.do_req('put', url, data)
+        return self.pc.do_req('put', url, data)
 
     def post_metadata(self, subject, metric, measurement):
         post_dict = {
@@ -56,7 +52,7 @@ class UNISInstance:
             return md_list[0]
         # put $schema in down here due to query bug see GEMINI-115 comment 1
         post_dict.update({"$schema": settings.SCHEMAS["metadata"]})
-        return self.gc.do_req("post", "/metadata", data=post_dict)
+        return self.pc.do_req("post", "/metadata", data=post_dict)
 
     def post_port(self, post_dict, headers=None):
         if "$schema" not in post_dict:
@@ -66,7 +62,7 @@ class UNISInstance:
                               post_dict.get("name", "")})
         if "location" not in post_dict and "location" in self.config:
             post_dict.update({"location": self.config["location"]})
-        port_post = self.gc.do_req("post", "/ports", data=post_dict)
+        port_post = self.pc.do_req("post", "/ports", data=post_dict)
         # Update the node to have these ports as well
         if port_post:
             node_rep = self.get_node()

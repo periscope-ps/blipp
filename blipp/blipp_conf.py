@@ -1,57 +1,85 @@
 from conf import ServiceConfigure
-from copy import deepcopy
-from utils import merge_into
+from utils import merge_into, blipp_import
 from schema_cache import SchemaCache
-from validation import validate_add_defaults
 import settings
+import pprint
 
 # should be blipp_conf, but netlogger doesn't like that for some reason
 logger = settings.get_logger('confblipp')
 
 class BlippConfigure(ServiceConfigure):
-    def __init__(self, initial_config={}, node_id=None):
+    def __init__(self, initial_config={}, node_id=None, pre_existing_measurements="ignore"):
         if "name" not in initial_config:
             initial_config['name']="blipp"
+        self.pem = pre_existing_measurements
         self.schema_cache = SchemaCache()
+        self.initial_probes = self._strip_probes(initial_config)
         super(BlippConfigure, self).__init__(initial_config, node_id)
 
-    def expand_probe_config(self):
+    def initialize(self):
+        super(BlippConfigure, self).initialize()
+        self.initial_measurements = self.unis.get("/measurements?service=" +
+                                                  self.config["selfRef"])
+        self._post_probes()
+
+    def _post_probes(self):
+        failed_probes = {}
+        for name,probe in self.initial_probes.items():
+            probe.update({"name": name})
+            r = self._post_measurement(probe)
+            if not r:
+                failed_probes[name] = probe
+        self.initial_probes = failed_probes
+        if failed_probes:
+            logger.warn('_post_probes', failed_probes=pprint.pformat(failed_probes))
+
+    def refresh(self):
+        super(BlippConfigure, self).refresh()
+        if self.initial_probes:
+            self._post_probes()
+        self.measurements = self.unis.get("/measurements?service=" +
+                                          self.config["selfRef"])
+
+    def _post_measurement(self, probe):
+        probe_mod = blipp_import(probe["probe_module"])
+        if "EVENT_TYPES" in probe_mod.__dict__:
+            eventTypes = probe_mod.EVENT_TYPES.values()
+        else:
+            try:
+                eventTypes = probe["eventTypes"].values()
+            except KeyError:
+                logger.warn("_post_measurement", msg="No eventTypes present")
+                eventTypes = []
+
+        measurement = {}
+        measurement["service"] = self.config["selfRef"]
+
+        measurement["configuration"] = probe
+        measurement["eventTypes"] = eventTypes
+        r = self.unis.post("/measurements", measurement)
+        return r
+
+    def get_measurements(self):
         '''
-        Take's BLiPP's configuration, and creates a separate config
-        dictionary for each probe, merging in defaults such as the
-        scheduler if they are not defined within the probe.
+        Return all measurements which are configured for this blipp
+        instance. Possibly excluding those which where initially
+        present when blipp started.
         '''
-        expanded_probes = []
-        probes = self.config["properties"]["configurations"]["probes"]
+        measurements = []
+        for m in self.measurements:
+            if self.pem=="use":
+                measurements.append(m)
+            elif m not in self.initial_measurements:
+                measurements.append(m)
 
-        defaults = self._make_defaults()
-        for name, pconf in probes.items():
-            probe = {}
-            probe["name"] = name
-            probe.update(pconf)
-            merge_into(probe, defaults)
-            if "$schema" in probe:
-                try:
-                    schema = self.schema_cache.get(probe["$schema"])
-                    validate_add_defaults(probe, schema)
-                except Exception as e:
-                    logger.exc('expand_probe_config', e)
-                    continue
-            expanded_probes.append(probe)
+        return measurements
 
-        return expanded_probes
-
-    def _make_defaults(self):
-        defaults = {}
-        defaults["runningOn"] = self.config["runningOn"]
-        if "selfRef" in self.config:
-            defaults["serviceRef"] = self.config["selfRef"]
-        props = deepcopy(self.config["properties"])
-        del props["configurations"]
-        defaults["properties"] = props
-        for k,v in self.config["properties"]["configurations"].items():
-            if (str(k) != "probe_defaults") and (str(k) != "probes"):
-                defaults[k] = v
-        for k,v in self.config["properties"]["configurations"]["probe_defaults"].items():
-            defaults[k] = v
-        return defaults
+    @staticmethod
+    def _strip_probes(initial_config):
+        probes = initial_config["properties"]["configurations"]["probes"]
+        del initial_config["properties"]["configurations"]["probes"]
+        probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
+        del initial_config["properties"]["configurations"]["probe_defaults"]
+        for probe in probes.values():
+            merge_into(probe, probe_defaults)
+        return probes

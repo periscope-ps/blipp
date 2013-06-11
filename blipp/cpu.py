@@ -39,9 +39,9 @@ class Probe:
     CPU_TYPE = "socket"
     CORE_TYPE = "core"
 
-    def __init__(self, config={}):
-        kwargs = config.get("kwargs", {})
-        self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
+    def __init__(self, service, measurement):
+        self.config = measurement["configuration"]
+        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
         self._prev_cpu_hz = {}
         self._prev_cpu_total_hz = 0
 
@@ -163,4 +163,3 @@ class CPUInfo:
                 self._prev_cpu_hz[idx] = prev_values
                 self._prev_cpu_total_hz[idx] = total_hz
         return result
-

@@ -32,5 +32,11 @@ class BlippConfigureTests(unittest2.TestCase):
         probe_list = self.sconf.expand_probe_config()
         self.assertTrue(pingschema in probe_list)
 
+    def test_strip_probes(self):
+        sampleconf = deepcopy(consts.SAMPLE_CONFIG)
+        probes = BlippConfigure._strip_probes(sampleconf)
+        self.assertEqual(sampleconf, consts.SAMPLE_STRIPPED)
+        self.assertEqual(probes, consts.STRIPPED_PROBES)
+
 if __name__ == '__main__':
     unittest2.main()
