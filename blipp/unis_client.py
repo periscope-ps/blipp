@@ -6,13 +6,14 @@ from periscope_client import PeriscopeClient
 logger = settings.get_logger('unis_client')
 
 class UNISInstance:
-    def __init__(self, service_entry={}):
+    def __init__(self, service_entry):
         self.service_entry = service_entry
         self.config = service_entry["properties"]["configurations"]
         unis_url=self.config["unis_url"]
         if unis_url and unis_url[-1]=="/":
             unis_url = unis_url[:-1]
         self.pc = PeriscopeClient(service_entry, unis_url)
+        self.meas_to_mds = {}
 
     def post(self, url, data={}):
         return self.pc.do_req('post', url, data)
@@ -28,30 +29,31 @@ class UNISInstance:
             del data["ts"]
         return self.pc.do_req('put', url, data)
 
-    def post_metadata(self, subject, metric, measurement):
+    def find_or_create_metadata(self, subject, metric, measurement):
+        if not measurement["id"] in self.meas_to_mds:
+            mds = self.get("/metadata?parameters.measurement.href=" + measurement["selfRef"])
+            if mds:
+                self.meas_to_mds[measurement["id"]] = mds
+        mds = self.meas_to_mds.get(measurement["id"], [])
+        for md in mds:
+            if md["subject"] == subject and md["eventType"] == metric:
+                return md
+
         post_dict = {
+            "$schema": settings.SCHEMAS["metadata"],
             "subject": {
                 "href": subject,
                 "rel": "full"
-                },
-            "eventType":metric,
+            },
+            "eventType": metric,
             "parameters": {
                 "datumSchema": settings.SCHEMAS["datum"],
-                "measurement": measurement
+                "measurement": {
+                    "href": measurement["selfRef"],
+                    "rel": "full"
                 }
             }
-
-        qstring = query_string_from_dict(post_dict)
-        qstring = urllib.quote_plus(qstring)
-        qstring = qstring.replace('%3D', '=') # see GEMINI-115
-        qstring = qstring.replace('%26', '&') # GEMINI-115 comment 2
-        qstring += "limit=2" # getting a bazillion results tends to slow things down
-        md_list = self.get("/metadata?" + qstring)
-
-        if md_list:
-            return md_list[0]
-        # put $schema in down here due to query bug see GEMINI-115 comment 1
-        post_dict.update({"$schema": settings.SCHEMAS["metadata"]})
+        }
         return self.pc.do_req("post", "/metadata", data=post_dict)
 
     def post_port(self, post_dict, headers=None):

@@ -3,10 +3,11 @@ Usage:
   blippd [options]
 
 Options:
-  -c FILE --config-file=FILE  The json formatted config file.
-  -u URL --unis-url=URL       Where UNIS is running.
-  -n NID --node-id=NID        ID of the node entry in UNIS that this blipp instance is running on.
-  -s SID --service-id=SID     ID of the service entry in UNIS that this blipp should pull config from.
+  -c FILE --config-file=FILE   The json formatted config file.
+  -u URL --unis-url=URL        Where UNIS is running.
+  -n NID --node-id=NID         ID of the node entry in UNIS that this blipp instance is running on.
+  -s SID --service-id=SID      ID of the service entry in UNIS that this blipp should pull config from.
+  -e ACTION --existing=ACTION  What to do with measurements already in UNIS (ignore|use) [default: ignore]
 '''
 
 from blipp_conf import BlippConfigure
@@ -45,7 +46,9 @@ def main(options=None):
         fconf = get_file_config(options['--config-file'])
         merge_dicts(conf, fconf)
 
-    bconf = BlippConfigure(initial_config=conf, node_id=options['--node-id'])
+    bconf = BlippConfigure(initial_config=conf,
+                           node_id=options['--node-id'],
+                           pre_existing_measurements=options['--existing'])
     bconf.initialize()
     bconf.refresh()
 

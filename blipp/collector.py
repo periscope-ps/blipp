@@ -35,8 +35,12 @@ class Collector:
                 ts = met_val["ts"]
                 del met_val["ts"]
             for metric, value in met_val.iteritems():
+                if metric not in self.measurement["eventTypes"]:
+                    self._add_et(metric)
                 if not metric in mids.get(subject, {}):
-                    r = self.unis.post_metadata(subject, metric, self.measurement)
+                    r = self.unis.find_or_create_metadata(subject,
+                                                          metric,
+                                                          self.measurement)
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
                 self._insert_datum(mids[subject][metric], ts, value)
@@ -50,6 +54,14 @@ class Collector:
         item = dict({"ts": ts * 10e5,
                      "value":val})
         self.mid_to_data[mid].append(item)
+
+    def _add_et(self, metric):
+        self.measurement["eventTypes"].append(metric)
+        r = self.unis.put("/measurements/" +
+                          self.measurement["id"],
+                          data=self.measurement)
+        if r:
+            self.measurement = r
 
     def report(self):
         '''
