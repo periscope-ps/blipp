@@ -1,18 +1,16 @@
 import settings
-from utils import query_string_from_dict
-import urllib
 from periscope_client import PeriscopeClient
 
 logger = settings.get_logger('unis_client')
 
 class UNISInstance:
-    def __init__(self, service_entry):
-        self.service_entry = service_entry
-        self.config = service_entry["properties"]["configurations"]
+    def __init__(self, service):
+        self.service = service
+        self.config = service["properties"]["configurations"]
         unis_url=self.config["unis_url"]
         if unis_url and unis_url[-1]=="/":
             unis_url = unis_url[:-1]
-        self.pc = PeriscopeClient(service_entry, unis_url)
+        self.pc = PeriscopeClient(service, unis_url)
         self.meas_to_mds = {}
 
     def post(self, url, data={}):
@@ -62,19 +60,13 @@ class UNISInstance:
         if "urn" not in post_dict:
             post_dict.update({"urn":settings.HOST_URN + "port=" + \
                               post_dict.get("name", "")})
-        if "location" not in post_dict and "location" in self.config:
-            post_dict.update({"location": self.config["location"]})
+        if "location" not in post_dict and "location" in self.service:
+            post_dict.update({"location": self.service["location"]})
         port_post = self.pc.do_req("post", "/ports", data=post_dict)
         # Update the node to have these ports as well
         if port_post:
-            node_rep = self.get_node()
+            node_rep = self.get(self.service["runningOn"]["href"])
             node_rep.setdefault("ports", []).append({"href":port_post["selfRef"],
                                                      "rel": "full"})
             self.put(node_rep["selfRef"], data=node_rep)
         return port_post
-
-    def get_node(self, config=None):
-        if not config:
-            config = self.config
-        node_url = config['runningOn']['href']
-        return self.get(node_url)

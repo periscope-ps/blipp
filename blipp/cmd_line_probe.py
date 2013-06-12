@@ -8,11 +8,15 @@ logger = settings.get_logger('cmd_line_probe')
 
 class Probe:
 
-    def __init__(self, config={}):
-        self.config = config
-        self.command = self._substitute_command(str(config.get("command")), self.config)
-        self.data_regex = re.compile(str(config["regex"]), flags=re.S|re.M)
-        self.EVENT_TYPES = config["eventTypes"]
+    def __init__(self, service, measurement):
+        self.service = service
+        self.measurement = measurement
+        self.config = measurement["configuration"]
+        self.command = self._substitute_command(str(self.config.get("command")), self.config)
+        self.data_regex = re.compile(
+            str(self.config["regex"]),
+            flags=re.S|re.M)
+        self.EVENT_TYPES = self.config["eventTypes"]
 
     def get_data(self):
         proc = subprocess.Popen(self.command,
