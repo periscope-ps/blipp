@@ -190,7 +190,7 @@ def get_conflicting_measurements(unis, measurement):
     conflicting_measurements = []
     for resource in measurement["configuration"]["resources"]:
         meas_for_resource = unis.get(
-            "/measurements?resources.ref=" + resource["ref"])
+            "/measurements?configuration.resources.ref=" + resource["ref"])
         filter(lambda m: False if m["id"] == measurement["id"] else True,
                meas_for_resource)
         conflicting_measurements.extend(meas_for_resource)
@@ -200,7 +200,7 @@ def get_conflicting_times(conflicting_measurements):
     # aggregate all conflicting times
     conflicting_times = []
     for meas in conflicting_measurements:
-        conflicting_times.extend(meas["scheduled_times"])
+        conflicting_times.extend(meas.setdefault("scheduled_times", []))
     # and convert them to datetime objects
     for tobj in conflicting_times:
         tobj["start"] = dateutil.parser.parse(tobj["start"])
