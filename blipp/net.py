@@ -50,22 +50,21 @@ class Probe:
                       "compressed_out", "multicast_in", "colls_out", "colls_in",
                       "carrier_out", "carrier_in", "frame_out", "multicast_out"]
 
-    def __init__(self, config={}):
-        kwargs = config.get("kwargs", {})
-        logger.debug('Probe.__init__', kwargs=str(kwargs))
-        self.config = config
-        self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
-        self.node_subject=kwargs.get("subject", config.get("runningOn", {}).get('href', 'not found'))
-        self.port_match_method=kwargs.get("port_match_method", "geni_utils.mac_match")
+    def __init__(self, service, measurement):
+        self.service = service
+        self.measurement = measurement
+        self.config = measurement["configuration"]
+        logger.debug('Probe.__init__', config=self.config)
+        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
+        self.node_subject=self.config.get(
+            "subject",
+            self.config.get("runningOn", {}).get('href', 'not found'))
+        self.port_match_method=self.config.get(
+            "port_match_method", "geni_utils.mac_match")
         self.port_match_method=blipp_import_method(self.port_match_method)
-        self.unis = None
+        self.unis = UNISInstance(service)
         logger.debug('Probe.__init__ ', subject=self.node_subject)
         self.subjects=self.get_interface_subjects()
-
-    def _get_unis(self):
-        if not self.unis:
-            self.unis = UNISInstance(self.config)
-        return self.unis
 
     def get_data(self):
         netdev = self._proc.open('net', 'dev')
@@ -193,18 +192,18 @@ class Probe:
         return post_dict
 
     def get_interfaces_in_unis(self):
-        node = self._get_unis().get_node()
+        node = self.unis.get(self.service["runningOn"]["href"])
         port_list = node.get('ports', [])
         ports = []
         for port in port_list:
-            ports.append(self._get_unis().get(port['href']))
+            ports.append(self.unis.get(port['href']))
         return ports
 
     def _find_or_post_port(self, ports, local_port, matching_method):
         for port in ports:
             if matching_method(port, local_port):
                 return port["selfRef"]
-        post = self._get_unis().post_port(local_port)
+        post = self.unis.post_port(local_port)
         if post:
             return post["selfRef"]
         else:
