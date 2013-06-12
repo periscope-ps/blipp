@@ -2,6 +2,8 @@ from conf import ServiceConfigure
 from utils import merge_into, blipp_import
 from schema_cache import SchemaCache
 import settings
+from validation import validate_add_defaults
+
 import pprint
 
 # should be blipp_conf, but netlogger doesn't like that for some reason
@@ -26,12 +28,23 @@ class BlippConfigure(ServiceConfigure):
         failed_probes = {}
         for name,probe in self.initial_probes.items():
             probe.update({"name": name})
+            try:
+                probe = self._validate_schema_probe(probe)
+            except Exception as e:
+                logger.exc('_post_probes', e)
+                continue # skip this probe
             r = self._post_measurement(probe)
             if not r:
                 failed_probes[name] = probe
         self.initial_probes = failed_probes
         if failed_probes:
             logger.warn('_post_probes', failed_probes=pprint.pformat(failed_probes))
+
+    def _validate_schema_probe(self, probe):
+        if "$schema" in probe:
+            schema = self.schema_cache.get(probe["$schema"])
+            validate_add_defaults(probe, schema)
+        return probe
 
     def refresh(self):
         super(BlippConfigure, self).refresh()
