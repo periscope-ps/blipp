@@ -127,11 +127,10 @@ class Probe:
         #f.write("%s" %result)
         return result
 
-<<<<<<< HEAD
     def _find_or_post_node(self, partition={}):
         f = open('./tempFile.txt', 'r+')
         exists = False
-)
+
         nodeList = self._get_unis().get('nodes', [])
         #f.write("%s" %nodeList)
         for node in nodeList:
@@ -148,6 +147,4 @@ class Probe:
 
 #myProbe = Probe()
 #myProbe.get_data()
-=======
 
->>>>>>> 5d277d1a75e8c1c0ee0552a188c88c31d1176632
