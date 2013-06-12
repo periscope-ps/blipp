@@ -7,8 +7,8 @@ import pytz
 import time
 import re
 from pprint import pprint
-import settings
-logger = settings.get_logger('adaptive')
+import blipp.settings
+logger = blipp.settings.get_logger('adaptive')
 
 def simple_avoid(config=None, **kwargs):
     while True:
