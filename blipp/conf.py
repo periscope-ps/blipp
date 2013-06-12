@@ -53,11 +53,13 @@ class ServiceConfigure(object):
                         "name": hostname,
                         "urn": urn})
             self.node_id = r["id"]
-
-        config["runningOn"] = {
-            "href": r["selfRef"],
-            "rel": "full"}
-        self.node_setup = True
+        if r:
+            config["runningOn"] = {
+                "href": r["selfRef"],
+                "rel": "full"}
+            self.node_setup = True
+        else:
+            logger.warn('_setup_node', msg="Unable to set up node in UNIS")
 
     def _setup_service(self):
         config = self.config
@@ -102,8 +104,12 @@ class ServiceConfigure(object):
         if config != r:
             logger.info("_setup_service",
                         msg="Local configuration differs from UNIS - updating UNIS")
-            self.unis.put("/services/" + config["id"], data=config)
-        self.service_setup = True
+            config["selfRef"] = r["selfRef"]
+            r = self.unis.put("/services/" + config["id"], data=config)
+        if r:
+            self.service_setup = True
+        else:
+            logger.warn('_setup_service', msg="unable to set up service in UNIS")
 
 
 
