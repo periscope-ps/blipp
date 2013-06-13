@@ -102,14 +102,14 @@ def config_logger():
     # set level
     if TRACE:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[3]
+                     nllog.TRACE)[3]
     elif DEBUG:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[2]
+                     nllog.TRACE)[2]
 
     else:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[0]
+                     nllog.TRACE)[1]
     log.setLevel(log_level)
 
 
