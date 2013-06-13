@@ -40,6 +40,18 @@ def full_event_types(data, EVENT_TYPES):
             result[EVENT_TYPES[k]]=v
         return result
 
+def remove_old_resources(resource_list):
+    """
+    Remove resources in a list which have the same id as another resource but an older timestamp
+    """
+    uniques = []
+    ids = set()
+    for r in resource_list:
+        if r["id"] not in ids:
+            uniques.append(r)
+            ids.add(r["id"])
+    return uniques
+
 def delete_nones(adict):
     '''Recursively delete None (json null) values from a deeply nested
     dictionary'''
