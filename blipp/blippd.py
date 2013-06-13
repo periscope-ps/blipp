@@ -20,7 +20,7 @@ from copy import deepcopy
 from utils import merge_dicts, delete_nones
 # import cProfile
 
-logger = settings.get_logger('blippd')
+logger = settings.get_logger('ablippd')
 
 def get_options():
     options = docopt.docopt(__doc__)
