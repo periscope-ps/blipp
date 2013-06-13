@@ -22,6 +22,7 @@ class ProbeRunner:
 
     def run(self, conn):
         for nextt in self.scheduler:
+            logger.debug("run", msg="got time from scheduler", time=nextt)
             if conn.poll():
                 if conn.recv() == "stop":
                     self._cleanup()
@@ -59,7 +60,7 @@ class ProbeRunner:
             sched_file, sched_name = "builtins", config["collection_schedule"]
         logger.info('setup', sched_file=sched_file, sched_name=sched_name)
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
-        self.scheduler = self.scheduler(config=config, **config["schedule_params"])
+        self.scheduler = self.scheduler(self.service, self.measurement)
 
         self.collector = Collector(self.service, self.measurement)
 
