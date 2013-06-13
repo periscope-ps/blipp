@@ -1,0 +1,36 @@
+{
+    "properties": {
+	"configurations": {
+	    "unis_url": "http://localhost:8888",
+	    "probe_defaults": {
+		"ms_url": "http://localhost:8888",
+		"resources": [
+		    {
+			"ref": "shared"
+		    }
+		],
+		"collection_schedule": "adaptive.simple_avoid",
+		"schedule_params": {
+		    "every": 60,
+		    "duration": 5,
+		    "num_to_schedule": 6,
+		    "max_wait": 30
+		}
+	    },
+	    "probes":{
+		"adaptive_probe1": {
+		    "probe_module": "dummy"
+		},
+		"adaptive_probe2": {
+		    "probe_module": "dummy"
+		},
+		"adaptive_probe3": {
+		    "probe_module": "dummy"
+		},
+		"adaptive_probe4": {
+		    "probe_module": "dummy"
+		}
+	    }
+	}
+    }
+}
