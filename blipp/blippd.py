@@ -34,7 +34,7 @@ def main(options=None):
         "name": "blipp",
         "properties": {
             "configurations": {
-                "unis-url": options.get("--unis-url", None),
+                "unis_url": options.get("--unis-url", None),
 
             }
         }
