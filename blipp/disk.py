@@ -1,7 +1,13 @@
 import resource
 import os
 import math
-from utils import full_event_types
+import sys
+import ethtool
+import socket
+from unis_client import UNISInstance
+import settings
+from utils import full_event_types, blipp_import_method
+import subprocess
 
 class Proc:
 
@@ -13,18 +19,55 @@ class Proc:
 
 
 EVENT_TYPES={
-    "write":"ps:tools:blipp:linux:disk:utilization:write",
-    "read":"ps:tools:blipp:linux:disk:utilization:read"
+    "write":"ps:tools:blipp:linux:disk:partition:write",
+    "read":"ps:tools:blipp:linux:disk:partition:read"
 }
 
 class Probe:
 
-    def __init__(self, config={}):
-        self.config = config
-        kwargs = config.get("kwargs", {})
+    def __init__(self, service, measurement):
+        self.service = service
+        self.measurement = measurement
+        self.config = measurement['configuration']
+        kwargs = self.config.get("kwargs", {})
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
+        self.unis = UNISInstance(self.service)
+
+    def _partition_info(self, partition={}):
+        hostName = socket.gethostname()
+        hostRef = self.unis.get(self.service["runningOn"]["href"])
+        hostRef = hostRef['selfRef']
+        result = {}
+        result['properties'] = {}
+        result['name'] = "%s %s" % (hostName, partition['dev']) #node name
+        result['host'] = hostRef #reference to system disk is on
+
+        try: #free space on mounted drives, likely just the root
+            line = subprocess.check_output("df -h | grep %s" %partition['dev'], shell=True)
+            split = line.split()
+            result['properties']['free space'] = split[3]
+        except:
+            pass
+
+        try: #disk volumes
+            line = subprocess.check_output("lsblk | grep %s" %partition['dev'], shell=True)
+            split = line.split()
+            result['properties']['size'] = split[3]
+        except:
+            pass
         
-    def parse_diskstats(self, dev=None):
+        try: #check for uuid and add to properties
+            line = subprocess.check_output("ls -l /dev/disk/by-uuid | grep %s" %partition['dev'], shell=True)
+            split = line.split()
+            result['properties']['uuid'] = split[8]
+            result['properties']['path'] = "/dev/"+partition['dev']
+        except:
+            pass
+        
+        return result
+
+    def _parse_diskstats(self, dev=None):
+        #columns of /proc/diskstats
         columns = ['m', 'mm', 'dev', 'reads', 'reads_merged', 'sectors_read',
                   'ms_reading', 'writes', 'writes_merged', 'sectors_written', 
                   'ms_writing', 'ios_in_progress', 'ms_io', 'weighted_ms_io']
@@ -47,42 +90,62 @@ class Probe:
 
             result[data['dev']] = data
 
-        return result #return dict entries for each device
+        return result 
 
-    def calc_reads(self, dataSet, driveType):
-        drive = dataSet[driveType]
+    def _calc_reads(self, drive):
         numReads = float(drive['reads'])
         readTime = float(drive['ms_reading'])
-        readAvg = round(readTime/numReads)
+        if numReads != 0 and readTime != 0:
+            readAvg = round(readTime/numReads)
+        else:
+            readAvg = 0
         return readAvg
 
-    def calc_writes(self, dataSet, driveType):
-        drive = dataSet[driveType]
+    def _calc_writes(self, drive):
         numWrites = float(drive['writes'])
         writeTime = float(drive['ms_writing'])
-        writeAvg = round(writeTime/numWrites)
+        if numWrites != 0 and writeTime != 0:
+            writeAvg = round(writeTime/numWrites)
+        else:
+            writeAvg = 0
         return writeAvg
 
     def get_data(self):
-
+        data = {}
         result = {}
-        dataSet = self.parse_diskstats()
+        thisPartition = {}
+        dataSet = self._parse_diskstats()
+        f = open('./tempFile.txt', 'r+')
+        partitions = {}
+#################################################################
+#use lsblk to get all partitions, then compare against dataSet build partitions{}
 
         for key in dataSet:
-            if key[0:2] == 'sd' and len(key) == 3:
-                thisKey = key[0:3]
-                readString = thisKey + ' reads'
-                writeString = thisKey + ' writes'
-                result[readString] = self.calc_reads(dataSet, thisKey)
-                result[writeString] = self.calc_writes(dataSet, thisKey)
-
-            elif key[0:2] == 'hd' and len(key) == 3:
-                thisKey = key[0:3]
-                result[thisKey] = self.calc_reads(dataSet, thisKey)
-                writeString = thisKey + ' writes'
-                result[readString] = self.calc_reads(dataSet, thisKey)
-                result[writeString] = self.calc_writes(dataSet, thisKey)
+            if key[0:2] == 'sd' and len(key) > 3:
+                partitions[key] = dataSet[key]
+#################################################################        
+        for key in partitions:
+            thisPartition = self._partition_info(partitions[key])
+            ref = self._find_or_post_node(thisPartition)
+            data['write'] = self._calc_writes(partitions[key])
+            data['read'] = self._calc_reads(partitions[key])
+            newKey = ref['selfRef']
+                
+            result[newKey] = full_event_types(data, EVENT_TYPES)
 
         return result
 
+    def _find_or_post_node(self, partition={}):
+        f = open('./tempFile.txt', 'r+')
+        exists = False
 
+        nodeList = self.unis.get('nodes', [])
+        for node in nodeList:
+            if node['name'] == partition['name']:
+                ref = node
+                exists = True
+
+        if not exists:
+            ref = self.unis.post("/nodes", partition)
+
+        return ref
