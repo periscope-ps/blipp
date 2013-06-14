@@ -120,6 +120,7 @@ class Probe:
 #################################################################
 #use lsblk to get all partitions, then compare against dataSet build partitions{}
 
+        test = self._get_unis()
         for key in dataSet:
             if key[0:2] == 'sd' and len(key) > 3:
                 partitions[key] = dataSet[key]
