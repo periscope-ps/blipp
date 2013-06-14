@@ -36,7 +36,7 @@ class Probe:
             self.unis = UNISInstance(self.config)
         return self.unis
 
-    def partition_info(self, partition={}):
+    def _partition_info(self, partition={}):
         hostName = socket.gethostname()
         hostRef = self._get_unis().get_node()
         hostRef = hostRef['selfRef']
@@ -45,6 +45,20 @@ class Probe:
         result['name'] = "%s %s" % (hostName, partition['dev']) #node name
         result['host'] = hostRef #reference to system disk is on
 
+        try: #disk volumes
+            line = subprocess.check_output("lsblk | grep %s" %partition['dev'], shell=True)
+            split = line.split()
+            result['properties']['size'] = split[3]
+        except:
+            pass
+
+        try: #free space on mounted drives, likely just the root
+            line = subprocess.check_output("df -h | grep %s" %partition['dev'], shell=True)
+            split = line.split()
+            result['properties']['free space'] = split[3]
+        except:
+            pass
+        
         try: #check for uuid and add to properties
             line = subprocess.check_output("ls -l /dev/disk/by-uuid | grep %s" %partition['dev'], shell=True)
             split = line.split()
@@ -55,7 +69,7 @@ class Probe:
         
         return result
 
-    def parse_diskstats(self, dev=None):
+    def _parse_diskstats(self, dev=None):
         #columns of /proc/diskstats
         columns = ['m', 'mm', 'dev', 'reads', 'reads_merged', 'sectors_read',
                   'ms_reading', 'writes', 'writes_merged', 'sectors_written', 
@@ -81,7 +95,7 @@ class Probe:
 
         return result 
 
-    def calc_reads(self, drive):
+    def _calc_reads(self, drive):
         numReads = float(drive['reads'])
         readTime = float(drive['ms_reading'])
         if numReads != 0 and readTime != 0:
@@ -90,7 +104,7 @@ class Probe:
             readAvg = 0
         return readAvg
 
-    def calc_writes(self, drive):
+    def _calc_writes(self, drive):
         numWrites = float(drive['writes'])
         writeTime = float(drive['ms_writing'])
         if numWrites != 0 and writeTime != 0:
@@ -103,7 +117,7 @@ class Probe:
         data = {}
         result = {}
         thisPartition = {}
-        dataSet = self.parse_diskstats()
+        dataSet = self._parse_diskstats()
         f = open('./tempFile.txt', 'r+')
         partitions = {}
 
@@ -113,10 +127,10 @@ class Probe:
                 partitions[key] = dataSet[key]
         
         for key in partitions:
-            thisPartition = self.partition_info(partitions[key])
+            thisPartition = self._partition_info(partitions[key])
             ref = self._find_or_post_node(thisPartition)
-            data['write'] = self.calc_writes(partitions[key])
-            data['read'] = self.calc_reads(partitions[key])
+            data['write'] = self._calc_writes(partitions[key])
+            data['read'] = self._calc_reads(partitions[key])
             newKey = ref['selfRef']
                 
             result[newKey] = full_event_types(data, EVENT_TYPES)
@@ -137,6 +151,3 @@ class Probe:
             ref = self.unis.post("/nodes", partition)
 
         return ref
-
-
-
