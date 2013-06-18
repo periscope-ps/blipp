@@ -9,6 +9,8 @@ import settings
 from utils import full_event_types, blipp_import_method
 import subprocess
 
+logger = settings.get_logger('disk')
+
 class Proc:
 
     def __init__(self, dirname="/proc"):
@@ -16,12 +18,6 @@ class Proc:
 
     def open(self, *path):
         return open(os.path.join(self._dir, *path))
-
-
-EVENT_TYPES={
-    "write":"ps:tools:blipp:linux:disk:partition:write",
-    "read":"ps:tools:blipp:linux:disk:partition:read"
-}
 
 class Probe:
 
@@ -42,19 +38,19 @@ class Probe:
         result['name'] = "%s %s" % (hostName, partition['dev']) #node name
         result['host'] = hostRef #reference to system disk is on
 
-        try: #free space on mounted drives, likely just the root
+        try: #free space on mounted drives, likely just where root file system is mounted
             line = subprocess.check_output("df -h | grep %s" %partition['dev'], shell=True)
             split = line.split()
             result['properties']['free space'] = split[3]
         except:
-            pass
+            logger.info('free disk space', msg='free space for %s is unavailable' %partition['dev'])
 
-        try: #disk volumes
+        try: #disk sizes
             line = subprocess.check_output("lsblk | grep %s" %partition['dev'], shell=True)
             split = line.split()
             result['properties']['size'] = split[3]
         except:
-            pass
+            logger.info('disk size', msg='unable to retrieve size of partition %s' %partition['dev'])
         
         try: #check for uuid and add to properties
             line = subprocess.check_output("ls -l /dev/disk/by-uuid | grep %s" %partition['dev'], shell=True)
@@ -62,7 +58,7 @@ class Probe:
             result['properties']['uuid'] = split[8]
             result['properties']['path'] = "/dev/"+partition['dev']
         except:
-            pass
+            logger.info('uuid', msg='partition %s has no UUID' %partition['dev'])
         
         return result
 
@@ -74,7 +70,6 @@ class Probe:
 
         stat_file = self._proc.open("diskstats")
         result = {}
-
         lines = stat_file.readlines()
         
         for line in lines:
@@ -91,6 +86,24 @@ class Probe:
             result[data['dev']] = data
 
         return result 
+
+    def _parse_lsblk(self):
+        columns = ['name', 'dev_nums', 'rm', 'size', 'ro', 'type', 'mount_point']
+        f = open('./tempFile.txt', 'r+')
+        result = []
+        try:
+            lines = subprocess.check_output('lsblk -l -n', shell=True)
+            lines = lines.splitlines()
+            for line in lines:
+                split = line.split()
+                parts = dict(zip(columns, split))
+                for key in parts:
+                    if key == 'type':
+                        if parts['type'] == 'part':
+                            result.append(parts['name'])
+        except:
+            logger.warn('lsblk', msg="Unable to retrieve partition info from command 'lsblk'")
+        return result
 
     def _calc_reads(self, drive):
         numReads = float(drive['reads'])
@@ -110,34 +123,36 @@ class Probe:
             writeAvg = 0
         return writeAvg
 
+    def _build_event_types(self, partition={}):
+        result = {"write":"ps:tools:blipp:linux:disk:partition:%s:average:write:time" %partition['dev'],
+                  "read":"ps:tools:blipp:linux:disk:partition:%s:average:read:time" %partition['dev']}
+        return result
+
     def get_data(self):
         data = {}
         result = {}
         thisPartition = {}
         dataSet = self._parse_diskstats()
-        f = open('./tempFile.txt', 'r+')
         partitions = {}
-#################################################################
-#use lsblk to get all partitions, then compare against dataSet build partitions{}
-
-        test = self._get_unis()
+ 
+        partList = self._parse_lsblk() #get the names of all partitions
+        
         for key in dataSet:
-            if key[0:2] == 'sd' and len(key) > 3:
-                partitions[key] = dataSet[key]
-#################################################################        
-        for key in partitions:
+            if key in partList:
+                partitions[key] = dataSet[key] #see if the item from diskstats is a partition
+
+        for key in partitions: #get all data for each partition
             thisPartition = self._partition_info(partitions[key])
             ref = self._find_or_post_node(thisPartition)
             data['write'] = self._calc_writes(partitions[key])
             data['read'] = self._calc_reads(partitions[key])
             newKey = ref['selfRef']
-                
-            result[newKey] = full_event_types(data, EVENT_TYPES)
+            eventTypes = self._build_event_types(partitions[key])
+            result[newKey] = full_event_types(data, eventTypes)
 
         return result
 
     def _find_or_post_node(self, partition={}):
-        f = open('./tempFile.txt', 'r+')
         exists = False
 
         nodeList = self.unis.get('nodes', [])
