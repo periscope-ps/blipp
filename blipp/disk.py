@@ -43,7 +43,7 @@ class Probe:
             split = line.split()
             result['properties']['free space'] = split[3]
         except:
-            logger.info('free disk space', msg='free space for %s is unavailable' %partition['dev'])
+            logger.info('free disk space', msg='free space info for %s is unavailable' %partition['dev'])
 
         try: #disk sizes
             line = subprocess.check_output("lsblk | grep %s" %partition['dev'], shell=True)
@@ -56,10 +56,11 @@ class Probe:
             line = subprocess.check_output("ls -l /dev/disk/by-uuid | grep %s" %partition['dev'], shell=True)
             split = line.split()
             result['properties']['uuid'] = split[8]
-            result['properties']['path'] = "/dev/"+partition['dev']
         except:
             logger.info('uuid', msg='partition %s has no UUID' %partition['dev'])
         
+        result['properties']['path'] = "/dev/"+partition['dev']
+
         return result
 
     def _parse_diskstats(self, dev=None):
@@ -90,7 +91,7 @@ class Probe:
     def _parse_lsblk(self):
         columns = ['name', 'dev_nums', 'rm', 'size', 'ro', 'type', 'mount_point']
         f = open('./tempFile.txt', 'r+')
-        result = []
+        partList = []
         try:
             lines = subprocess.check_output('lsblk -l -n', shell=True)
             lines = lines.splitlines()
@@ -100,10 +101,10 @@ class Probe:
                 for key in parts:
                     if key == 'type':
                         if parts['type'] == 'part':
-                            result.append(parts['name'])
+                            partList.append(parts['name'])
         except:
             logger.warn('lsblk', msg="Unable to retrieve partition info from command 'lsblk'")
-        return result
+        return partList
 
     def _calc_reads(self, drive):
         numReads = float(drive['reads'])
@@ -124,8 +125,9 @@ class Probe:
         return writeAvg
 
     def _build_event_types(self, partition={}):
-        result = {"write":"ps:tools:blipp:linux:disk:partition:%s:average:write:time" %partition['dev'],
-                  "read":"ps:tools:blipp:linux:disk:partition:%s:average:read:time" %partition['dev']}
+        result = {"write":"ps:tools:blipp:linux:disk:partition:%s:average:write:ms" %partition['dev'],
+                  "read":"ps:tools:blipp:linux:disk:partition:%s:average:read:ms" %partition['dev'],
+                  "weighted_io":"ps:tools:blipp:linux:disk:partition:%s:weighted:io:ms" %partition['dev']}
         return result
 
     def get_data(self):
@@ -134,7 +136,6 @@ class Probe:
         thisPartition = {}
         dataSet = self._parse_diskstats()
         partitions = {}
- 
         partList = self._parse_lsblk() #get the names of all partitions
         
         for key in dataSet:
@@ -146,6 +147,7 @@ class Probe:
             ref = self._find_or_post_node(thisPartition)
             data['write'] = self._calc_writes(partitions[key])
             data['read'] = self._calc_reads(partitions[key])
+            data['weighted_io'] = partitions[key]['weighted_ms_io']
             newKey = ref['selfRef']
             eventTypes = self._build_event_types(partitions[key])
             result[newKey] = full_event_types(data, eventTypes)
