@@ -30,36 +30,40 @@ class Probe:
         self.unis = UNISInstance(self.service)
 
     def _partition_info(self, partition={}):
+        dev = partition['dev']
         hostName = socket.gethostname()
         hostRef = self.unis.get(self.service["runningOn"]["href"])
         hostRef = hostRef['selfRef']
         result = {}
         result['properties'] = {}
-        result['name'] = "%s %s" % (hostName, partition['dev']) #node name
+        result['name'] = "%s %s" % (hostName, dev) #node name
         result['host'] = hostRef #reference to system disk is on
 
-        try: #free space on mounted drives, likely just where root file system is mounted
-            line = subprocess.check_output("df -h | grep %s" %partition['dev'], shell=True)
-            split = line.split()
-            result['properties']['free space'] = split[3]
-        except:
-            logger.info('free disk space', msg='free space info for %s is unavailable' %partition['dev'])
+        line = subprocess.check_output("lsblk | grep %s" %dev, shell=True)
+        split = line.split()
+        result['properties']['size'] = split[3]
 
-        try: #disk sizes
-            line = subprocess.check_output("lsblk | grep %s" %partition['dev'], shell=True)
-            split = line.split()
-            result['properties']['size'] = split[3]
-        except:
-            logger.info('disk size', msg='unable to retrieve size of partition %s' %partition['dev'])
+        lines = subprocess.check_output("df -h", shell=True)
+        if dev in lines:
+            lines = lines.splitlines()
+            for line in lines:
+                if dev in line:
+                    split = line.split()
+                    result['properties']['free space'] = split[3]
+        else:
+            result['properties']['free space'] = 'unavailable'
         
-        try: #check for uuid and add to properties
-            line = subprocess.check_output("ls -l /dev/disk/by-uuid | grep %s" %partition['dev'], shell=True)
-            split = line.split()
-            result['properties']['uuid'] = split[8]
-        except:
-            logger.info('uuid', msg='partition %s has no UUID' %partition['dev'])
+        lines = subprocess.check_output("ls -l /dev/disk/by-uuid", shell=True)
+        if dev in lines:
+            lines = lines.splitlines()
+            for line in lines:
+                if dev in line:
+                    split = line.split()
+                    result['properties']['uuid'] = split[8]
+        else:
+            result['properties']['uuid'] = 'n/a'
         
-        result['properties']['path'] = "/dev/"+partition['dev']
+        result['properties']['path'] = "/dev/"+dev
 
         return result
 
@@ -102,8 +106,8 @@ class Probe:
                     if key == 'type':
                         if parts['type'] == 'part':
                             partList.append(parts['name'])
-        except:
-            logger.warn('lsblk', msg="Unable to retrieve partition info from command 'lsblk'")
+        except Exception as e:
+            logger.exc('_parse_lsblk', e)
         return partList
 
     def _calc_reads(self, drive):
