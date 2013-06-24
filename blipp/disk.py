@@ -28,6 +28,7 @@ class Probe:
         kwargs = self.config.get("kwargs", {})
         self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
         self.unis = UNISInstance(self.service)
+        self.alt_version = False
 
     def _partition_info(self, partition={}):
         dev = partition['dev']
@@ -73,6 +74,8 @@ class Probe:
                   'ms_reading', 'writes', 'writes_merged', 'sectors_written', 
                   'ms_writing', 'ios_in_progress', 'ms_io', 'weighted_ms_io']
 
+        alt_columns = ['m', 'mm', 'dev', 'reads', 'sectors_read', 'writes', 'sectors_written'] #kernel 2.6.0 - 2.6.24
+
         stat_file = self._proc.open("diskstats")
         result = {}
         lines = stat_file.readlines()
@@ -80,13 +83,22 @@ class Probe:
         for line in lines:
             if line == '': continue
             split = line.split()
-            
-            data = dict(zip(columns, split))
-            if dev != None and dev != data['dev']:
-                continue
-            for key in data:
-                if key != 'dev':
-                    data[key] = int(data[key])
+            if len(split) == 14:
+                data = dict(zip(columns, split))
+                if dev != None and dev != data['dev']:
+                    continue
+                for key in data:
+                    if key != 'dev':
+                        data[key] = int(data[key])
+
+            elif len(split) == 7: #kernel 2.6.0 - 2.6.24
+                data = dict(zip(alt_columns, split))
+                self.alt_version = True
+                if dev != None and dev != data['dev']:
+                    continue
+                for key in data:
+                    if key != 'dev':
+                        data[key] = int(data[key])
 
             result[data['dev']] = data
 
@@ -129,9 +141,16 @@ class Probe:
         return writeAvg
 
     def _build_event_types(self, partition={}):
-        result = {"write":"ps:tools:blipp:linux:disk:partition:%s:average:write:ms" %partition['dev'],
-                  "read":"ps:tools:blipp:linux:disk:partition:%s:average:read:ms" %partition['dev'],
-                  "weighted_io":"ps:tools:blipp:linux:disk:partition:%s:weighted:io:ms" %partition['dev']}
+        dev = partition['dev']
+        if not self.alt_version:
+            result = {"read":"ps:tools:blipp:linux:disk:partition:%s:average:read:ms" %dev,
+                      "write":"ps:tools:blipp:linux:disk:partition:%s:average:write:ms" %dev,
+                      "weighted_io":"ps:tools:blipp:linux:disk:partition:%s:weighted:io:ms" %dev}
+        else: #kernel 2.6.0 - 2.6.24
+            result = {"reads":"ps:tools:blipp:linux:disk:partition:%s:reads:issued" %dev,
+                      "sectors_read":"ps:tools:blipp:linux:disk:partition:%s:sectors:read" %dev,
+                      "writes":"ps:tools:blipp:linux:disk:partition:%s:writes:issued" %dev,
+                      "sectors_written":"ps:tools:blipp:linux:disk:partition:%s:sectors:written" %dev}
         return result
 
     def get_data(self):
@@ -149,11 +168,20 @@ class Probe:
         for key in partitions: #get all data for each partition
             thisPartition = self._partition_info(partitions[key])
             ref = self._find_or_post_node(thisPartition)
-            data['write'] = self._calc_writes(partitions[key])
-            data['read'] = self._calc_reads(partitions[key])
-            data['weighted_io'] = partitions[key]['weighted_ms_io']
             newKey = ref['selfRef']
+
+            if not self.alt_version:
+                data['read'] = self._calc_reads(partitions[key])
+                data['write'] = self._calc_writes(partitions[key])
+                data['weighted_io'] = partitions[key]['weighted_ms_io']
+            else:
+                data['reads'] = partitions[key]['reads']
+                data['sectors_read'] = partitions[key]['sectors_read']
+                data['writes'] = partitions[key]['writes']
+                data['sectors_written'] = partitions[key]['sectors_written']
+                
             eventTypes = self._build_event_types(partitions[key])
+                
             result[newKey] = full_event_types(data, eventTypes)
 
         return result
