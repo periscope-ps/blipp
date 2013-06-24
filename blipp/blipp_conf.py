@@ -85,7 +85,7 @@ class BlippConfigure(ServiceConfigure):
             elif m not in self.initial_measurements:
                 measurements.append(m)
 
-        return measurements
+        return filter(lambda m: m["configuration"].get("status", "ON").upper()=="ON", measurements)
 
     @staticmethod
     def _strip_probes(initial_config):
