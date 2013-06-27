@@ -7,16 +7,17 @@ import re
 logger = settings.get_logger("netlogger_probe")
 
 class Probe:
-    def __init__(self, config={}):
+    def __init__(self, service, measurement):
+        self.config = measurement["configuration"]
         self.logfile = None
         try:
-            self.logfile = open(config["logfile"])
+            self.logfile = open(self.config["logfile"])
         except KeyError:
             logger.warn("__init__", msg="Config does not specify logfile!")
         except IOError:
-            logger.warn("__init__", msg="Could not open logfile: %s" % config["logfile"])
+            logger.warn("__init__", msg="Could not open logfile: %s" % self.config["logfile"])
 
-        self.app_name = config.get("appname", "")
+        self.app_name = self.config.get("appname", "")
         self.et_string = "ps:tools:blipp:netlogger:"
         if self.app_name:
             self.et_string += self.app_name + ":"
