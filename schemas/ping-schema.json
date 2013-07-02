@@ -12,21 +12,25 @@
 	    "required": false
 	},
 	"probe_module": {
+            "title": "Probe Module",
 	    "default": "cmd_line_probe",
 	    "type": "string",
 	    "required": false
 	},
 	"command": {
+            "title": "Command",
 	    "default": "ping -c 1 $-W $-s $-t $-p $-M $-Q $address",
 	    "type": "string",
 	    "required": false
 	},
 	"regex": {
+            "title": "Regular Expression", 
 	    "default": "ttl=(?P<ttl>\\d+).*time=(?P<rtt>\\d+\\.\\d+) ",
 	    "type": "string",
 	    "required": false
 	},
 	"eventTypes": {
+            "title": "Event Types",
 	    "required": false,
 	    "default": {
 		"ttl": "ps:tools:blipp:linux:net:ping:ttl",

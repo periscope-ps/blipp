@@ -1,0 +1,31 @@
+{
+  "form": [
+    {
+      "key": "$schema",
+      "type": "hidden"
+    },
+    {
+      "key": "probe_module",
+      "type": "hidden"
+    }
+    {
+      "key": "command",
+      "type": "hidden"
+    }
+    {
+      "key": "regex",
+      "type": "hidden"
+    }
+    {
+      "key": "eventTypes",
+      "type": "hidden"
+    }
+    "text",
+    {
+      "type": "submit",
+      "title": "Submit"
+    }
+  ]
+}
+
+
