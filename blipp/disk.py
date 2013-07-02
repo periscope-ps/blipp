@@ -1,4 +1,3 @@
-import resource
 import os
 import math
 import sys
@@ -40,11 +39,22 @@ class Probe:
         result['name'] = "%s %s" % (hostName, dev) #node name
         result['host'] = hostRef #reference to system disk is on
 
-        line = subprocess.check_output("lsblk | grep %s" %dev, shell=True)
+        lines = subprocess.check_output("ls -l /dev/disk/by-uuid", shell=True, stderr=subprocess.STDOUT)
+        if dev in lines:
+            lines = lines.splitlines()
+            for line in lines:
+                if dev in line:
+                    split = line.split()
+                    result['properties']['uuid'] = split[8]
+        else:
+            #result['properties']['uuid'] = 'n/a'
+            return 'skip'
+
+        line = subprocess.check_output("lsblk | grep %s" %dev, shell=True, stderr=subprocess.STDOUT,)
         split = line.split()
         result['properties']['size'] = split[3]
 
-        lines = subprocess.check_output("df -h", shell=True)
+        lines = subprocess.check_output("df -h", shell=True, stderr=subprocess.STDOUT,)
         if dev in lines:
             lines = lines.splitlines()
             for line in lines:
@@ -53,16 +63,6 @@ class Probe:
                     result['properties']['free space'] = split[3]
         else:
             result['properties']['free space'] = 'unavailable'
-        
-        lines = subprocess.check_output("ls -l /dev/disk/by-uuid", shell=True)
-        if dev in lines:
-            lines = lines.splitlines()
-            for line in lines:
-                if dev in line:
-                    split = line.split()
-                    result['properties']['uuid'] = split[8]
-        else:
-            result['properties']['uuid'] = 'n/a'
         
         result['properties']['path'] = "/dev/"+dev
 
@@ -106,7 +106,6 @@ class Probe:
 
     def _parse_lsblk(self):
         columns = ['name', 'dev_nums', 'rm', 'size', 'ro', 'type', 'mount_point']
-        f = open('./tempFile.txt', 'r+')
         partList = []
         try:
             lines = subprocess.check_output('lsblk -l -n', shell=True)
@@ -167,6 +166,8 @@ class Probe:
 
         for key in partitions: #get all data for each partition
             thisPartition = self._partition_info(partitions[key])
+            if thisPartition == 'skip':
+                continue
             ref = self._find_or_post_node(thisPartition)
             newKey = ref['selfRef']
 
@@ -188,12 +189,15 @@ class Probe:
 
     def _find_or_post_node(self, partition={}):
         exists = False
-
         nodeList = self.unis.get('nodes', [])
+
         for node in nodeList:
-            if node['name'] == partition['name']:
-                ref = node
-                exists = True
+            if node['name'] == socket.gethostname():
+                continue #don't check host
+            else:
+                if node['properties']['uuid'] == partition['properties']['uuid']:
+                    ref = node
+                    exists = True
 
         if not exists:
             ref = self.unis.post("/nodes", partition)
