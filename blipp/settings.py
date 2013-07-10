@@ -27,7 +27,7 @@ MIME = {
     }
 
 HOSTNAME = socket.gethostname() ### this needs to get the fqdn for DOMAIN to be right down below
-GEMINI_NODE_INFO="/usr/local/etc/node.info"
+NODE_INFO="/usr/local/etc/node.info"
 try:
     DOMAIN = HOSTNAME.split('.', 1)[1]
 except Exception:
@@ -61,9 +61,10 @@ STANDALONE_DEFAULTS = {
     }
 nconf = {}
 AUTH_UUID = None
+UNIS_ID = None
 MS_URL = None
 try:
-    with open(GEMINI_NODE_INFO, 'r') as cfile:
+    with open(NODE_INFO_FILE, 'r') as cfile:
         for line in cfile:
             name, var = line.partition("=")[::2]
             nconf[name.strip()] = str(var).rstrip()
@@ -75,10 +76,16 @@ try:
             AUTH_UUID = nconf['auth_uuid']
         except Exception as e:
             pass
+        try:
+            UNIS_ID = nconf['unis_id']
+        except Exception as e:
+            pass
 except IOError:
     pass
 if AUTH_UUID:
     STANDALONE_DEFAULTS["properties"].update({"geni": {"slice_uuid":AUTH_UUID}})
+if UNIS_ID:
+    STANDALONE_DEFAULTS["properties"]["configurations"].update({"node_id":UNIS_ID})
 
 
 ##################################################################
