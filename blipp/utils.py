@@ -40,6 +40,18 @@ def full_event_types(data, EVENT_TYPES):
             result[EVENT_TYPES[k]]=v
         return result
 
+def remove_old_resources(resource_list):
+    """
+    Remove resources in a list which have the same id as another resource but an older timestamp
+    """
+    uniques = []
+    ids = set()
+    for r in resource_list:
+        if r["id"] not in ids:
+            uniques.append(r)
+            ids.add(r["id"])
+    return uniques
+
 def delete_nones(adict):
     '''Recursively delete None (json null) values from a deeply nested
     dictionary'''
@@ -53,14 +65,27 @@ def delete_nones(adict):
     for k in del_keys:
         del adict[k]
 
-def merge_dicts(adict, overriding):
-    '''Recursively merge two deeply nested dictionaries, preferring
-    values from 'overriding' when there are colliding keys'''
+def merge_dicts(base, overriding):
+    '''Recursively merge 'overriding' into base (both nested
+    dictionaries), preferring values from 'overriding' when there are
+    colliding keys
+    '''
     for k,v in overriding.iteritems():
         if isinstance(v, dict):
-            merge_dicts(adict.setdefault(k, {}), v)
+            merge_dicts(base.setdefault(k, {}), v)
         else:
-            adict[k] = v
+            base[k] = v
+
+def merge_into(base, defaults):
+    '''Recursively merge 'defaults' into base (both nested dictionaries),
+    preferring values from 'base' when there are colliding keys
+    '''
+    for k,v in defaults.items():
+        if isinstance(v, dict) and isinstance(base.get(k, None), dict):
+            merge_into(base.setdefault(k, {}), v)
+        elif not k in base:
+            base[k] = v
+
 
 def reconcile_config(defaults, master):
     ans = deepcopy(defaults)
@@ -80,6 +105,9 @@ def query_string_from_dict(adict, prefix=""):
     if prefix:
         prefix += "."
     for k,v in adict.items():
+        # a hack: UNIS doesn't like queries that have a '$' in the key for some reason
+        if "$" in k:
+            continue
         if isinstance(v, dict):
             retstring += query_string_from_dict(v, prefix + str(k))
         else:
@@ -88,9 +116,9 @@ def query_string_from_dict(adict, prefix=""):
             elif isinstance(v, int):
                 retstring += prefix + str(k) + "=number:" + str(v) + "&"
             elif isinstance(v, str):
-                retstring+= prefix + str(k) + "=" + v + "&"
+                retstring += prefix + str(k) + "=" + v + "&"
             elif isinstance(v, unicode):
-                retstring+= prefix + str(k) + "=" + v + "&"
+                retstring += prefix + str(k) + "=" + v + "&"
             else:
                 print "ATTEMPT TO QUERY ON NON SUPPORTED TYPE:"
                 print v

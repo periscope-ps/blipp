@@ -3,11 +3,12 @@ import json
 import settings
 import re
 
-logger = settings.get_logger('gemini_client')
+logger = settings.get_logger('periscope_client')
 
-class GeminiClient:
-    def __init__(self, config, url):
-        self.config = config
+class PeriscopeClient:
+    def __init__(self, service_entry, url):
+        self.service_entry = service_entry
+        self.config = service_entry["properties"]["configurations"]
         self.url = url
 
     def do_req(self, rtype, url, data=None, headers=None):
@@ -22,7 +23,7 @@ class GeminiClient:
                 self._add_gemini_auth(data, loc)
         if config.get("use_ssl", None):
             r = http.make_request(rtype, url, headers, json.dumps(data),
-                                  config['ssl_cert'], config['ssl_key'],
+                                  config.get('ssl_cert', None), config.get('ssl_key', None),
                                   config['ssl_cafile'])
         else:
             r = http.make_request(rtype, url, headers, json.dumps(data))
@@ -58,9 +59,9 @@ class GeminiClient:
         return url, schema, headers
 
     def _add_gemini_auth(self, post_dict, loc="properties"):
-        if "geni" in self.config.get("properties", {}):
+        if "geni" in self.service_entry.get("properties", {}):
             geni = post_dict.setdefault(loc, {}).setdefault("geni", {})
-            geni.update(self.config["properties"]["geni"])
+            geni.update(self.service_entry["properties"]["geni"])
 
 
     def get(self, url, data=None, headers=None):

@@ -27,6 +27,7 @@ setup(
     url="https://github.com/periscope-ps/periscope",
 
     install_requires=[
+        "validictory",
         "requests",
         "netlogger>=4.3.0",
         "netifaces",
@@ -38,7 +39,7 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'blippd = blipp.start_blipp:main',
+            'blippd = blipp.blippd:main',
             'blippcmd = scripts.blippcmd:main'
         ]
     },

@@ -34,10 +34,11 @@ EVENT_TYPES={
 class Probe:
     """Get memory statistics.
     """
-    def __init__(self, config={}):
-        self.config = config
-        kwargs = config.get("kwargs", {})
-        self._proc = Proc(kwargs.get("proc_dir", "/proc/"))
+    def __init__(self, service, measurement):
+        self.service = service
+        self.measurement = measurement
+        self.config = measurement["configuration"]
+        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
 
     def get_data(self):
         bean_counts = self._proc.exists("user_beancounters")

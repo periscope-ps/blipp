@@ -28,37 +28,33 @@ MIME = {
 
 HOSTNAME = socket.gethostname() ### this needs to get the fqdn for DOMAIN to be right down below
 NODE_INFO_FILE="/usr/local/etc/node.info"
+
 try:
     DOMAIN = HOSTNAME.split('.', 1)[1]
 except Exception:
     DOMAIN = HOSTNAME
-URN_STRING = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
-DEFAULT_COLLECTION_SIZE=10000000 # ~10 megabytes
-DEFAULT_COLLECTION_TTL=1500000 # ~17 days
+HOST_URN = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
 
 STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],
     "status": "ON",
-    "name": "blipp",
-    "description": "default blipp service description",
     "serviceType": "http://some_schema_domain/blipp",
     "properties": {
         "configurations": {
             "unis_poll_interval":300,
             "use_ssl": "",
-	    "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
-	    "ssl_key": "/usr/local/etc/certs/mp_key.pem",
 	    "ssl_cafile": "",
-            "hostname": HOSTNAME,
-            "host_urn": URN_STRING,
-            "location":{},
             "probe_defaults": {
                 "collection_size": 10000000, # ~10 megabytes
-                "collection_ttl": 1500000 # ~17 days
-                }
+                "collection_ttl": 1500000, # ~17 days
+                "reporting_params": 1
+            },
+            "probes": {
             }
         }
     }
+}
+
 nconf = {}
 AUTH_UUID = None
 UNIS_ID = None
@@ -82,6 +78,7 @@ try:
             pass
 except IOError:
     pass
+
 if AUTH_UUID:
     STANDALONE_DEFAULTS["properties"].update({"geni": {"slice_uuid":AUTH_UUID}})
 if MS_URL:
@@ -112,14 +109,14 @@ def config_logger():
     # set level
     if TRACE:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[3]
+                     nllog.TRACE)[3]
     elif DEBUG:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[2]
+                     nllog.TRACE)[2]
 
     else:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
-                 nllog.TRACE)[0]
+                     nllog.TRACE)[1]
     log.setLevel(log_level)
 
 
@@ -129,4 +126,3 @@ def get_logger(namespace=NETLOGGER_NAMESPACE):
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
         config_logger()
     return nllog.get_logger(namespace)
-

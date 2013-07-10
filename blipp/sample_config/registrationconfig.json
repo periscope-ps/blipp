@@ -1,0 +1,27 @@
+{
+    "properties": {
+	"configurations": {
+	    "unis_url": "http://localhost:8888",
+	    "probe_defaults": {
+		"ms_url": "http://localhost:8888",
+		"collection_schedule": "builtins.simple",
+		"schedule_params": {"every": 30}
+	    },
+	    "probes":{
+		"openvpn-nersc": {
+		    "probe_module": "registration_probe",
+		    "pidfile": "/var/run/openvpn.config-nersc.pid",
+		    "service_description": "OpenVPN for NERSC",
+		    "service_type": "http://www.openvpn.net"
+		},
+		"sshd": {
+                    "probe_module": "registration_probe",
+		    "pidfile": "/var/run/sshd.pid",
+                    "service_description": "SSH Daemon",
+                    "service_accesspoint": "ssh://localhost:22",
+                    "service_type": "http://www.openssh.org"
+                }
+	    }
+	}
+    }
+}

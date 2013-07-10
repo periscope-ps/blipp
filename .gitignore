@@ -1,1 +1,11 @@
 blipp/blippprof
+*.pyc
+*~
+#*
+.tox
+blipp.egg-info
+build/
+dist/
+*.prof
+*#
+.#*

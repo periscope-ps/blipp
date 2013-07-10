@@ -1,68 +1,98 @@
 from conf import ServiceConfigure
-from copy import deepcopy
-from utils import merge_dicts
+from utils import merge_into, blipp_import
+from schema_cache import SchemaCache
+import settings
+from validation import validate_add_defaults
 
+import pprint
+
+# should be blipp_conf, but netlogger doesn't like that for some reason
+logger = settings.get_logger('confblipp')
 
 class BlippConfigure(ServiceConfigure):
-    def __init__(self, file_loc=None, unis_url=None, service_id=None,
-                 node_id=None, service_name=None, query_service=True):
-        if service_name==None:
-            service_name="blipp"
-        super(BlippConfigure, self).__init__(file_loc, unis_url, service_id,
-                                             node_id, service_name, query_service)
+    def __init__(self, initial_config={}, node_id=None, pre_existing_measurements="ignore"):
+        if "name" not in initial_config:
+            initial_config['name']="blipp"
+        self.pem = pre_existing_measurements
+        self.schema_cache = SchemaCache()
+        self.initial_probes = self._strip_probes(initial_config)
+        super(BlippConfigure, self).__init__(initial_config, node_id)
 
-    def expand_probe_config(self):
-        '''Configuration for probes has 3 levels, there are the
-           service level probe_defaults, the defaults for each probe
-           under "probes", and then specific config under "targets"
-           for each actual instance of that particular
-           probe. "targets" may not exist in which case there is one
-           instance of that probe type. Each probe instance's actual
-           config is the top level default, overidden by anything in
-           probe_defaults, which in turn is overridden by anything in
-           "targets".  This method returns a list of the final probe
-           instances and their configurations
+    def initialize(self):
+        super(BlippConfigure, self).initialize()
+        self.initial_measurements = self.unis.get("/measurements?service=" +
+                                                  self.config["selfRef"])
+        self._post_probes()
+
+    def _post_probes(self):
+        failed_probes = {}
+        for name,probe in self.initial_probes.items():
+            probe.update({"name": name})
+            try:
+                probe = self._validate_schema_probe(probe)
+            except Exception as e:
+                logger.exc('_post_probes', e)
+                continue # skip this probe
+            r = self._post_measurement(probe)
+            if not r:
+                failed_probes[name] = probe
+        self.initial_probes = failed_probes
+        if failed_probes:
+            logger.warn('_post_probes', failed_probes=pprint.pformat(failed_probes))
+
+    def _validate_schema_probe(self, probe):
+        if "$schema" in probe:
+            schema = self.schema_cache.get(probe["$schema"])
+            validate_add_defaults(probe, schema)
+        return probe
+
+    def refresh(self):
+        super(BlippConfigure, self).refresh()
+        if self.initial_probes:
+            self._post_probes()
+        self.measurements = self.unis.get("/measurements?service=" +
+                                          self.config["selfRef"])
+
+    def _post_measurement(self, probe):
+        probe_mod = blipp_import(probe["probe_module"])
+        if "EVENT_TYPES" in probe_mod.__dict__:
+            eventTypes = probe_mod.EVENT_TYPES.values()
+        else:
+            try:
+                eventTypes = probe["eventTypes"].values()
+            except KeyError:
+                logger.warn("_post_measurement", msg="No eventTypes present")
+                eventTypes = []
+
+        measurement = {}
+        measurement["service"] = self.config["selfRef"]
+
+        measurement["configuration"] = probe
+        measurement["eventTypes"] = eventTypes
+        r = self.unis.post("/measurements", measurement)
+        return r
+
+    def get_measurements(self):
         '''
-        probes = self.config["properties"]["configurations"]["probes"]
-        probe_defaults = self.config["properties"]["configurations"]["probe_defaults"]
-        configurations = deepcopy(self.config["properties"]["configurations"])
-        del configurations["probe_defaults"]
-        del configurations["probes"]
-        probelist = []
-        for name,probe in probes.iteritems():
-            if "targets" in probe:
-                targets = probe["targets"]
-                for target in targets:
-                    pconf = deepcopy(configurations)
-                    merge_dicts(pconf, probe_defaults)
-                    merge_dicts(pconf, probe)
-                    del pconf["targets"]
-                    merge_dicts(pconf, target)
-                    pconf["name"] = name
-                    probelist.append(pconf)
-            else:
-                pconf = deepcopy(configurations)
-                merge_dicts(pconf, probe_defaults)
-                merge_dicts(pconf, probe)
-                pconf["name"] = name
-                probelist.append(pconf)
+        Return all measurements which are configured for this blipp
+        instance. Possibly excluding those which where initially
+        present when blipp started.
+        '''
+        measurements = []
+        for m in self.measurements:
+            if self.pem=="use":
+                measurements.append(m)
+            elif m not in self.initial_measurements:
+                measurements.append(m)
 
-        self._add_extra_fields(probelist)
-        return probelist
+        return filter(lambda m: m["configuration"].get("status", "ON").upper()=="ON", measurements)
 
-    def _add_extra_fields(self, probelist):
-        other_props = deepcopy(self.config["properties"])
-        del other_props["configurations"]
-        for probe in probelist:
-            probe["runningOn"] = self.config["runningOn"]
-
-            probeprops = probe.setdefault("properties", {})
-            probeprops.update(other_props)
-            for prop,val in other_props.iteritems():
-                probeprops[prop]=val
-
-
-
-
-
-
+    @staticmethod
+    def _strip_probes(initial_config):
+        probes = initial_config["properties"]["configurations"]["probes"]
+        del initial_config["properties"]["configurations"]["probes"]
+        probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
+        del initial_config["properties"]["configurations"]["probe_defaults"]
+        for probe in probes.values():
+            merge_into(probe, probe_defaults)
+        return probes
