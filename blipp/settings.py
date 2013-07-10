@@ -27,7 +27,7 @@ MIME = {
     }
 
 HOSTNAME = socket.gethostname() ### this needs to get the fqdn for DOMAIN to be right down below
-NODE_INFO="/usr/local/etc/node.info"
+NODE_INFO_FILE="/usr/local/etc/node.info"
 try:
     DOMAIN = HOSTNAME.split('.', 1)[1]
 except Exception:
@@ -84,6 +84,8 @@ except IOError:
     pass
 if AUTH_UUID:
     STANDALONE_DEFAULTS["properties"].update({"geni": {"slice_uuid":AUTH_UUID}})
+if MS_URL:
+    STANDALONE_DEFAULTS["properties"]["configurations"]["probe_defaults"].update({"ms_url":MS_URL})
 if UNIS_ID:
     STANDALONE_DEFAULTS["properties"]["configurations"].update({"node_id":UNIS_ID})
 
