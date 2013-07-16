@@ -13,10 +13,16 @@ class Probe:
         self.measurement = measurement
         self.config = measurement["configuration"]
         self.command = self._substitute_command(str(self.config.get("command")), self.config)
-        self.data_regex = re.compile(
-            str(self.config["regex"]),
-            flags=re.S|re.M)
-        self.EVENT_TYPES = self.config["eventTypes"]
+        try:
+            self.data_regex = re.compile(
+                str(self.config["regex"]),
+                flags=re.S|re.M)
+        except Exception:
+            self.data_regex = None
+        try:
+            self.EVENT_TYPES = self.config["eventTypes"]
+        except Exception:
+            self.EVENT_TYPES = {}
 
     def get_data(self):
         proc = subprocess.Popen(self.command,

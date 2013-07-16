@@ -26,6 +26,20 @@ def blipp_import_method(method_string):
     mod = blipp_import(mod)
     return mod.__getattribute__(method)
 
+def get_most_recent(resources):
+    res_dict = {}
+    for res in resources:
+        if res['id'] in res_dict:
+            if res['ts'] > res_dict[res['id']]['ts']:
+                res_dict[res['id']] = res
+        else:
+            res_dict[res['id']] = res
+
+    res = []
+    for href in res_dict:
+        res.append(res_dict[href])
+    return res
+
 def full_event_types(data, EVENT_TYPES):
     result = {}
     if isinstance(data.itervalues().next(), dict):

@@ -41,6 +41,7 @@ class Arbiter():
         self._check_procs()
         new_m_list = self.config_obj.get_measurements()
         our_m_list = self.proc_to_measurement.values()
+
         for m in new_m_list:
             if not m in our_m_list:
                 if settings.DEBUG:
@@ -57,15 +58,18 @@ class Arbiter():
     def _start_new_probe(self, m):
         logger.info("_start_new_probe", name=m["configuration"]["name"])
         logger.debug("_start_new_probe", config=pprint.pformat(m))
-        pr = ProbeRunner(self.config_obj.config, m)
+        pr = ProbeRunner(self.config_obj, m)
         parent_conn, child_conn = Pipe()
         probe_proc = Process(target = pr.run, args = (child_conn,))
         probe_proc.start()
         self.proc_to_measurement[(probe_proc, parent_conn)] = m
 
     def _stop_probe(self, proc_conn_tuple):
-        logger.info('_stop_probe',
-                    msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["name"])
+        try:
+            logger.info('_stop_probe',
+                        msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["configuration"]["name"])
+        except Exception:
+            logger.info('_stop_probe', msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["id"])
         proc_conn_tuple[1].send("stop")
         self.stopped_procs[proc_conn_tuple] = time.time()
 

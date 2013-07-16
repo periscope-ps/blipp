@@ -1,5 +1,5 @@
 from conf import ServiceConfigure
-from utils import merge_into, blipp_import
+from utils import merge_into, blipp_import, get_most_recent
 from schema_cache import SchemaCache
 import settings
 from validation import validate_add_defaults
@@ -15,6 +15,7 @@ class BlippConfigure(ServiceConfigure):
             initial_config['name']="blipp"
         self.pem = pre_existing_measurements
         self.schema_cache = SchemaCache()
+        self.probe_defaults = None
         self.initial_probes = self._strip_probes(initial_config)
         super(BlippConfigure, self).__init__(initial_config, node_id)
 
@@ -22,6 +23,7 @@ class BlippConfigure(ServiceConfigure):
         super(BlippConfigure, self).initialize()
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
+        self.initial_measurements = get_most_recent(self.initial_measurements)
         self._post_probes()
 
     def _post_probes(self):
@@ -48,11 +50,13 @@ class BlippConfigure(ServiceConfigure):
 
     def refresh(self):
         super(BlippConfigure, self).refresh()
+        self.initial_probes = self._strip_probes(self.config)
         if self.initial_probes:
             self._post_probes()
         self.measurements = self.unis.get("/measurements?service=" +
                                           self.config["selfRef"])
-
+        self.measurements = get_most_recent(self.measurements)
+        
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])
         if "EVENT_TYPES" in probe_mod.__dict__:
@@ -84,15 +88,25 @@ class BlippConfigure(ServiceConfigure):
                 measurements.append(m)
             elif m not in self.initial_measurements:
                 measurements.append(m)
-
+        
         return filter(lambda m: m["configuration"].get("status", "ON").upper()=="ON", measurements)
 
-    @staticmethod
-    def _strip_probes(initial_config):
-        probes = initial_config["properties"]["configurations"]["probes"]
-        del initial_config["properties"]["configurations"]["probes"]
-        probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
-        del initial_config["properties"]["configurations"]["probe_defaults"]
-        for probe in probes.values():
-            merge_into(probe, probe_defaults)
+    def _strip_probes(self, initial_config):
+        probes = None
+        try:
+            probes = initial_config["properties"]["configurations"]["probes"]
+            del initial_config["properties"]["configurations"]["probes"]
+        except Exception:
+            pass
+        try:    
+            probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
+            self.probe_defaults = probe_defaults
+            del initial_config["properties"]["configurations"]["probe_defaults"]
+        except Exception:
+            pass
+        
+        if probes:
+            for probe in probes.values():
+                merge_into(probe, self.probe_defaults)
+
         return probes
