@@ -55,31 +55,14 @@ class ProbeRunner:
         probe_mod = blipp_import(config["probe_module"])
         self.probe = probe_mod.Probe(self.service, self.measurement)
 
-        try:
-            if "." in config["collection_schedule"]:
-                sched_file, sched_name = config["collection_schedule"].split('.')
-            else:
-                sched_file, sched_name = "builtins", config["collection_schedule"]
-        except Exception:
-            sched_file, sched_name = self.probe_defaults["collection_schedule"].split('.')
-        
-        try:
-            config["ms_url"]
-        except Exception:
-            config["ms_url"] = self.probe_defaults["ms_url"]
-        try:
-            config["collection_size"]
-        except Exception:
-            config["collection_size"] = self.probe_defaults["collection_size"]
-        try:
-            config["collection_ttl"]
-        except Exception:
-            config["collection_ttl"] = self.probe_defaults["collection_ttl"]
+        if "." in config["collection_schedule"]:
+            sched_file, sched_name = config["collection_schedule"].split('.')
+        else:
+            sched_file, sched_name = "builtins", config["collection_schedule"]
 
         logger.info('setup', sched_file=sched_file, sched_name=sched_name)
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
-
         self.collector = Collector(self.service, self.measurement)
 
 

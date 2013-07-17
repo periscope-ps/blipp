@@ -56,7 +56,12 @@ class BlippConfigure(ServiceConfigure):
         self.measurements = self.unis.get("/measurements?service=" +
                                           self.config["selfRef"])
         self.measurements = get_most_recent(self.measurements)
-        
+        for m in self.measurements:
+            size_orig = len(m["configuration"])
+            merge_into(m["configuration"], self.probe_defaults)
+            if size_orig < len(m["configuration"]):
+                self.unis.put("/measurements/"+m["id"], m)                              
+
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])
         if "EVENT_TYPES" in probe_mod.__dict__:
@@ -101,7 +106,6 @@ class BlippConfigure(ServiceConfigure):
         try:    
             probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
             self.probe_defaults = probe_defaults
-            del initial_config["properties"]["configurations"]["probe_defaults"]
         except Exception:
             pass
         
