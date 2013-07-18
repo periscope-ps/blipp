@@ -15,6 +15,8 @@ class ServiceConfigure(object):
     ServiceConfigure.
     '''
     def __init__(self, initial_config={}, node_id=None):
+        if not node_id:
+            node_id = settings.UNIS_ID
         self.node_id = node_id
         self.config = initial_config
         self.unis = UNISInstance(self.config)

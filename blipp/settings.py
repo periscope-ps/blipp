@@ -83,9 +83,6 @@ if AUTH_UUID:
     STANDALONE_DEFAULTS["properties"].update({"geni": {"slice_uuid":AUTH_UUID}})
 if MS_URL:
     STANDALONE_DEFAULTS["properties"]["configurations"]["probe_defaults"].update({"ms_url":MS_URL})
-if UNIS_ID:
-    STANDALONE_DEFAULTS["properties"]["configurations"].update({"node_id":UNIS_ID})
-
 
 ##################################################################
 # Netlogger stuff... pasted from Ahmed's peri-tornado
