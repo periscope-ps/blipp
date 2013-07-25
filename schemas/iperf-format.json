@@ -1,0 +1,40 @@
+[
+  {
+    "key": "command",
+    "title": "Command",
+    "type": "text",
+    "width": "60%"
+  },
+  "--port",
+  "--udp",
+  "--len",
+  "--window",
+  "--bind",
+  "--mss",
+  "--nodelay",
+  "--IPv6Version",
+  "--bandwidth",
+  "--client",
+  "--dualtest",
+  "--num",
+  "--tradeoff",
+  "--time",
+  "--fileinput",
+  "--listenport",
+  "--parallel",
+  "--ttl",
+  "--linuxcongestion",
+  {
+    "type": "actions",
+    "items": [
+      {
+        "type": "submit",
+        "title": "submit"
+      },
+      {
+        "type": "button",
+        "title": "cancel"
+      }
+    ]
+  }
+]

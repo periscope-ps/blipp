@@ -1,0 +1,28 @@
+[
+    {
+        "key": "command",
+        "title": "Command",
+        "type": "text",
+        "width": "60%"
+    },
+    "-W",
+    "-s",
+    "-t",
+    "-p",
+    "-M",
+    "-Q",
+    "address",
+    {
+        "type": "actions",
+        "items": [
+            {
+                "type": "submit",
+                "title": "submit"
+            },
+            {
+                "type": "button",
+                "title": "cancel"
+            }
+        ]
+    }
+]
