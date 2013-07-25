@@ -9,7 +9,7 @@
   "--udp",
   "--len",
   "--window",
-  "--bind",
+  "$--bind",
   "--mss",
   "--nodelay",
   "--IPv6Version",
@@ -23,7 +23,7 @@
   "--listenport",
   "--parallel",
   "--ttl",
-  "--linuxcongestion",
+  "--linux-congestion",
   {
     "type": "actions",
     "items": [
