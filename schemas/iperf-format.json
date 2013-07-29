@@ -23,18 +23,5 @@
   "--listenport",
   "--parallel",
   "--ttl",
-  "--linux-congestion",
-  {
-    "type": "actions",
-    "items": [
-      {
-        "type": "submit",
-        "title": "submit"
-      },
-      {
-        "type": "button",
-        "title": "cancel"
-      }
-    ]
-  }
+  "--linux-congestion"
 ]

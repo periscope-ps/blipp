@@ -11,18 +11,5 @@
     "-p",
     "-M",
     "-Q",
-    "address",
-    {
-        "type": "actions",
-        "items": [
-            {
-                "type": "submit",
-                "title": "submit"
-            },
-            {
-                "type": "button",
-                "title": "cancel"
-            }
-        ]
-    }
+    "address"
 ]

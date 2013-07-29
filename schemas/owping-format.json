@@ -10,18 +10,5 @@
   "-s",
   "-i",
   "-L",
-  "server",
-  {
-    "type": "actions",
-    "items": [
-      {
-        "type": "submit",
-        "title": "submit"
-      },
-      {
-        "type": "button",
-        "title": "cancel"
-      }
-    ]
-  }
+  "server"
 ]
