@@ -1,27 +1,41 @@
 [
-  {
-    "key": "command",
-    "title": "Command",
-    "type": "text",
-    "width": "60%"
-  },
-  "--port",
-  "--udp",
-  "--len",
-  "--window",
-  "$--bind",
-  "--mss",
-  "--nodelay",
-  "--IPv6Version",
-  "--bandwidth",
-  "--client",
-  "--dualtest",
-  "--num",
-  "--tradeoff",
-  "--time",
-  "--fileinput",
-  "--listenport",
-  "--parallel",
-  "--ttl",
-  "--linux-congestion"
+    {
+        "key": "$schema",
+        "type": "hidden"
+    },
+    {
+        "key": "probe_module",
+        "type": "hidden"
+    },
+    "regex",
+    {
+        "key": "eventTypes",
+        "title": "Event Types"
+        "default": [
+          "eventTypes.default.bandwidth"
+        ]
+    },
+    {
+        "key": "command",
+        "title": "Command"
+    },
+    "--port",
+    "--udp",
+    "--len",
+    "--window",
+    "$--bind",
+    "--mss",
+    "--nodelay",
+    "--IPv6Version",
+    "--bandwidth",
+    "--client",
+    "--dualtest",
+    "--num",
+    "--tradeoff",
+    "--time",
+    "--fileinput",
+    "--listenport",
+    "--parallel",
+    "--ttl",
+    "--linux-congestion"
 ]

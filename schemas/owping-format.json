@@ -1,14 +1,37 @@
 [
-  {
-    "key": "command",
-    "title": "Command",
-    "type": "text",
-    "width": "60%"
-  },
-  "testpeer",
-  "-c",
-  "-s",
-  "-i",
-  "-L",
-  "server"
+    {
+        "key": "$schema",
+        "type": "hidden"
+    },
+    {
+        "key": "probe_module",
+        "type": "hidden"
+    },
+    "regex",
+    {
+        "key": "eventTypes",
+        "title": "Event Types",
+        "default": [
+            "fmin",
+            "fmedian",
+            "fmax",
+            "ferr",
+            "fjitter",
+            "rmin",
+            "rmedian",
+            "rmax",
+            "rerr",
+            "rjitter"
+        ]
+    },
+    {
+        "key": "command",
+        "title": "Command"
+    },
+    "testpeer",
+    "-c",
+    "-s",
+    "-i",
+    "-L",
+    "server"
 ]

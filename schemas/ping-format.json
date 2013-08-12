@@ -1,5 +1,22 @@
 [
     {
+        "key": "$schema",
+        "type": "hidden"
+    },
+    {
+        "key": "probe_module",
+        "type": "hidden"
+    },
+    "regex",
+    {
+        "key": "eventTypes",
+        "title": "Event Types",
+        "default": [
+            "ttl",
+            "rtt"
+        ]
+    },
+    {
         "key": "command",
         "title": "Command",
         "type": "text",
