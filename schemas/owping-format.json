@@ -7,21 +7,24 @@
         "key": "probe_module",
         "type": "hidden"
     },
-    "regex",
+    {
+        "key": "regex",
+        "title": "Regular Expression"
+    },
     {
         "key": "eventTypes",
         "title": "Event Types",
-        "default": [
-            "fmin",
-            "fmedian",
-            "fmax",
-            "ferr",
-            "fjitter",
-            "rmin",
-            "rmedian",
-            "rmax",
-            "rerr",
-            "rjitter"
+        "enum": [
+            "eventTypes.fmin",
+            "eventTypes.fmedian",
+            "eventTypes.fmax",
+            "eventTypes.ferr",
+            "eventTypes.fjitter",
+            "eventTypes.rmin",
+            "eventTypes.rmedian",
+            "eventTypes.rmax",
+            "eventTypes.rerr",
+            "eventTypes.rjitter"
         ]
     },
     {
