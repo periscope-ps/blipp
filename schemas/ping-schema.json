@@ -30,13 +30,12 @@
 	    "required": false
 	},
 	"eventTypes": {
-            "title": "Event Types",
 	    "required": false,
-	    "default": {
-		"ttl": "ps:tools:blipp:linux:net:ping:ttl",
-		"rtt": "ps:tools:blipp:linux:net:ping:rtt"
+            "type": "object",
+            "properties": {
+                "ttl": { "type": "string", "default": "ps:tools:blipp:linux:net:ping:ttl" },
+                "rtt": { "type": "string", "default": "ps:tools:blipp:linux:net:ping:rtt" }
 	    },
-	    "type": "object",
 	    "additionalProperties": true
 	},
 	"-W": {
