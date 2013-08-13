@@ -1,4 +1,7 @@
-dden"
+[
+  {
+    "key": "$schema",
+    "type": "hidden"
     },
     {
         "key": "probe_module",

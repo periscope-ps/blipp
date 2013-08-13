@@ -1,41 +1,44 @@
 [
-    {
-        "key": "$schema",
-        "type": "hidden"
+  {
+    "key": "$schema",
+    "type": "hidden"
+  },
+  {
+    "key": "probe_module",
+    "type": "hidden"
+  },
+   {   "key": "regex",
+        "title": "Regular Expression"
     },
-    {
-        "key": "probe_module",
-        "type": "hidden"
-    },
-    "regex",
-    {
-        "key": "eventTypes",
-        "title": "Event Types"
-        "default": [
-          "eventTypes.default.bandwidth"
+  {
+    "key": "eventTypes",
+    "title": "Event Types",
+        "enum": [
+          "eventTypes.bandwidth"
         ]
-    },
-    {
-        "key": "command",
-        "title": "Command"
-    },
-    "--port",
-    "--udp",
-    "--len",
-    "--window",
-    "$--bind",
-    "--mss",
-    "--nodelay",
-    "--IPv6Version",
-    "--bandwidth",
-    "--client",
-    "--dualtest",
-    "--num",
-    "--tradeoff",
-    "--time",
-    "--fileinput",
-    "--listenport",
-    "--parallel",
-    "--ttl",
-    "--linux-congestion"
+
+  },
+  {
+    "key": "command",
+    "title": "Command"
+  },
+  "--port",
+  "--udp",
+  "--len",
+  "--window",
+  "$--bind",
+  "--mss",
+  "--nodelay",
+  "--IPv6Version",
+  "--bandwidth",
+  "--client",
+  "--dualtest",
+  "--num",
+  "--tradeoff",
+  "--time",
+  "--fileinput",
+  "--listenport",
+  "--parallel",
+  "--ttl",
+  "--linux-congestion"
 ]
