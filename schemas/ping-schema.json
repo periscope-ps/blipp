@@ -33,8 +33,8 @@
 	    "required": false,
             "type": "object",
             "properties": {
-                "ttl": { "type": "string", "default": "ps:tools:blipp:linux:net:ping:ttl" },
-                "rtt": { "type": "string", "default": "ps:tools:blipp:linux:net:ping:rtt" }
+                "ttl": { "type": "string", "title": "TTL", "default": "ps:tools:blipp:linux:net:ping:ttl" },
+                "rtt": { "type": "string", "title": "RTT", "default": "ps:tools:blipp:linux:net:ping:rtt" }
 	    },
 	    "additionalProperties": true
 	},
