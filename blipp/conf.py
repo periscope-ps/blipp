@@ -103,6 +103,7 @@ class ServiceConfigure(object):
             r = r[0]
         merge_dicts(r, config)
         self.config = r
+
         if config != r:
             logger.info("_setup_service",
                         msg="Local configuration differs from UNIS - updating UNIS")

@@ -1,3 +1,4 @@
+import ConfigParser
 import socket
 
 SCHEMAS = {
@@ -45,9 +46,11 @@ STANDALONE_DEFAULTS = {
             "use_ssl": "",
 	    "ssl_cafile": "",
             "probe_defaults": {
+                "collection_schedule": "builtins.simple",
+                "schedule_params": {"every": 2}, # run every 2 seconds
                 "collection_size": 10000000, # ~10 megabytes
                 "collection_ttl": 1500000, # ~17 days
-                "reporting_params": 1
+                "reporting_params": 1 # report every probe (no default aggregation)
             },
             "probes": {
             }
@@ -123,3 +126,43 @@ def get_logger(namespace=NETLOGGER_NAMESPACE):
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
         config_logger()
     return nllog.get_logger(namespace)
+
+##################################################################
+# Read in a configuration file
+##################################################################
+
+CONFIG_FILE="/etc/blipp/blippd.conf"
+
+config = ConfigParser.RawConfigParser()
+config.read(CONFIG_FILE)
+
+main_config = ["unis_url", "ms_url", "ssl_cert", "ssl_key", "ssl_cafile", "unis_poll_interval"]
+probe_map = {"registration_probe": ["service_type", "service_name", "service_description", "service_accesspoint", "pidfile"],
+             "some other probe": ["blah", "blah2"]}
+
+for key in main_config:
+    try:
+        value = config.get("main", key)
+        STANDALONE_DEFAULTS["properties"]["configurations"].update({key: value})
+    except:
+        pass
+
+for section in config.sections():
+    if section == "main":
+        continue
+    module = config.get(section, "module")
+    if module in probe_map.keys():
+        conf = dict()
+        conf.update({"probe_module": module})
+        # set the schedule interval if present (otherwise will get probe default)
+        try:
+            conf.update({"schedule_params": {"every": (int)(config.get(section, "schedule"))}})
+        except:
+            pass
+        for key in probe_map[module]:
+            try:
+                value = config.get(section, key)
+                conf.update({key: value})
+            except:
+                pass
+        STANDALONE_DEFAULTS["properties"]["configurations"]["probes"].update({section: conf})

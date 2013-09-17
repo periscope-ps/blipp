@@ -50,7 +50,8 @@ def main(options=None):
                            node_id=options['--node-id'],
                            pre_existing_measurements=options['--existing'])
     bconf.initialize()
-    bconf.refresh()
+    # EK: don't need to refresh right away, right?
+    #bconf.refresh()
 
     config = bconf.config
     logger.info('main', config=pprint.pformat(config))

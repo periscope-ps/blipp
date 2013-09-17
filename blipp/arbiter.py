@@ -132,9 +132,9 @@ class Arbiter():
 def main(config):
     a = Arbiter(config)
     s = ConfigServer(config)
-    last_reload_time = 0
-    check_interval = config["properties"]["configurations"]["unis_poll_interval"]
+    last_reload_time = time.time()
+    check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
     while s.listen(last_reload_time + check_interval - time.time()):
         last_reload_time = a.reload_all()
-        check_interval = config["properties"]["configurations"]["unis_poll_interval"]
+        check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
         logger.info("main", msg="check interval %d"%check_interval)
