@@ -12,6 +12,9 @@ from pprint import pformat
 import blipp.settings
 logger = blipp.settings.get_logger('adaptive')
 
+def k_disjoint():
+    print("in k_disjoint")
+
 def simple_avoid(service, measurement):
     config = measurement["configuration"]
     every = config["schedule_params"]["every"]
