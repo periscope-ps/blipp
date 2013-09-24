@@ -12,9 +12,6 @@ from pprint import pformat
 import blipp.settings
 logger = blipp.settings.get_logger('adaptive')
 
-def k_disjoint():
-    print("in k_disjoint")
-
 def simple_avoid(service, measurement):
     config = measurement["configuration"]
     every = config["schedule_params"]["every"]
@@ -35,13 +32,16 @@ def simple_avoid(service, measurement):
     conflicting_times = None
 
     while True:
-        wait_time = random.random()*max_wait
-        logger.info("simple_avoid",
-                    msg="random wait initiated",
-                    wait_time=wait_time,
-                    probe=config["name"])
+#        turn off random wait for testing purpose, should be find if
+#        multiple blipp don't start at a same time.
+#
+#        wait_time = random.random()*max_wait
+#        logger.info("simple_avoid",
+#                    msg="random wait initiated",
+#                    wait_time=wait_time,
+#                    probe=config["name"])
         # wait randomly then regenerate schedule
-        time.sleep(wait_time)
+#        time.sleep(wait_time)
 
         start_scheduler = time.time()
 
@@ -63,7 +63,7 @@ def simple_avoid(service, measurement):
         logger.debug("simple_avoid", msg="finish generation",
                      duration=time.time()-start_scheduler)
 
-        conflicting_times = check_schedule(unis, measurement)
+        conflicting_times = False#check_schedule(unis, measurement)
         if conflicting_times:
             logger.info("simple_avoid",
                         msg="conflict detected",
@@ -103,14 +103,18 @@ def build_basic_schedule(start, td_every,
     schedule = []
     cur = start
     for t in conflicting_times:
+        
         while (t["start"] - cur) > td_duration:
             schedule.append({"start":datetime_to_dtstring(cur),
                              "end":datetime_to_dtstring(cur+td_duration)})
             cur += td_every
             if len(schedule) >= num_to_schedule:
-                break
-        cur = t["end"]
-     # finish building schedule if there are no more conflicts
+                return schedule
+        
+        if cur <= t["end"]:
+            cur = t["end"]
+            
+    # finish building schedule if there are no more conflicts
     while len(schedule) < num_to_schedule:
         s = datetime_to_dtstring(cur)
         e = datetime_to_dtstring(cur+td_duration)
@@ -125,6 +129,8 @@ def get_conflicting_measurements(unis, measurement):
             unis.get(
                 "/measurements?configuration.resources.ref=" +
                 resource["ref"]))
+        # ATTENTION: following filter assumes users specify accurate duration arg
+        # otherwise last schedule in a group may overlap first schedule of next group
         meas_for_resource = filter(
             lambda m: False if m["id"] == measurement["id"] else True,
             meas_for_resource)

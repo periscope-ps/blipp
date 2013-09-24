@@ -64,6 +64,7 @@ def remove_old_resources(resource_list):
         if r["id"] not in ids:
             uniques.append(r)
             ids.add(r["id"])
+        # ATTENTION: shouldn't "else" and compare ts here?
     return uniques
 
 def delete_nones(adict):

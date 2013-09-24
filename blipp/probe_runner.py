@@ -3,6 +3,7 @@ import time
 from collector import Collector
 from utils import blipp_import
 import pprint
+import os
 
 logger = settings.get_logger('probe_runner')
 
@@ -24,12 +25,22 @@ class ProbeRunner:
     def run(self, conn):
         for nextt in self.scheduler:
             logger.debug("run", msg="got time from scheduler", time=nextt)
+            time.sleep(max(nextt-time.time(), 0))
+            
             if conn.poll():
                 if conn.recv() == "stop":
                     self._cleanup()
-                    break
-            time.sleep(max(nextt-time.time(), 0))
+                    break            
+            
+            # check parent, 1 means arbiter already quit, should stop
+            if os.getppid() == 1:
+                self._cleanup()
+                break
+                
             self.collect()
+            
+        # should kill itself at this point, but the the process remains for some reason
+        # had better do "kill -TERM -ppid" to terminate the parent for now
 
     def collect(self):
         logger.debug('collect', name=self.config['name'], module=self.config["probe_module"])

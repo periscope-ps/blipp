@@ -41,15 +41,24 @@ class Arbiter():
         self._check_procs()
         new_m_list = self.config_obj.get_measurements()
         our_m_list = self.proc_to_measurement.values()
+        # these two lists make one runner process always take care of one
+        # measurement (including renew them constantly)
+        new_m_list2 = [x["id"] for x in self.config_obj.get_measurements()]
+        our_m_list2 = [x["id"] for x in self.proc_to_measurement.values()]
 
         for m in new_m_list:
-            if not m in our_m_list:
+            # one running blipp instance == one service, so when this blipp instance
+            # queries UNIS, it only want the tasks assigned to itself
+            # should improve later: all elements in this list should be the same
+            if m["service"] not in [x["service"] for x in self.config_obj.get_measurements()]:
+                continue
+            if not m["id"] in our_m_list2:
                 if settings.DEBUG:
                     self._print_pc_diff(m, our_m_list)
                 self._start_new_probe(m)
 
         for proc_conn, pc in self.proc_to_measurement.iteritems():
-            if not pc in new_m_list:
+            if not pc["id"] in new_m_list2:
                 if settings.DEBUG:
                     self._print_pc_diff(pc, new_m_list)
                 self._stop_probe(proc_conn)
