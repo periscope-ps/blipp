@@ -52,6 +52,7 @@ class Arbiter():
             # should improve later: all elements in this list should be the same
             if m["service"] not in [x["service"] for x in self.config_obj.get_measurements()]:
                 continue
+            
             if not m["id"] in our_m_list2:
                 if settings.DEBUG:
                     self._print_pc_diff(m, our_m_list)

@@ -32,16 +32,13 @@ def simple_avoid(service, measurement):
     conflicting_times = None
 
     while True:
-#        turn off random wait for testing purpose, should be find if
-#        multiple blipp don't start at a same time.
-#
-#        wait_time = random.random()*max_wait
-#        logger.info("simple_avoid",
-#                    msg="random wait initiated",
-#                    wait_time=wait_time,
-#                    probe=config["name"])
+        wait_time = random.random()*max_wait
+        logger.info("simple_avoid",
+                    msg="random wait initiated",
+                    wait_time=wait_time,
+                    probe=config["name"])
         # wait randomly then regenerate schedule
-#        time.sleep(wait_time)
+        time.sleep(wait_time)
 
         start_scheduler = time.time()
 

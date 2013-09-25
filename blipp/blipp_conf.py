@@ -3,6 +3,7 @@ from utils import merge_into, blipp_import, get_most_recent
 from schema_cache import SchemaCache
 import settings
 from validation import validate_add_defaults
+import subprocess
 
 import pprint
 
@@ -112,5 +113,26 @@ class BlippConfigure(ServiceConfigure):
         if probes:
             for probe in probes.values():
                 merge_into(probe, self.probe_defaults)
+                
+                # ATTENTION: for each probe, dynamically obtain its resource list
+                # the conf file models one single resource list for possible multiple
+                # probes, this may not be correct
+                links = [{"ref": "(localhost)"}]
+                dst_ip = probe["--client"]
+                proc = subprocess.Popen(["traceroute", dst_ip], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+                return_code = proc.wait()
+        
+                for line in proc.stdout:
+                    # should improve the robustness of following parsing
+                    try:
+                        int(line.split()[0])
+                        links.append({"ref": line.split()[2]})
+                    except ValueError:
+                        pass
+
+                for line in proc.stderr:
+                    print("stderr: " + line.rstrip())
+                    
+                probe["resources"] = links
 
         return probes
