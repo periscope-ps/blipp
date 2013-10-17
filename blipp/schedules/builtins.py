@@ -6,7 +6,7 @@ def simple(service, measurement):
     params = measurement["configuration"]["schedule_params"]
     start_time = params.get("start_time", time.time())
     end_time = params.get("end_time", sys.maxint)
-    every = params["every"]
+    every = float(params["every"])
     if not start_time:
         start_time = time.time()
 
