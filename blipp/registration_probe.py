@@ -1,6 +1,7 @@
 import settings
 import os
 import errno
+import psutil
 from unis_client import UNISInstance
 
 logger = settings.get_logger("registration_probe")
@@ -20,11 +21,11 @@ class Probe:
             logger.error("__init__", msg="Must specify service_type!")
 
         try:
-            self.pidfile = self.config["pidfile"]
+            self.pidfile = self.config.get("pidfile", None)
         except Exception:
             logger.warn("__init__", msg="Config does not specify pidfile")
 
-        self.app_name = self.config.get("appname", "")
+        self.pname = self.config.get("process_name", None)
         #self.et_string = "ps:tools:blipp:netlogger:"
 
     def get_data(self):
@@ -37,7 +38,7 @@ class Probe:
                 self.pidfile = open(self.config["pidfile"])
                 pid = self.pidfile.read().rstrip()
             except IOError:
-                logger.error("__init__", msg="Could not open pidfile: %s" % self.config["pidfile"])
+                logger.warn("__init__", msg="Could not open pidfile: %s" % self.config["pidfile"])
             if pid:
                 try:
                     os.kill(int(pid), 0)
@@ -49,13 +50,17 @@ class Probe:
                         logger.warn("get_data", msg="No permission to signal this process: %s" % pid)
                     else:
                         logger.warn("get_data", msg="Uknown error: %s" % error.errno)
-                if stat is "UNKNOWN" and os.path.exists("/proc/"+pid):
-                    stat = "ON"
+                #We could assume if the pidfile exists, the process is running
+                #if stat is "UNKNOWN" and os.path.exists("/proc/"+pid):
+                #    stat = "ON"
                 self.pidfile.close()
-            
-        # check process name
+        
+        # check process name, this takes priority
         if self.pname:
-            pass
+            processes = psutil.process_iter()
+            for p in processes:
+                if p.name == self.pname:
+                    stat = "ON"
 
         self.send_service(status=stat)
 
