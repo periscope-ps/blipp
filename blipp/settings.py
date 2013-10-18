@@ -131,7 +131,7 @@ def get_logger(namespace=NETLOGGER_NAMESPACE):
 # Read in a configuration file
 ##################################################################
 
-CONFIG_FILE="/etc/blipp/blippd.conf"
+CONFIG_FILE="/etc/periscope/blippd.conf"
 
 config = ConfigParser.RawConfigParser()
 config.read(CONFIG_FILE)

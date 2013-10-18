@@ -49,6 +49,9 @@ Usually you'll probably want to point it at a configuration file like this:
 $ python blipp/start_blipp.py -c /path/to/config.json
 #+END_SRC
 
+** For Redhat, create an RPM:
+python setup.py bdist_rpm --requires docopt,magicdate,netlogger,python,python-netifaces,python-requests,python-zmq,python-setuptools,validictory
+
 * Configuration
 Configuration happens in a json file, there are some examples in the
 =blipp/sample_config= subdirectory. Here is a fairly short example

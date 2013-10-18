@@ -25,7 +25,8 @@ setup(
     author_email="matthew.jaffee@gmail.com",
     license="http://www.apache.org/licenses/LICENSE-2.0",
     url="https://github.com/periscope-ps/periscope",
-
+    description="BLiPP: Basic Lightweight Periscope Probes",
+    data_files = [("/etc/periscope", ["config/blippd.conf"])],
     install_requires=[
         "validictory",
         "requests",
