@@ -17,13 +17,14 @@ THIS=`pwd`/$0
 tail -n +$SKIP $THIS | tar -xz
 
 # Installation steps for LAMP Toolkit
-DIR=newblipp
+DIR=blipp
 ETC=/usr/local/etc
 
-yum -y install python-setuptools
-yum -y install libnl-devel
+yum -y install python-setuptools python-dateutil libnl-devel
 cd ${DIR}
 python ./setup.py install 
+
+install -D config/blipp_default.json ${ETC}
 
 exit 0
 
