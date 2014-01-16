@@ -7,8 +7,8 @@
     "description": "BLiPP running on a GENI slice",
     "properties": {
 	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu:8888",
-	    "use_ssl": false,
+	    "unis_url":"https://unis.incntre.iu.edu:8443",
+	    "use_ssl": true,
             "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
             "ssl_key": "/usr/local/etc/certs/mp_key.pem",
 	    "ssl_cafile": "",
@@ -17,15 +17,22 @@
 	     "schedule_params": {"every": 10},
 	     "reporting_params": 8,
 	     "reporting_tolerance": 10,
-	     "collection_size":10000000,
-	     "collection_ttl":1500000,
-	     "ms_url": "http://dev.incntre.iu.edu:8888"
+	     "collection_size":10000,
+	     "collection_ttl":1500000
 	    },
 	    "probes":{
-	    "iptables":{
-	    	"probe_module": "iptables",
-	    	"kwargs":{}
-	    }
+		"cpu":{
+		    "probe_module": "cpu",
+		    "kwargs":{"proc_dir":"/proc"}
+		},
+		"net":{
+		    "probe_module": "net",
+		    "kwargs":{"unis_url": "https://unis.incntre.iu.edu:8443"}
+		},
+		"mem": {
+		    "probe_module": "mem",
+		    "kwargs":{}
+		}
 	    }
 	},
 	"summary": {
