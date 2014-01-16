@@ -7,8 +7,7 @@
     "description": "BLiPP running on a GENI slice",
     "properties": {
 	"configurations": {
-            "unis_poll_interval": 30,
-	    "unis_url": "https://unis.incntre.iu.edu:8443",
+	    "unis_url":"https://unis.incntre.iu.edu:8443",
 	    "use_ssl": true,
             "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
             "ssl_key": "/usr/local/etc/certs/mp_key.pem",
@@ -17,8 +16,7 @@
 	    {"collection_schedule":"builtins.simple",
 	     "schedule_params": {"every": 10},
 	     "reporting_params": 8,
-	     "reporting_tolerance": 10,
-	     "collection_size":10000,
+	     "collection_size":10000000,
 	     "collection_ttl":1500000
 	    },
 	    "probes":{
