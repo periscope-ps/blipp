@@ -27,17 +27,20 @@ class Probe:
             ret = []
             self.logfile.seek(self.logfile.tell())
             for line in self.logfile:
-                line = shlex.split(line)
-                for pair in line:
-                    pair = pair.partition("=")
-                    if pair[0] == "ts":
-                        ts = self.date_to_unix(pair[2])
-                    if pair[0] == "VAL":
-                        val = self._numberize(pair[2])
-                    if pair[0] == "event":
-                        event = self.et_string + pair[2]
-                    
-                ret.append({"ts": ts, event: val})
+                if "VAL" not in line:
+                    self.parse_calipers(ret, line)
+                else:
+                    line = shlex.split(line)
+                    for pair in line:
+                        pair = pair.partition("=")
+                        if pair[0] == "ts":
+                            ts = self.date_to_unix(pair[2])
+                        if pair[0] == "VAL":
+                            val = self._numberize(pair[2])
+                        if pair[0] == "event":
+                            event = self.et_string + pair[2]
+
+                    ret.append({"ts": ts, event: val})
             return ret
         else:
             logger.error("get_data", msg="No logfile available")
@@ -64,3 +67,18 @@ class Probe:
             fraction = fraction.group(1)
             unix_seconds += float(fraction)/10e5
         return unix_seconds
+
+    def parse_calipers(self, ret, line):
+        line = shlex.split(line)
+        cal_events = []
+        for pair in line:
+            pair = pair.partition("=")
+            if pair[0] == "ts":
+                ts = self.date_to_unix(pair[2])
+            elif pair[0] == "event":
+                event = self.et_string + pair[2]
+            else:
+                cal_events.append({"e": event+":"+pair[0], "v": self._numberize(pair[2])})
+        
+        for ce in cal_events:
+            ret.append({"ts": ts, ce['e']: ce['v']})
