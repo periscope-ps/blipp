@@ -53,7 +53,8 @@ class ServiceConfigure(object):
                               data={
                         "$schema": settings.SCHEMAS["nodes"],
                         "name": hostname,
-                        "urn": urn})
+                        "urn": urn,
+                        "ip":config["ip"]})
             self.node_id = r["id"]
         if r:
             config["runningOn"] = {
@@ -108,6 +109,8 @@ class ServiceConfigure(object):
             logger.info("_setup_service",
                         msg="Local configuration differs from UNIS - updating UNIS")
             config["selfRef"] = r["selfRef"]
+            # this 'put' should update existing service (same node and same name), but
+            # it will post a new item to UNIS. Need be fixed.
             r = self.unis.put("/services/" + config["id"], data=config)
         if r:
             self.service_setup = True

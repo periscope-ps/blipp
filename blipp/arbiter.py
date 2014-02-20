@@ -1,10 +1,14 @@
 import time
+import datetime, calendar
 import settings
 from probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
 from copy import copy
 from config_server import ConfigServer
 import pprint
+
+import subprocess
+from utils import merge_into
 
 logger = settings.get_logger('arbiter')
 PROBE_GRACE_PERIOD = 10
@@ -31,6 +35,7 @@ class Arbiter():
         self.config_obj = config_obj # BlippConfigure object
         self.proc_to_measurement = {} # {(proc, conn): measurement_dict, ...}
         self.stopped_procs = {} # {(proc, conn): time_stopped, ...}
+        self._retired = []
 
     def reload_all(self):
         self.config_obj.refresh()
@@ -40,29 +45,43 @@ class Arbiter():
             return time.time()
         self._check_procs()
         new_m_list = self.config_obj.get_measurements()
-        our_m_list = self.proc_to_measurement.values()
-        # these two lists make one runner process always take care of one
-        # measurement (including renew them constantly)
-        new_m_list2 = [x["id"] for x in self.config_obj.get_measurements()]
-        our_m_list2 = [x["id"] for x in self.proc_to_measurement.values()]
+        new_id_list = [x["id"] for x in new_m_list]
 
-        for m in new_m_list:
-            # one running blipp instance == one service, so when this blipp instance
-            # queries UNIS, it only want the tasks assigned to itself
-            # should improve later: all elements in this list should be the same
-            if m["service"] not in [x["service"] for x in self.config_obj.get_measurements()]:
-                continue
-            
-            if not m["id"] in our_m_list2:
-                if settings.DEBUG:
-                    self._print_pc_diff(m, our_m_list)
-                self._start_new_probe(m)
+        for m in new_m_list:            
+            if "scheduled_times" in m:
+                if m['id'] not in self._retired:
+                    self._start_new_probe(m)
+                    self._retired.append(m['id'])
+                
+            elif "resources" not in m["configuration"]:
+                links = [{"ref": "(localhost)"}]
+                dst_ip = m["configuration"]["--client"]
+                proc = subprocess.Popen(["traceroute", dst_ip], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+                return_code = proc.wait()
+        
+                for line in proc.stdout:
+                    # should improve the robustness of following parsing
+                    try:
+                        int(line.split()[0])
+                        links.append({"ref": line.split()[2]})
+                    except ValueError:
+                        pass
 
+                for line in proc.stderr:
+                    print("stderr: " + line.rstrip())
+                    
+                m["configuration"]["resources"] = links
+                self.config_obj.unis.put("/measurements/"+m["id"], m)
+                    
+            else:
+                pass
+                
         for proc_conn, pc in self.proc_to_measurement.iteritems():
-            if not pc["id"] in new_m_list2:
+            if not pc["id"] in new_id_list:
                 if settings.DEBUG:
                     self._print_pc_diff(pc, new_m_list)
                 self._stop_probe(proc_conn)
+        
         return time.time()
 
     def _start_new_probe(self, m):

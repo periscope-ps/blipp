@@ -7,10 +7,37 @@ import pytz
 from blipp.utils import remove_old_resources
 import time
 import re
-from pprint import pprint
 from pprint import pformat
 import blipp.settings
 logger = blipp.settings.get_logger('adaptive')
+
+def silent_lamb(service, measurement):
+    for t in measurement["scheduled_times"]:
+        yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+
+def time_begger(service, measurement):
+    every = measurement["configuration"]["schedule_params"]["every"]
+    unis = blipp.unis_client.UNISInstance(service)
+
+    while True:
+        # Wait until resources and scheduled_times have been added
+        # we somehow trust the scheduler is on
+        # guess: [0] means the latest?
+        while "resources" not in measurement["configuration"] or \
+              "scheduled_times" not in measurement:
+            time.sleep(every/2)
+            measurement = unis.get("/measurements?configuration.name=" +
+                                   measurement["configuration"]["name"] +
+                                   "&service=" +
+                                   measurement["service"] +
+                                   "&id=" + measurement["id"])[0]
+
+        for t in measurement["scheduled_times"]:
+            yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+        
+        # put a new request to UNIS
+        measurement.pop("scheduled_times")
+        measurement = unis.put("/measurements/" + measurement["id"], data=measurement)
 
 def simple_avoid(service, measurement):
     config = measurement["configuration"]

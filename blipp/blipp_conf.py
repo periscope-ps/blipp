@@ -61,7 +61,7 @@ class BlippConfigure(ServiceConfigure):
             size_orig = len(m["configuration"])
             merge_into(m["configuration"], self.probe_defaults)
             if size_orig < len(m["configuration"]):
-                self.unis.put("/measurements/"+m["id"], m)                              
+                self.unis.put("/measurements/"+m["id"], m)
 
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])
@@ -109,30 +109,5 @@ class BlippConfigure(ServiceConfigure):
             self.probe_defaults = probe_defaults
         except Exception:
             pass
-        
-        if probes:
-            for probe in probes.values():
-                merge_into(probe, self.probe_defaults)
-                
-                # ATTENTION: for each probe, dynamically obtain its resource list
-                # the conf file models one single resource list for possible multiple
-                # probes, this may not be correct
-                links = [{"ref": "(localhost)"}]
-                dst_ip = probe["--client"]
-                proc = subprocess.Popen(["traceroute", dst_ip], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
-                return_code = proc.wait()
-        
-                for line in proc.stdout:
-                    # should improve the robustness of following parsing
-                    try:
-                        int(line.split()[0])
-                        links.append({"ref": line.split()[2]})
-                    except ValueError:
-                        pass
-
-                for line in proc.stderr:
-                    print("stderr: " + line.rstrip())
-                    
-                probe["resources"] = links
 
         return probes

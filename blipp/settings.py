@@ -42,11 +42,12 @@ STANDALONE_DEFAULTS = {
     "serviceType": "http://some_schema_domain/blipp",
     "properties": {
         "configurations": {
-            "unis_poll_interval":300,
+            "unis_url": "http://dev.incntre.iu.edu:8888",
+            "unis_poll_interval":30,
             "use_ssl": "",
-	    "ssl_cafile": "",
+            "ssl_cafile": "",
             "probe_defaults": {
-                "collection_schedule": "builtins.simple",
+                "collection_schedule": "adaptive.silent_lamb",
                 "schedule_params": {"every": 2}, # run every 2 seconds
                 "collection_size": 10000000, # ~10 megabytes
                 "collection_ttl": 1500000, # ~17 days
