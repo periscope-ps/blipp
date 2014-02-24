@@ -47,8 +47,11 @@ class Collector:
 
         self.num_collected += 1
         if self.num_collected >= self.config["reporting_params"]:
-            self.report()
-            self.num_collected = 0
+            try:
+                self.report()
+                self.num_collected = 0
+            except:
+                logger.info("report", msg="Could not send to MS")
 
     def _insert_datum(self, mid, ts, val):
         item = dict({"ts": ts * 10e5,

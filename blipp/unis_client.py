@@ -34,7 +34,7 @@ class UNISInstance:
                 self.meas_to_mds[measurement["id"]] = mds
         mds = self.meas_to_mds.get(measurement["id"], [])
         for md in mds:
-            if md["subject"] == subject and md["eventType"] == metric:
+            if md["subject"]["href"] == subject and md["eventType"] == metric:
                 return md
 
         post_dict = {

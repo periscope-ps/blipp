@@ -17,6 +17,7 @@ class BlippConfigure(ServiceConfigure):
         self.schema_cache = SchemaCache()
         self.probe_defaults = None
         self.initial_probes = self._strip_probes(initial_config)
+        self.measurements = []
         super(BlippConfigure, self).__init__(initial_config, node_id)
 
     def initialize(self):
@@ -24,6 +25,10 @@ class BlippConfigure(ServiceConfigure):
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
         self.initial_measurements = get_most_recent(self.initial_measurements)
+        # start any pre-existing measurements right away
+        if self.pem=="use":
+            for m in self.initial_measurements:
+                self.measurements.append(m)
         self._post_probes()
 
     def _post_probes(self):
@@ -79,6 +84,8 @@ class BlippConfigure(ServiceConfigure):
         measurement["configuration"] = probe
         measurement["eventTypes"] = eventTypes
         r = self.unis.post("/measurements", measurement)
+        # add the measurement to our internal list right away
+        self.measurements.append(r)
         return r
 
     def get_measurements(self):

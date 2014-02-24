@@ -32,13 +32,7 @@ class Arbiter():
         self.proc_to_measurement = {} # {(proc, conn): measurement_dict, ...}
         self.stopped_procs = {} # {(proc, conn): time_stopped, ...}
 
-    def reload_all(self):
-        self.config_obj.refresh()
-        self._cleanup_stopped_probes()
-        if self.config_obj.get("status", "ON").upper() == "OFF":
-            self._stop_all()
-            return time.time()
-        self._check_procs()
+    def run_probes(self):
         new_m_list = self.config_obj.get_measurements()
         our_m_list = self.proc_to_measurement.values()
 
@@ -55,6 +49,15 @@ class Arbiter():
                 self._stop_probe(proc_conn)
         return time.time()
 
+    def reload_all(self):
+        self.config_obj.refresh()
+        self._cleanup_stopped_probes()
+        if self.config_obj.get("status", "ON").upper() == "OFF":
+            self._stop_all()
+            return time.time()
+        self._check_procs()
+        return self.run_probes()
+        
     def _start_new_probe(self, m):
         logger.info("_start_new_probe", name=m["configuration"]["name"])
         logger.debug("_start_new_probe", config=pprint.pformat(m))
@@ -112,20 +115,23 @@ class Arbiter():
         # a helper function for printing the difference between old and new probe configs
         # can be useful for debugging
         for npc in new_m_list:
-            if npc["name"] == pc["name"]:
-                for key in npc.keys():
-                    if key in pc.keys():
-                        if not pc[key] == npc[key]:
-                            logger.debug("reload_all",
-                                         msg=key +
-                                         " newval:" +
-                                         str(npc[key]) +
-                                         " oldval:" + str(pc[key]))
-                    else:
-                        logger.debug("reload_all", msg="new key/val: " + key + ": " + str(npc[key]))
-                for key in pc.keys():
-                    if key not in npc.keys():
-                        logger.debug("reload_all", msg="deleted key/val: " + key + " :" + str(pc[key]))
+            try:
+                if npc["configuration"]["name"] == pc["configuration"]["name"]:
+                    for key in npc.keys():
+                        if key in pc.keys():
+                            if not pc[key] == npc[key]:
+                                logger.debug("reload_all",
+                                             msg=key +
+                                             " newval:" +
+                                             str(npc[key]) +
+                                             " oldval:" + str(pc[key]))
+                            else:
+                                logger.debug("reload_all", msg="new key/val: " + key + ": " + str(npc[key]))
+                    for key in pc.keys():
+                        if key not in npc.keys():
+                            logger.debug("reload_all", msg="deleted key/val: " + key + " :" + str(pc[key]))
+            except:
+                logger.debug("reload_all", msg="name not set")
 
 
 
@@ -134,6 +140,7 @@ def main(config):
     s = ConfigServer(config)
     last_reload_time = time.time()
     check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
+    a.run_probes()
     while s.listen(last_reload_time + check_interval - time.time()):
         last_reload_time = a.reload_all()
         check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
