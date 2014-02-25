@@ -16,8 +16,7 @@ SKIP=`awk '/^__TARFILE_FOLLOWS__/ { print NR + 1; exit 0; }' $0`
 THIS=`pwd`/$0
 tail -n +$SKIP $THIS | tar -xz
 
-# Installation steps for LAMP Toolkit
-DIR=blipp
+DIR=periscope-ps-blipp
 ETC=/usr/local/etc
 
 apt-get -y install python-setuptools python-dev python-zmq python-dateutil libnl-dev
