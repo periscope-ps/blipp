@@ -1,6 +1,6 @@
 // sample config file for blipp - designed to match unis service definition
 // with blipp specific stuff under ["properties"]["configurations"]
-// service schema http://unis.incntre.iu.edu/schema/20120709/service
+// service schema http://unis.incntre.iu.edu/schema/20140214/service
 // configuration schema is ###TODO
 // This conf file schema deviates from the service schema only in that it
 // may not require all fields that the schema does

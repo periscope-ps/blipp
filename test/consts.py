@@ -269,7 +269,7 @@ big_config_dict = {"not_in_unis": "file_val",
 
 bootstrap_local_config = {
     "status": "ON",
-    "$schema": 'http://unis.incntre.iu.edu/schema/20120709/service#',
+    "$schema": 'http://unis.incntre.iu.edu/schema/20140214/service#',
     "serviceType": "http://some_schema_domain/blipp",
     "name": "blipp",
     "ttl": 100000,

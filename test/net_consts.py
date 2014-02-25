@@ -1,5 +1,5 @@
 node1 = {
-    "$schema": "http://unis.incntre.iu.edu/schema/20120709/node#",
+    "$schema": "http://unis.incntre.iu.edu/schema/20140214/node#",
     "name": "VM-4",
     "selfRef": "https://unis.incntre.iu.edu:8443/nodes/VM-4.gemslice4.emulab-net.uky.emulab.net",
     "urn": "urn:publicid:IDN+emulab.net+slice+gemslice4+node+VM-4",
@@ -78,7 +78,7 @@ dev_string = ''' face |bytes    packets errs drop fifo frame compressed multicas
 '''
 
 port1 = {
-  "$schema": "http://unis.incntre.iu.edu/schema/20120709/port#",
+  "$schema": "http://unis.incntre.iu.edu/schema/20140214/port#",
   "name": "VM-4:if0",
   "selfRef": "https://unis.incntre.iu.edu:8443/ports/emulab.net_slice_gemslice4_interface_VM-4:if0",
   "urn": "urn:publicid:IDN+emulab.net+slice+gemslice4+interface+VM-4:if0",
@@ -112,7 +112,7 @@ port1 = {
   "id": "emulab.net_slice_gemslice4_interface_VM-4:if0"
 }
 
-local_port = {u'$schema': u'http://unis.incntre.iu.edu/schema/20120709/port#',
+local_port = {u'$schema': u'http://unis.incntre.iu.edu/schema/20140214/port#',
               u'capacity': -42,
               u'location': {},
               u'name': u'wlan0',
@@ -132,7 +132,7 @@ local_port_resp = {
   "ts": 1361833601555044,
   "id": "512bee81e77989124d0005f4",
   "location": {},
-  "$schema": "http://unis.incntre.iu.edu/schema/20120709/port#",
+  "$schema": "http://unis.incntre.iu.edu/schema/20140214/port#",
   "nodeRef": "urn:ogf:network:domain=hikerbear:node=hikerbear",
   "properties": {
     "mac": {

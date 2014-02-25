@@ -25,7 +25,7 @@ class MSInstanceTests(unittest2.TestCase):
         self.ms.post_data(data)
         self.ms._check_mids.assert_called_with(["testmid1", "testmid2"])
         self.ms.gc.do_req.assert_called_with('post', '/data', data, {'content-type':
-                          'application/perfsonar+json profile=http://unis.incntre.iu.edu/schema/20120709/data#',
+                          'application/perfsonar+json profile=http://unis.incntre.iu.edu/schema/20140214/data#',
                           'accept':"*/*"})
 
     def test_check_mids(self):

@@ -2,19 +2,19 @@ import ConfigParser
 import socket
 
 SCHEMAS = {
-    'networkresources': 'http://unis.incntre.iu.edu/schema/20120709/networkresource#',
-    'nodes': 'http://unis.incntre.iu.edu/schema/20120709/node#',
-    'domains': 'http://unis.incntre.iu.edu/schema/20120709/domain#',
-    'ports': 'http://unis.incntre.iu.edu/schema/20120709/port#',
-    'links': 'http://unis.incntre.iu.edu/schema/20120709/link#',
-    'paths': 'http://unis.incntre.iu.edu/schema/20120709/path#',
-    'networks': 'http://unis.incntre.iu.edu/schema/20120709/network#',
-    'topologies': 'http://unis.incntre.iu.edu/schema/20120709/topology#',
-    'services': 'http://unis.incntre.iu.edu/schema/20120709/service#',
-    'blipp': 'http://unis.incntre.iu.edu/schema/20120709/blipp#',
-    'metadata': 'http://unis.incntre.iu.edu/schema/20120709/metadata#',
-    'datum': 'http://unis.incntre.iu.edu/schema/20120709/datum#',
-    'data': 'http://unis.incntre.iu.edu/schema/20120709/data#'
+    'networkresources': 'http://unis.incntre.iu.edu/schema/20140214/networkresource#',
+    'nodes': 'http://unis.incntre.iu.edu/schema/20140214/node#',
+    'domains': 'http://unis.incntre.iu.edu/schema/20140214/domain#',
+    'ports': 'http://unis.incntre.iu.edu/schema/20140214/port#',
+    'links': 'http://unis.incntre.iu.edu/schema/20140214/link#',
+    'paths': 'http://unis.incntre.iu.edu/schema/20140214/path#',
+    'networks': 'http://unis.incntre.iu.edu/schema/20140214/network#',
+    'topologies': 'http://unis.incntre.iu.edu/schema/20140214/topology#',
+    'services': 'http://unis.incntre.iu.edu/schema/20140214/service#',
+    'blipp': 'http://unis.incntre.iu.edu/schema/20140214/blipp#',
+    'metadata': 'http://unis.incntre.iu.edu/schema/20140214/metadata#',
+    'datum': 'http://unis.incntre.iu.edu/schema/20140214/datum#',
+    'data': 'http://unis.incntre.iu.edu/schema/20140214/data#'
     }
 
 MIME = {
@@ -62,6 +62,7 @@ nconf = {}
 AUTH_UUID = None
 UNIS_ID = None
 MS_URL = None
+GN_ADDR = None
 try:
     with open(NODE_INFO_FILE, 'r') as cfile:
         for line in cfile:
@@ -77,6 +78,10 @@ try:
             pass
         try:
             UNIS_ID = nconf['unis_id']
+        except Exception as e:
+            pass
+        try:
+            GN_ADDR = nconf['gn_address']
         except Exception as e:
             pass
 except IOError:
@@ -97,18 +102,6 @@ DEBUG = False
 TRACE = False
 NETLOGGER_NAMESPACE = "blipp"
 
-# read global node address from node.info file
-def get_gn():
-    import re
-    pattern = 'gn_address='
-    GEMINI_NODE_INFO = '/usr/local/etc/node.info'
-    file_data = open(GEMINI_NODE_INFO)
-
-    for line in file_data:
-        match = re.match(pattern, line)
-        if match:
-            return line.split('=')[1].strip()
-
 def config_logger():
     """Configures netlogger"""
     nllog.PROJECT_NAMESPACE = NETLOGGER_NAMESPACE
@@ -116,14 +109,13 @@ def config_logger():
     logging.setLoggerClass(nllog.BPLogger)
     log = logging.getLogger(nllog.PROJECT_NAMESPACE)
     handler = logging.StreamHandler()
-    # get address of global node
-    gn_address = get_gn()
-    # setup socket to global node, GN
-    socketHandler = logging.handlers.SocketHandler(gn_address,
-    	logging.handlers.DEFAULT_TCP_LOGGING_PORT)
     handler.setFormatter(logging.Formatter("%(message)s"))
     log.addHandler(handler)
-    log.addHandler(socketHandler)
+    if GN_ADDR:
+        # setup socket to global node, GN
+        socketHandler = logging.handlers.SocketHandler(GN_ADDR,
+                                                       logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+        log.addHandler(socketHandler)
     # set level
     if TRACE:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
