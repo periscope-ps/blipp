@@ -22,6 +22,9 @@ class BlippConfigure(ServiceConfigure):
 
     def initialize(self):
         super(BlippConfigure, self).initialize()
+        if not self.service_setup:
+            logger.info("initialize", msg="Could not reach UNIS to initialize service")
+            exit(-1)
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
         self.initial_measurements = get_most_recent(self.initial_measurements)
@@ -58,14 +61,16 @@ class BlippConfigure(ServiceConfigure):
         self.initial_probes = self._strip_probes(self.config)
         if self.initial_probes:
             self._post_probes()
-        self.measurements = self.unis.get("/measurements?service=" +
-                                          self.config["selfRef"])
-        self.measurements = get_most_recent(self.measurements)
-        for m in self.measurements:
-            size_orig = len(m["configuration"])
-            merge_into(m["configuration"], self.probe_defaults)
-            if size_orig < len(m["configuration"]):
-                self.unis.put("/measurements/"+m["id"], m)                              
+        qmeas = self.unis.get("/measurements?service=" +
+                              self.config["selfRef"])
+        if qmeas:
+            self.measurements = qmeas
+            self.measurements = get_most_recent(self.measurements)
+            for m in self.measurements:
+                size_orig = len(m["configuration"])
+                merge_into(m["configuration"], self.probe_defaults)
+                if size_orig < len(m["configuration"]):
+                    self.unis.put("/measurements/"+m["id"], m)
 
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])

@@ -47,11 +47,9 @@ class Collector:
 
         self.num_collected += 1
         if self.num_collected >= self.config["reporting_params"]:
-            try:
-                self.report()
+            ret = self.report()
+            if ret:
                 self.num_collected = 0
-            except:
-                logger.info("report", msg="Could not send to MS")
 
     def _insert_datum(self, mid, ts, val):
         item = dict({"ts": ts * 10e5,
@@ -74,8 +72,11 @@ class Collector:
         for mid, data in self.mid_to_data.iteritems():
             if len(data):
                 post_data.append({"mid":mid, "data":data})
-        self.ms.post_data(post_data)
+        ret = self.ms.post_data(post_data)
+        if not ret:
+            return None
         self._clear_data()
+        return post_data
 
     def _clear_data(self):
         for mid in self.mid_to_data:
