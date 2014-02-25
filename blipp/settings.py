@@ -90,12 +90,24 @@ if MS_URL:
 ##################################################################
 # Netlogger stuff... pasted from Ahmed's peri-tornado
 ##################################################################
-import logging
+import logging, logging.handlers
 from netlogger import nllog
 
-DEBUG = True
+DEBUG = False
 TRACE = False
 NETLOGGER_NAMESPACE = "blipp"
+
+# read global node address from node.info file
+def get_gn():
+    import re
+    pattern = 'gn_address='
+    GEMINI_NODE_INFO = '/usr/local/etc/node.info'
+    file_data = open(GEMINI_NODE_INFO)
+
+    for line in file_data:
+        match = re.match(pattern, line)
+        if match:
+            return line.split('=')[1].strip()
 
 def config_logger():
     """Configures netlogger"""
@@ -104,8 +116,14 @@ def config_logger():
     logging.setLoggerClass(nllog.BPLogger)
     log = logging.getLogger(nllog.PROJECT_NAMESPACE)
     handler = logging.StreamHandler()
+    # get address of global node
+    gn_address = get_gn()
+    # setup socket to global node, GN
+    socketHandler = logging.handlers.SocketHandler(gn_address,
+    	logging.handlers.DEFAULT_TCP_LOGGING_PORT)
     handler.setFormatter(logging.Formatter("%(message)s"))
     log.addHandler(handler)
+    log.addHandler(socketHandler)
     # set level
     if TRACE:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
@@ -113,12 +131,10 @@ def config_logger():
     elif DEBUG:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
                      nllog.TRACE)[2]
-
     else:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
                      nllog.TRACE)[1]
     log.setLevel(log_level)
-
 
 def get_logger(namespace=NETLOGGER_NAMESPACE):
     """Return logger object"""
