@@ -14,7 +14,8 @@ SCHEMAS = {
     'blipp': 'http://unis.incntre.iu.edu/schema/20140214/blipp#',
     'metadata': 'http://unis.incntre.iu.edu/schema/20140214/metadata#',
     'datum': 'http://unis.incntre.iu.edu/schema/20140214/datum#',
-    'data': 'http://unis.incntre.iu.edu/schema/20140214/data#'
+    'data': 'http://unis.incntre.iu.edu/schema/20140214/data#',
+    'measurement': 'http://unis.incntre.iu.edu/schema/20140214/measurement#',
     }
 
 MIME = {
