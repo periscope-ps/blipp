@@ -17,7 +17,7 @@ THIS=`pwd`/$0
 tail -n +$SKIP $THIS | tar -xz
 
 # Installation steps for LAMP Toolkit
-DIR=blipp
+DIR=periscope-ps-blipp
 ETC=/usr/local/etc
 
 yum -y install python-setuptools python-dateutil libnl-devel

@@ -74,7 +74,7 @@ STANDALONE_DEFAULTS = {
     "serviceType": "http://some_schema_domain/blipp",
     "properties": {
         "configurations": {
-            "unis_poll_interval":300,
+            "unis_poll_interval":30,
             "use_ssl": "",
 	    "ssl_cafile": "",
             "probe_defaults": {
