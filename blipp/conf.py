@@ -89,32 +89,29 @@ class ServiceConfigure(object):
                             logger.warn('_setup_service',
                                         msg="id not unique... taking first result")
                             r = r[0]
-                            config["id"] = r["id"]
                         logger.info('_setup_service',
-                                    msg="%s service found with id %s" %(config["name"], r["id"]))
+                                    msg="%s service found with id %s" % (config["name"], r["id"]))
                         break
-        if not r:
-            logger.warn('_setup_service',
-                        msg="no service found by id or querying "\
-                            "...creating new service")
-            r = self.unis.post("/services", data=config)
-            if r:
-                merge_dicts(config, r)
-
-        if isinstance(r, list):
-            logger.warn('_setup_service',
-                        msg="id not unique... taking first result")
-            r = r[0]
+            else:
+                logger.warn('_setup_service',
+                            msg="no service found by id or querying "\
+                                "...creating new service")
 
         if r:
-            merge_dicts(r, config)
-            self.config = r
+            merge_dicts(config, r)
+
+        # always update UNIS with the merged config
+        if config.get("id", None):
+            r = self.unis.put("/services/" + config["id"], data=config)
+        else:
+            r = self.unis.post("/services", data=config)
+        if r:
+            merge_dicts(config, r)
 
         if r:
             self.service_setup = True
         else:
             logger.warn('_setup_service', msg="unable to set up service in UNIS")
-
 
 
     def get(self, key, default=None):
