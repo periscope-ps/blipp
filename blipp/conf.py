@@ -63,6 +63,7 @@ class ServiceConfigure(object):
                 "rel": "full"}
             self.node_setup = True
         else:
+            config["runningOn"] = {"href": ""}
             logger.warn('_setup_node', msg="Unable to set up node in UNIS")
 
     def _setup_service(self):
@@ -75,7 +76,8 @@ class ServiceConfigure(object):
             logger.warn('_setup_service',
                         msg="service id not specified or not found "\
                             "unis instance ...querying for service")
-            rlist = self.unis.get("/services?name=" + config.get("name", None) + "&limit=2")
+            rlist = self.unis.get("/services?name=" + config.get("name", None) +\
+                                      "&runningOn.href=" + config["runningOn"]["href"] + "&limit=2")
             # loop over the returned services and find one that
             # doesn't return 410 see
             # https://uisapp2.iu.edu/jira-prd/browse/GEMINI-98
@@ -88,9 +90,9 @@ class ServiceConfigure(object):
                                         msg="id not unique... taking first result")
                             r = r[0]
                             config["id"] = r["id"]
-                            logger.info('_setup_service',
-                                        msg="%s service found with id %s" %(config["name"], r["id"]))
-                            break
+                        logger.info('_setup_service',
+                                    msg="%s service found with id %s" %(config["name"], r["id"]))
+                        break
         if not r:
             logger.warn('_setup_service',
                         msg="no service found by id or querying "\
@@ -107,12 +109,6 @@ class ServiceConfigure(object):
         if r:
             merge_dicts(r, config)
             self.config = r
-
-        #if config != r:
-        #    logger.info("_setup_service",
-        #                msg="Local configuration differs from UNIS - updating UNIS")
-        #    config["selfRef"] = r["selfRef"]
-        #    r = self.unis.put("/services/" + config["id"], data=config)
 
         if r:
             self.service_setup = True
