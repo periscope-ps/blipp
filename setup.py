@@ -33,6 +33,7 @@ setup(
         "netlogger>=4.3.0",
         "netifaces",
         "pyzmq",
+        "psutil",
         "docopt"
     ],
     dependency_links=[
