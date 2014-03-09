@@ -21,20 +21,21 @@ class BlippConfigure(ServiceConfigure):
 
     def initialize(self):
         super(BlippConfigure, self).initialize()
-        self.initial_probes = self._strip_probes(self.config)
-        if self.initial_probes:
-            self._post_probes()
-            self.unis.put("/services/" + self.config["id"], data=self.config)
         if not self.service_setup:
             logger.info("initialize", msg="Could not reach UNIS to initialize service")
             exit(-1)
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
         self.initial_measurements = get_most_recent(self.initial_measurements)
-        # start any pre-existing measurements right away
+        # use any pre-existing measurements found in UNIS right away
         if self.pem=="use":
             for m in self.initial_measurements:
                 self.measurements.append(m)
+        # now strip and add to measurements any probes found in the merged initial config
+        self.initial_probes = self._strip_probes(self.config)
+        if self.initial_probes:
+            self._post_probes()
+            self.unis.put("/services/" + self.config["id"], data=self.config)
 
     def _post_probes(self):
         failed_probes = {}
@@ -48,6 +49,9 @@ class BlippConfigure(ServiceConfigure):
             r = self._post_measurement(probe)
             if not r:
                 failed_probes[name] = probe
+            else:
+                # add the measurement to our internal list right away
+                self.measurements.append(r)
         self.initial_probes = failed_probes
         if failed_probes:
             logger.warn('_post_probes', failed_probes=pprint.pformat(failed_probes))
