@@ -16,12 +16,15 @@ class BlippConfigure(ServiceConfigure):
         self.pem = pre_existing_measurements
         self.schema_cache = SchemaCache()
         self.probe_defaults = None
-        self.initial_probes = self._strip_probes(initial_config)
         self.measurements = []
         super(BlippConfigure, self).__init__(initial_config, node_id)
 
     def initialize(self):
         super(BlippConfigure, self).initialize()
+        self.initial_probes = self._strip_probes(self.config)
+        if self.initial_probes:
+            self._post_probes()
+            self.unis.put("/services/" + self.config["id"], data=self.config)
         if not self.service_setup:
             logger.info("initialize", msg="Could not reach UNIS to initialize service")
             exit(-1)
@@ -32,7 +35,6 @@ class BlippConfigure(ServiceConfigure):
         if self.pem=="use":
             for m in self.initial_measurements:
                 self.measurements.append(m)
-        self._post_probes()
 
     def _post_probes(self):
         failed_probes = {}
@@ -61,6 +63,7 @@ class BlippConfigure(ServiceConfigure):
         self.initial_probes = self._strip_probes(self.config)
         if self.initial_probes:
             self._post_probes()
+            self.unis.put("/services/" + self.config["id"], data=self.config)
         qmeas = self.unis.get("/measurements?service=" +
                               self.config["selfRef"])
         if qmeas:
@@ -89,8 +92,6 @@ class BlippConfigure(ServiceConfigure):
         measurement["configuration"] = probe
         measurement["eventTypes"] = eventTypes
         r = self.unis.post("/measurements", measurement)
-        # add the measurement to our internal list right away
-        self.measurements.append(r)
         return r
 
     def get_measurements(self):
@@ -109,7 +110,7 @@ class BlippConfigure(ServiceConfigure):
         return filter(lambda m: m["configuration"].get("status", "ON").upper()=="ON", measurements)
 
     def _strip_probes(self, initial_config):
-        probes = None
+        probes = {}
         try:
             probes = initial_config["properties"]["configurations"]["probes"]
             del initial_config["properties"]["configurations"]["probes"]
