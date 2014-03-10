@@ -16,10 +16,12 @@ import arbiter
 import pprint
 import docopt
 import json
+import socket
 from copy import deepcopy
 from utils import merge_dicts, delete_nones
 # import cProfile
 
+HOSTNAME = socket.gethostname()
 logger = settings.get_logger('ablippd')
 
 def get_options():
@@ -55,7 +57,7 @@ def main(options=None):
 
     config = bconf.config
     logger.info('main', config=pprint.pformat(config))
-    logger.warn('GEMINI', config=pprint.pformat(config))
+    logger.warn('NODE: ' + HOSTNAME, config=pprint.pformat(config))
     arbiter.main(bconf)
 
 def get_file_config(filepath):

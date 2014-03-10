@@ -1,9 +1,11 @@
 import settings
 import time
+import socket
 from collector import Collector
 from utils import blipp_import
 import pprint
 
+HOSTNAME = socket.gethostname()
 logger = settings.get_logger('probe_runner')
 
 class ProbeRunner:
@@ -52,7 +54,7 @@ class ProbeRunner:
     def setup(self):
         config = self.config
         logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
-        logger.warn('GEMINI', name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
+        logger.warn('NODE: ' + HOSTNAME, name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
         probe_mod = blipp_import(config["probe_module"])
         self.probe = probe_mod.Probe(self.service, self.measurement)
 
@@ -62,7 +64,7 @@ class ProbeRunner:
             sched_file, sched_name = "builtins", config["collection_schedule"]
 
         logger.info('setup', sched_file=sched_file, sched_name=sched_name)
-        logger.warn('GEMINI', sched_file=sched_file, sched_name=sched_name)
+        logger.warn('NODE: ' + HOSTNAME, sched_file=sched_file, sched_name=sched_name)
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
         self.collector = Collector(self.service, self.measurement)
