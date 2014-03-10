@@ -101,6 +101,7 @@ from netlogger import nllog
 
 DEBUG = False
 TRACE = False
+CONSOLE = True
 NETLOGGER_NAMESPACE = "blipp"
 
 def config_logger():
@@ -124,6 +125,9 @@ def config_logger():
     elif DEBUG:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
                      nllog.TRACE)[2]
+    elif CONSOLE:	
+        log_level = (logging.WARN, logging.INFO, logging.DEBUG,
+                     25)[3]
     else:
         log_level = (logging.WARN, logging.INFO, logging.DEBUG,
                      nllog.TRACE)[1]

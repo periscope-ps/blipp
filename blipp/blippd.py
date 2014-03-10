@@ -55,7 +55,7 @@ def main(options=None):
 
     config = bconf.config
     logger.info('main', config=pprint.pformat(config))
-
+    logger.warn('GEMINI', config=pprint.pformat(config))
     arbiter.main(bconf)
 
 def get_file_config(filepath):
