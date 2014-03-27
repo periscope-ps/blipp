@@ -10,14 +10,15 @@ import pprint
 logger = settings.get_logger('confblipp')
 
 class BlippConfigure(ServiceConfigure):
-    def __init__(self, initial_config={}, node_id=None, pre_existing_measurements="ignore"):
+    def __init__(self, initial_config={}, node_id=None,
+        pre_existing_measurements="ignore", urn=None):
         if "name" not in initial_config:
             initial_config['name']="blipp"
         self.pem = pre_existing_measurements
         self.schema_cache = SchemaCache()
         self.probe_defaults = None
         self.measurements = []
-        super(BlippConfigure, self).__init__(initial_config, node_id)
+        super(BlippConfigure, self).__init__(initial_config, node_id, urn)
 
     def initialize(self):
         super(BlippConfigure, self).initialize()

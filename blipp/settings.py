@@ -1,5 +1,7 @@
 import ConfigParser
 import socket
+import netifaces
+import utils
 
 SCHEMAS = {
     'networkresources': 'http://unis.incntre.iu.edu/schema/20140214/networkresource#',
@@ -28,14 +30,39 @@ MIME = {
     'PSXML': 'application/perfsonar+xml',
     }
 
-HOSTNAME = socket.gethostname() ### this needs to get the fqdn for DOMAIN to be right down below
-NODE_INFO_FILE="/usr/local/etc/node.info"
+'''
+Calculate URN deterministic way with a goal to make it as unique as
+possible. We might still get into situation where urn might not be unique
+if appropriate reverse dns entries are not set or duplicate MAC addresses
+are used.
 
-try:
-    DOMAIN = HOSTNAME.split('.', 1)[1]
-except Exception:
-    DOMAIN = HOSTNAME
-HOST_URN = "urn:ogf:network:domain=" + DOMAIN + ":node=" + HOSTNAME.split('.', 1)[0] + ":"
+We construct urn as follows.
+case 1) socket.getfqdn() resolves into monitor.incentre.iu.edu then 
+  urn=urn:ogf:network:domain=incentre.iu.edu:node=monitor:
+case 2) socket.getgqdn() fails then
+  urn=urn:ogf:network:domain=<FQDN>:node=<default_interface_ip>_<mac_address_of_default_interface>_<hostname>:
+'''
+HOSTNAME = socket.getfqdn() ### this might fail n give hostname
+fqdn = socket.getfqdn()
+hostname = socket.gethostname()
+
+if not fqdn or not hostname:
+    raise Exception("socket.getfqdn or socket.gethostname failed.\
+        Try setting urn manually.")
+
+#we check fqdn != hostname, if not then we have success
+if fqdn != hostname:
+    domain = fqdn.strip(hostname+".")
+    HOST_URN = "urn:ogf:network:domain=%s:node=%s:" % (domain, hostname)
+else:
+    default_ip, default_iface = utils.get_default_gateway_linux()
+    default_ip =  netifaces.ifaddresses(default_iface)[netifaces.AF_INET][0]["addr"]
+    default_mac = netifaces.ifaddresses(default_iface)[netifaces.AF_LINK][0]["addr"]
+    default_mac = utils.clean_mac(default_mac)
+    HOST_URN = "urn:ogf:network:domain=%s:node=%s_%s_%s" % \
+        (fqdn, default_ip, default_mac, hostname)
+
+NODE_INFO_FILE="/usr/local/etc/node.info"
 
 STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],

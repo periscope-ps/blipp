@@ -1,5 +1,7 @@
 from copy import deepcopy
 import re
+import struct
+import socket
 
 def try__import__(name):
     try:
@@ -146,3 +148,15 @@ def clean_mac(mac):
         return re.search('([0-9a-f]{12})', mac).groups()[0]
     except AttributeError:
         return None
+
+def get_default_gateway_linux():
+    """
+    Reads the default gateway directly from /proc.
+    Returns default interface ip, default interface name
+    """
+    with open("/proc/net/route") as fh:
+        for line in fh:
+            fields = line.strip().split()
+            if fields[1] != '00000000' or not int(fields[3], 16) & 2:
+                continue
+            return socket.inet_ntoa(struct.pack("=L", int(fields[2], 16))),fields[0]

@@ -14,10 +14,11 @@ class ServiceConfigure(object):
     should be in the BlippConfigure class which extends
     ServiceConfigure.
     '''
-    def __init__(self, initial_config={}, node_id=None):
+    def __init__(self, initial_config={}, node_id=None, urn=None):
         if not node_id:
             node_id = settings.UNIS_ID
         self.node_id = node_id
+        self.urn = urn
         self.config = initial_config
         self.unis = UNISInstance(self.config)
         self.service_setup = False
@@ -37,7 +38,7 @@ class ServiceConfigure(object):
         config = self.config
         logger.debug('_setup_node', config=pprint.pformat(config))
         hostname = settings.HOSTNAME
-        urn = settings.HOST_URN
+        urn = settings.HOST_URN if not self.urn else self.urn
         if node_id:
             r = self.unis.get("/nodes/" + str(node_id))
             if not r:

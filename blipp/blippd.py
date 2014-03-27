@@ -8,6 +8,7 @@ Options:
   -n NID --node-id=NID         ID of the node entry in UNIS that this blipp instance is running on.
   -s SID --service-id=SID      ID of the service entry in UNIS that this blipp should pull config from.
   -e ACTION --existing=ACTION  What to do with measurements already in UNIS (ignore|use) [default: ignore]
+  --urn URN                    Specify urn to be used if blipp needs to create record on UNIS
 '''
 
 from blipp_conf import BlippConfigure
@@ -50,7 +51,8 @@ def main(options=None):
 
     bconf = BlippConfigure(initial_config=conf,
                            node_id=options['--node-id'],
-                           pre_existing_measurements=options['--existing'])
+                           pre_existing_measurements=options['--existing'],
+                           urn=options['--urn'])
     bconf.initialize()
     # EK: don't need to refresh right away, right?
     #bconf.refresh()
