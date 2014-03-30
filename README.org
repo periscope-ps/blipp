@@ -50,8 +50,10 @@ $ python blipp/start_blipp.py -c /path/to/config.json
 #+END_SRC
 
 ** For Redhat, create an RPM:
+#+BEGIN_SRC
 python setup.py bdist_rpm --requires docopt,magicdate,netlogger,python,python-netifaces,python-requests,\
 python-zmq,python-setuptools,python-psutil,validictory
+#+END_SRC
 
 * Configuration
 Configuration happens in a json file, there are some examples in the
