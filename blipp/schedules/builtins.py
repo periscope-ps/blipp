@@ -1,6 +1,16 @@
 import time
 import sys
+import calendar
+import dateutil.parser
 
+def scheduled(service, measurement):
+    for t in measurement["scheduled_times"]:
+        yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+
+def onetime(service, measurement):
+    params = measurement["configuration"]["schedule_params"]
+    start_time = params.get("start_time", time.time())
+    yield start_time
 
 def simple(service, measurement):
     params = measurement["configuration"]["schedule_params"]
