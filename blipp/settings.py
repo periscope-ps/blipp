@@ -176,7 +176,7 @@ CONFIG_FILE="/etc/periscope/blippd.conf"
 config = ConfigParser.RawConfigParser()
 config.read(CONFIG_FILE)
 
-main_config = ["unis_url", "ms_url", "ssl_cert", "ssl_key", "ssl_cafile", "unis_poll_interval"]
+main_config = ["unis_url", "ms_url", "ssl_cert", "ssl_key", "ssl_cafile", "unis_poll_interval", "use_ssl"]
 probe_map = {"registration_probe": ["service_type", "service_name", "service_description", "service_accesspoint", "pidfile", "process_name"],
              "some other probe": ["blah", "blah2"]}
 
