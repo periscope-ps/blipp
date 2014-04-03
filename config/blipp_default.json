@@ -5,23 +5,34 @@
     "ttl": 100000,
     "location":{"institution": "GEMINI"},
     "description": "BLiPP running on a GENI slice",
-    "ip": "10.10.1.2",
     "properties": {
 	"configurations": {
-	    "unis_url": "http://dev.incntre.iu.edu:8888",
-	    "use_ssl": false,
-            "ssl_cert": "",
-            "ssl_key": "",
+	    "unis_url":"https://localhost:8888",
+	    "use_ssl": true,
+            "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
+            "ssl_key": "/usr/local/etc/certs/mp_key.pem",
 	    "ssl_cafile": "",
 	    "probe_defaults":
-	    {"collection_schedule": "builtins.simple",
-	     "schedule_params": {"every": 30},
+	    {"collection_schedule":"builtins.simple",
+	     "schedule_params": {"every": 2},
 	     "reporting_params": 8,
-	     "collection_size": 10000000,
-	     "collection_ttl": 1500000,
-	     "ms_url": "http://dev.incntre.iu.edu:8888"
+	     "collection_size":10000000,
+	     "collection_ttl":1500000,
+	     "ms_url": "https://localhost:8888"
 	    },
 	    "probes":{
+		"cpu":{
+		    "probe_module": "cpu",
+		    "kwargs":{"proc_dir":"/proc"}
+		},
+		"net":{
+		    "probe_module": "net",
+		    "kwargs":{"unis_url": "https://localhost:8888"}
+		},
+		"mem": {
+		    "probe_module": "mem",
+		    "kwargs":{}
+		}
 	    }
 	},
 	"summary": {
