@@ -4,7 +4,7 @@ from utils import full_event_types
 import shlex
 import settings
 
-logger = settings.get_logger('cmd_line_probe')
+logger = settings.get_logger('traceroute_probe')
 
 class Probe:
 
@@ -41,11 +41,17 @@ class Probe:
         return data
 
     def _extract_data(self, stdout):
-        matches = self.data_regex.findall(stdout)
+        matches = self.data_regex.finditer(stdout)
         if not matches:
             raise NonMatchingOutputError(stdout)
-#        return matches.groupdict()
-        return {'hopip': matches}
+        k = None
+        v = []
+        for m in matches:
+            d = m.groupdict()
+            k = d.keys()[0]
+            v.extend(map(lambda x: x[1:-1], d.values()))
+            
+        return {k: v}
 
     def _substitute_command(self, command, config):
         ''' command in form "ping $ADDRESS"

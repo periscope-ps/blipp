@@ -53,10 +53,7 @@ def full_event_types(data, EVENT_TYPES):
         return result
     else:
         for k,v in data.iteritems():
-            try:
-                result[EVENT_TYPES[k]]=v
-            except:
-                result[EVENT_TYPES['bandwidth']]=v
+            result[EVENT_TYPES[k]]=v
         return result
 
 def remove_old_resources(resource_list):
