@@ -16,7 +16,7 @@ class Probe:
         try:
             self.data_regex = re.compile(
                 str(self.config["regex"]),
-                flags=re.S|re.M)
+                flags=re.M)
         except Exception:
             self.data_regex = None
         try:
@@ -41,10 +41,11 @@ class Probe:
         return data
 
     def _extract_data(self, stdout):
-        matches = self.data_regex.search(stdout)
+        matches = self.data_regex.findall(stdout)
         if not matches:
             raise NonMatchingOutputError(stdout)
-        return matches.groupdict()
+#        return matches.groupdict()
+        return {'hopip': matches}
 
     def _substitute_command(self, command, config):
         ''' command in form "ping $ADDRESS"
