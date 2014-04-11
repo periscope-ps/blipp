@@ -50,9 +50,10 @@ $ python blipp/start_blipp.py -c /path/to/config.json
 #+END_SRC
 
 ** For Redhat, create an RPM:
+Make sure to set correct release number.
 #+BEGIN_SRC
 python setup.py bdist_rpm --requires docopt,magicdate,netlogger,python,python-netifaces,python-requests,\
-python-zmq,python-setuptools,python-psutil,validictory
+python-zmq,python-setuptools,python-psutil,validictory --release 5
 #+END_SRC
 
 * Configuration
