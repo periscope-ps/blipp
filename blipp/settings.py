@@ -52,7 +52,7 @@ if not fqdn or not hostname:
 
 #we check fqdn != hostname, if not then we have success
 if fqdn != hostname:
-    domain = fqdn.strip(hostname+".")
+    domain = fqdn.replace(hostname+".", "")
     HOST_URN = "urn:ogf:network:domain=%s:node=%s:" % (domain, hostname)
 else:
     default_ip, default_iface = utils.get_default_gateway_linux()
