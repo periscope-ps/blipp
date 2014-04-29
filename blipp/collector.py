@@ -1,8 +1,8 @@
 from ms_client import MSInstance
+from data_logger import DataLogger
 from unis_client import UNISInstance
 import settings
 logger = settings.get_logger('collector')
-
 
 class Collector:
     """Collects reported measurements and aggregates them for
@@ -19,9 +19,11 @@ class Collector:
         self.measurement = measurement
         self.collections_created = False
         self.ms = MSInstance(service, measurement)
+        self.dl = DataLogger(service, measurement)
         self.mids = {} # {subject1: {metric1:mid, metric2:mid}, subj2: {...}}
         # {mid: [{"ts": ts, "value": val}, {"ts": ts, "value": val}]}
         self.mid_to_data = {}
+        self.mid_to_et = {}
         self.unis = UNISInstance(service)
         self.num_collected = 0
 
@@ -43,6 +45,7 @@ class Collector:
                                                           self.measurement)
                     mids.setdefault(subject, {})[metric] = r["id"]
                     self.mid_to_data[r["id"]] = []
+                self.mid_to_et[mids[subject][metric]] = metric
                 self._insert_datum(mids[subject][metric], ts, value)
 
         self.num_collected += 1
@@ -72,8 +75,9 @@ class Collector:
         for mid, data in self.mid_to_data.iteritems():
             if len(data):
                 post_data.append({"mid":mid, "data":data})
-        ret = self.ms.post_data(post_data)
-        if not ret:
+        ms_ret = self.ms.post_data(post_data)
+        dl_ret = self.dl.write_data(post_data, self.mid_to_et)
+        if not ms_ret and not dl_ret:
             return None
         self._clear_data()
         return post_data

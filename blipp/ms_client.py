@@ -27,6 +27,8 @@ class MSInstance:
         return self.pc.do_req('post', '/events', data, headers)
 
     def post_data(self, data):
+        if not self.ms_url:
+            return None
         mids = [ x["mid"] for x in data ]
         self._check_mids(mids)
         headers = self._def_headers("data")
