@@ -55,12 +55,16 @@ if fqdn != hostname:
     domain = fqdn.replace(hostname+".", "")
     HOST_URN = "urn:ogf:network:domain=%s:node=%s:" % (domain, hostname)
 else:
-    default_ip, default_iface = utils.get_default_gateway_linux()
-    default_ip =  netifaces.ifaddresses(default_iface)[netifaces.AF_INET][0]["addr"]
-    default_mac = netifaces.ifaddresses(default_iface)[netifaces.AF_LINK][0]["addr"]
-    default_mac = utils.clean_mac(default_mac)
-    HOST_URN = "urn:ogf:network:domain=%s:node=%s_%s_%s" % \
-        (fqdn, default_ip, default_mac, hostname)
+    try:
+        default_ip, default_iface = utils.get_default_gateway_linux()
+        default_ip =  netifaces.ifaddresses(default_iface)[netifaces.AF_INET][0]["addr"]
+        default_mac = netifaces.ifaddresses(default_iface)[netifaces.AF_LINK][0]["addr"]
+        default_mac = utils.clean_mac(default_mac)
+        HOST_URN = "urn:ogf:network:domain=%s:node=%s_%s_%s" % \
+            (fqdn, default_ip, default_mac, hostname)
+    except Exception:
+        domain = fqdn.replace(hostname+".", "")
+        HOST_URN = "urn:ogf:network:domain=%s:node=%s:" % (domain, hostname)
 
 NODE_INFO_FILE="/usr/local/etc/node.info"
 
