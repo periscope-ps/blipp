@@ -40,13 +40,13 @@ it takes.
 For development purposes, you may want to run blipp directly from the
 repository (with any changes you've made to the code). To do this, run
 #+BEGIN_SRC
-$ python blipp/start_blipp.py --help
+$ python blipp/blippd.py --help
 #+END_SRC
 ...with whatever options you like.
 
 Usually you'll probably want to point it at a configuration file like this:
 #+BEGIN_SRC
-$ python blipp/start_blipp.py -c /path/to/config.json
+$ python blipp/blippd.py -c config/blipp_default.json
 #+END_SRC
 
 ** For Redhat, create an RPM:
