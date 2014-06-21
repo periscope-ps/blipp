@@ -1,0 +1,24 @@
+{
+    "$schema": "http://unis.incntre.iu.edu/schema/20140214/measurement#",
+    "service": "http://dev.incntre.iu.edu:8888/services/53a4706de77989013a000150",
+    "ts": 1598785926407953,
+    "eventTypes": [
+      "ps:tools:blipp:linux:net:iptables:counting"
+    ], 
+    "configuration": {
+      "regex": "\\s+(?P<counting>[0-9]+)\\s+[0-9]+\\s+ACCEPT", 
+      "reporting_params": 1, 
+      "probe_module": "iptables", 
+      "schedule_params": {
+        "every": 5
+      }, 
+      "collection_schedule": "builtins.simple", 
+      "command": "sudo iptables -L CCHAIN -xnv", 
+      "collection_size": 10000000, 
+      "eventTypes": {
+        "counting": "ps:tools:blipp:linux:net:iptables:counting"
+      }, 
+      "collection_ttl": 1500000, 
+      "name": "iptables_counting"
+    }
+}

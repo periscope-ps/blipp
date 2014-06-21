@@ -109,7 +109,9 @@ class Arbiter():
             if not proc.is_alive():
                 proc.join()
                 logger.warn('_check_procs', msg="a probe has exited", exitcode=proc.exitcode)
-                self.proc_to_measurement.pop((proc, conn))
+                m = self.proc_to_measurement.pop((proc, conn))
+                m["configuration"]['status'] ='OFF'
+                self.config_obj.unis.post("/measurements", m)
 
     def _print_pc_diff(self, pc, new_m_list):
         # a helper function for printing the difference between old and new probe configs
