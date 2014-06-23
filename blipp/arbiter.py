@@ -50,12 +50,13 @@ class Arbiter():
         return time.time()
 
     def reload_all(self):
+        self._check_procs()
         self.config_obj.refresh()
         self._cleanup_stopped_probes()
         if self.config_obj.get("status", "ON").upper() == "OFF":
             self._stop_all()
             return time.time()
-        self._check_procs()
+        #self._check_procs()
         return self.run_probes()
         
     def _start_new_probe(self, m):
@@ -109,7 +110,9 @@ class Arbiter():
             if not proc.is_alive():
                 proc.join()
                 logger.warn('_check_procs', msg="a probe has exited", exitcode=proc.exitcode)
-                self.proc_to_measurement.pop((proc, conn))
+                m = self.proc_to_measurement.pop((proc, conn))
+                m["configuration"]['status'] ='OFF'
+                self.config_obj.unis.post("/measurements", m)
 
     def _print_pc_diff(self, pc, new_m_list):
         # a helper function for printing the difference between old and new probe configs
