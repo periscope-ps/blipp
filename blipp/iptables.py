@@ -5,7 +5,7 @@ import shlex
 import settings
 
 logger = settings.get_logger('traceroute_probe')
-CHAINNAME = "COUNTINGCHAIN"
+CHAINNAME = "CCHAIN"
 
 class Probe:
 
@@ -13,20 +13,21 @@ class Probe:
         self.service = service
         self.measurement = measurement
         self.config = measurement["configuration"]
+        
         os.system("sudo iptables -N " + CHAINNAME)
-        os.system("sudo iptables -I INPUT -p tcp -m tcp --dport 1935 -j " + CHAINNAME)
+        os.system("sudo iptables -I INPUT -p tcp -m tcp --dport 22 -j " + CHAINNAME)
         os.system("sudo iptables -I " + CHAINNAME + " -j ACCEPT")
 
-        #self.command = self._substitute_command(str(self.config.get("command")), self.config)
-        self.command = ["sudo", "iptables", "-L", CHAINNAME, "-xnv"]
+        self.command = self._substitute_command(str(self.config.get("command")), self.config)
+        
         try:
             self.data_regex = re.compile(
-                str("\s+(?P<counting>[0-9]+)\s+[0-9]+\s+ACCEPT"),
+                str(self.config["regex"]),
                 flags=re.M)
         except Exception:
             self.data_regex = None
         try:
-            self.EVENT_TYPES = {"counting": "ps:tools:blipp:linux:net:iptable:counting"}
+            self.EVENT_TYPES = {"counting": "ps:tools:blipp:linux:net:iptables:counting"}
         except Exception:
             self.EVENT_TYPES = {}
 
