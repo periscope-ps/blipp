@@ -16,6 +16,7 @@
 	    {"collection_schedule":"builtins.simple",
 	     "schedule_params": {"every": 10},
 	     "reporting_params": 8,
+	     "reporting_tolerance": 10,
 	     "collection_size":10000000,
 	     "collection_ttl":1500000,
 	     "ms_url": "http://dev.incntre.iu.edu:8888"

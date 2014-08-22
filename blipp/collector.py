@@ -77,7 +77,7 @@ class Collector:
                 post_data.append({"mid":mid, "data":data})
         ms_ret = self.ms.post_data(post_data)
         dl_ret = self.dl.write_data(post_data, self.mid_to_et)
-        if not ms_ret and not dl_ret and self.num_collected < 10 * self.config["reporting_params"]:
+        if not ms_ret and not dl_ret and self.num_collected < self.config["reporting_tolerance"] * self.config["reporting_params"]:
             return None
         self._clear_data()
         return True
