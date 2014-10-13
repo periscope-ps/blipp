@@ -15,9 +15,9 @@
 	    "ssl_cafile": "",
 	    "probe_defaults":
 	    {"collection_schedule":"builtins.simple",
-	     "schedule_params": {"every": 10},
+	     "schedule_params": {"every": 2},
 	     "reporting_params": 8,
-	     "collection_size":10000000,
+	     "collection_size":100000,
 	     "collection_ttl":1500000
 	    },
 	    "probes":{
