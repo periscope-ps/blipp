@@ -1,35 +1,39 @@
 {
-    "status": "ON",
-    "serviceType": "ps:tools:blipp",
-    "name": "blipp",
-    "ttl": 100000,
-    "location":{"institution": "GEMINI"},
-    "description": "BLiPP running on a GENI slice",
-    "properties": {
-	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu:8888",
-	    "use_ssl": false,
-            "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
-            "ssl_key": "/usr/local/etc/certs/mp_key.pem",
-	    "ssl_cafile": "",
-	    "probe_defaults":
-	    {"collection_schedule":"builtins.simple",
-	     "schedule_params": {"every": 10},
-	     "reporting_params": 8,
-	     "reporting_tolerance": 10,
-	     "collection_size":10000000,
-	     "collection_ttl":1500000,
-	     "ms_url": "http://dev.incntre.iu.edu:8888"
-	    },
-	    "probes":{
-	    "iptables":{
-	    	"probe_module": "iptables",
-	    	"kwargs":{}
-	    }
-	    }
+  "status": "ON",
+  "serviceType": "ps:tools:blipp",
+  "name": "blipp",
+  "ttl": 100000,
+  "location":{"institution": "CREST"},
+  "description": "BLiPP running locally",
+  "properties": {
+    "configurations": {
+      "unis_url":"http://localhost:8888",
+      "use_ssl": false,
+      "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
+      "ssl_key": "/usr/local/etc/certs/mp_key.pem",
+      "ssl_cafile": "",
+      "probe_defaults":
+      {"collection_schedule":"builtins.simple",
+       "schedule_params": {"every": 2},
+       "reporting_params": 4,
+       "reporting_tolerance": 10,
+       "collection_size":100000,
+       "collection_ttl":1500000,
+       "ms_url": "http://localhost:8888"
+      },
+      "probes":{
+	"cpu":{
+	  "probe_module": "cpu",
+	  "kwargs":{"proc_dir":"/proc"}
 	},
-	"summary": {
-	    "metadata": []
+	"mem": {
+	  "probe_module": "mem",
+	  "kwargs":{}
 	}
+      }
+    },
+    "summary": {
+      "metadata": []
     }
+  }
 }
