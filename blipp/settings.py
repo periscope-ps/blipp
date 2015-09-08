@@ -133,7 +133,7 @@ from netlogger import nllog
 DEBUG = False
 TRACE = False
 CONSOLE = True
-NETLOGGER_NAMESPACE = "blipp"
+NETLOGGER_NAMESPACE = "blippd"
 
 def config_logger():
     """Configures netlogger"""
