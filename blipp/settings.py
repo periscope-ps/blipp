@@ -134,6 +134,7 @@ DEBUG = False
 TRACE = False
 CONSOLE = True
 NETLOGGER_NAMESPACE = "blippd"
+WORKSPACE = "."
 
 def config_logger():
     """Configures netlogger"""
@@ -141,6 +142,11 @@ def config_logger():
     #logging.setLoggerClass(nllog.PrettyBPLogger)
     logging.setLoggerClass(nllog.BPLogger)
     log = logging.getLogger(nllog.PROJECT_NAMESPACE)
+
+    fileHandler = logging.handlers.RotatingFileHandler("{workspace}/blipp.log".format(workspace = WORKSPACE), maxBytes = 500000, backupCount = 5)
+    fileHandler.setFormatter(logging.Formatter("%(message)s"))
+    log.addHandler(fileHandler)
+    
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(message)s"))
     log.addHandler(handler)
