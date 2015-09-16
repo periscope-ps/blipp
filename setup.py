@@ -34,7 +34,8 @@ setup(
         "netifaces",
         "pyzmq",
         "psutil",
-        "docopt"
+        "docopt",
+        "daemon"
     ],
     dependency_links=[
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",
