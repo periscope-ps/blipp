@@ -168,22 +168,22 @@ def config_logger():
 
 def add_filehandler(logfile):
     log = logging.getLogger(nllog.PROJECT_NAMESPACE)
-
-    for handler in log.handlers:
-        if type(handler) is logging.handlers.RotatingFileHandler:
-            return
-
-    fileHandler = logging.handlers.RotatingFileHandler(logfile, maxBytes = 500000, backupCount = 5)
-    fileHandler.setFormatter(logging.Formatter("%(message)s"))
-    log.addHandler(fileHandler)
+    log.handlers = []
     
-def get_logger(namespace=NETLOGGER_NAMESPACE, logfile='stdout'):
+    try:
+        fileHandler = logging.handlers.RotatingFileHandler(logfile, maxBytes = 500000, backupCount = 5)
+        fileHandler.setFormatter(logging.Formatter("%(message)s"))
+        log.addHandler(fileHandler)
+    except exp as AttributeError:
+        log.error("Could not attach File Logger: {exp}".format(exp = exp))
+        
+def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None):
     """Return logger object"""
     # Test if netlogger is initialized
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
         config_logger()
 
-    if logfile != 'stdout':
+    if logfile:
         add_filehandler(logfile)
 
     return nllog.get_logger(namespace)

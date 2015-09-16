@@ -3,7 +3,7 @@ Usage:
   blippd [options]
 
 Options:
-  -l FILE --log                Set logging output file [default=stdout]
+  -l FILE --log                Set logging output file
   -d LEVEL --verbose           Select log verbosity [TRACE, DEBUG, CONSOLE]
   -c FILE --config-file=FILE   The json formatted config file.
   -u URL --unis-url=URL        Where UNIS is running.
