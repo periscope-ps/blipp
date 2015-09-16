@@ -136,17 +136,13 @@ CONSOLE = True
 NETLOGGER_NAMESPACE = "blippd"
 WORKSPACE = "."
 
-def config_logger():
+def config_logger(logfile):
     """Configures netlogger"""
     nllog.PROJECT_NAMESPACE = NETLOGGER_NAMESPACE
     #logging.setLoggerClass(nllog.PrettyBPLogger)
     logging.setLoggerClass(nllog.BPLogger)
     log = logging.getLogger(nllog.PROJECT_NAMESPACE)
 
-    fileHandler = logging.handlers.RotatingFileHandler("{workspace}/blipp.log".format(workspace = WORKSPACE), maxBytes = 500000, backupCount = 5)
-    fileHandler.setFormatter(logging.Formatter("%(message)s"))
-    log.addHandler(fileHandler)
-    
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(message)s"))
     log.addHandler(handler)
@@ -170,12 +166,28 @@ def config_logger():
                      nllog.TRACE)[1]
     log.setLevel(log_level)
 
-def get_logger(namespace=NETLOGGER_NAMESPACE):
+def add_filehandler(logfile):
+    log = logging.getLogger(nllog.PROJECT_NAMESPACE)
+
+    for handler in log.handlers:
+        if type(handler) is logging.handlers.RotatingFileHandler:
+            return
+
+    fileHandler = logging.handlers.RotatingFileHandler(logfile, maxBytes = 500000, backupCount = 5)
+    fileHandler.setFormatter(logging.Formatter("%(message)s"))
+    log.addHandler(fileHandler)
+    
+def get_logger(namespace=NETLOGGER_NAMESPACE, logfile='stdout'):
     """Return logger object"""
     # Test if netlogger is initialized
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
-        config_logger()
+        config_logger(logfile)
+
+    if logfile != 'stdout':
+        add_filehandler(logfile)
+
     return nllog.get_logger(namespace)
+
 
 ##################################################################
 # Read in a configuration file

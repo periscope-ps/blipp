@@ -27,7 +27,6 @@ from utils import merge_dicts, delete_nones
 # import cProfile
 
 HOSTNAME = socket.gethostname()
-logger = settings.get_logger('blippd')
 
 def get_options():
     options = docopt.docopt(__doc__)
@@ -35,6 +34,7 @@ def get_options():
 
 def main(options=None):
     options = get_options() if not options else options
+    logger = settings.get_logger('blippd', options['--log'])
     conf = deepcopy(settings.STANDALONE_DEFAULTS)
     cconf = {
         "id": options.get("--service-id", None),
@@ -53,6 +53,7 @@ def main(options=None):
         fconf = get_file_config(options['--config-file'])
         merge_dicts(conf, fconf)
 
+
     bconf = BlippConfigure(initial_config=conf,
                            node_id=options['--node-id'],
                            pre_existing_measurements=options['--existing'],
@@ -70,6 +71,7 @@ def main(options=None):
         arbiter.main(bconf)
 
 def get_file_config(filepath):
+    logger = settings.get_logger('blippd')
     try:
         with open(filepath) as f:
             conf = f.read()
