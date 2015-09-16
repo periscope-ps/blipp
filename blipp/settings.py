@@ -136,7 +136,7 @@ CONSOLE = True
 NETLOGGER_NAMESPACE = "blippd"
 WORKSPACE = "."
 
-def config_logger(logfile):
+def config_logger():
     """Configures netlogger"""
     nllog.PROJECT_NAMESPACE = NETLOGGER_NAMESPACE
     #logging.setLoggerClass(nllog.PrettyBPLogger)
@@ -181,7 +181,7 @@ def get_logger(namespace=NETLOGGER_NAMESPACE, logfile='stdout'):
     """Return logger object"""
     # Test if netlogger is initialized
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
-        config_logger(logfile)
+        config_logger()
 
     if logfile != 'stdout':
         add_filehandler(logfile)
