@@ -26,7 +26,9 @@ setup(
     license="http://www.apache.org/licenses/LICENSE-2.0",
     url="https://github.com/periscope-ps/periscope",
     description="BLiPP: Basic Lightweight Periscope Probes",
-    data_files = [("/etc/periscope", ["config/blippd.conf"])],
+    data_files = [("/usr/share/periscope", ["config/blippd.conf",
+                                            "config/RPM/blippd.service",
+                                            "config/RPM/blippd.opts"])],
     install_requires=[
         "validictory",
         "requests",
@@ -47,4 +49,6 @@ setup(
             'blippcmd = scripts.blippcmd:main'
         ]
     },
+    options = {'bdist_rpm':{'post_install' : 'config/RPM/centos_postinstall.sh',
+                            'post_uninstall' : 'config/RPM/centos_postuninstall.sh'}},
 )

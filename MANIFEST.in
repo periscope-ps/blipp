@@ -1,1 +1,3 @@
 include config/blippd.conf
+include config/RPM/blippd.service
+include config/RPM/blippd.opts

@@ -1,0 +1,13 @@
+[Unit]
+Description=BLiPP Service
+After=network.target
+
+[Service]
+Type=simple
+User=blipp
+EnvironmentFile=/etc/sysconfig/blippd
+ExecStart=/usr/bin/blippd -D -l /var/log/blippd.log $OPTIONS
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
