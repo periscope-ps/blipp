@@ -6,4 +6,5 @@ PETC=/etc/periscope
 SHARE=/usr/share/periscope
 LOG=/var/log/blippd.log
 
-userdel -r blipp
+service blippd stop
+userdel blipp
