@@ -37,7 +37,7 @@ setup(
         "pyzmq",
         "psutil",
         "docopt",
-        "python-daemon>=1.6",
+        "python-daemon>=1.5",
         "python-dateutil"
     ],
     dependency_links=[
