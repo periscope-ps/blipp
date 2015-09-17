@@ -4,7 +4,7 @@ Usage:
 
 Options:
   -l FILE --log                Set logging output file
-  -d LEVEL --verbose           Select log verbosity [TRACE, DEBUG, CONSOLE]
+  -d LEVEL --log-level=LEVEL   Select log verbosity [TRACE, DEBUG, CONSOLE]
   -c FILE --config-file=FILE   The json formatted config file.
   -u URL --unis-url=URL        Where UNIS is running.
   -n NID --node-id=NID         ID of the node entry in UNIS that this blipp instance is running on.
@@ -34,7 +34,8 @@ def get_options():
 
 def main(options=None):
     options = get_options() if not options else options
-    logger = settings.get_logger('blippd', options['--log'])
+
+    logger = settings.get_logger('blippd', options['--log'], options['--log-level'])
     conf = deepcopy(settings.STANDALONE_DEFAULTS)
     cconf = {
         "id": options.get("--service-id", None),

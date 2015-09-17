@@ -176,8 +176,26 @@ def add_filehandler(logfile):
         log.addHandler(fileHandler)
     except exp as AttributeError:
         log.error("Could not attach File Logger: {exp}".format(exp = exp))
-        
-def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None):
+
+def set_level(level):
+    log = logging.getLogger(nllog.PROJECT_NAMESPACE)
+    level = level.upper()
+    
+    if level == 'TRACE':
+        log_level = (logging.WARN, logging.INFO, logging.DEBUG,
+                     nllog.TRACE)[3]
+    elif level == 'DEBUG':
+        log_level = (logging.WARN, logging.INFO, logging.DEBUG,
+                     nllog.TRACE)[2]
+    elif level == 'CONSOLE':	
+        log_level = (logging.WARN, logging.INFO, logging.DEBUG,
+                     25)[3]
+    else:
+        return
+    
+    log.setLevel(log_level)    
+
+def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None, level=None):
     """Return logger object"""
     # Test if netlogger is initialized
     if nllog.PROJECT_NAMESPACE != NETLOGGER_NAMESPACE:
@@ -185,6 +203,8 @@ def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None):
 
     if logfile:
         add_filehandler(logfile)
+    if level:
+        set_level(level)
 
     return nllog.get_logger(namespace)
 
