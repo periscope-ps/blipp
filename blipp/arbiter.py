@@ -38,6 +38,10 @@ class Arbiter():
 
         for m in new_m_list:
             if not m in our_m_list:
+                if m['configuration']['collection_schedule'] == 'builtins.scheduled'\
+                    and 'scheduled_times' not in m:
+                    continue
+                
                 if settings.DEBUG:
                     self._print_pc_diff(m, our_m_list)
                 self._start_new_probe(m)
@@ -112,6 +116,8 @@ class Arbiter():
                 logger.warn('_check_procs', msg="a probe has exited", exitcode=proc.exitcode)
                 m = self.proc_to_measurement.pop((proc, conn))
                 m["configuration"]['status'] ='OFF'
+                if "ts" in m:
+                    del m["ts"]
                 self.config_obj.unis.post("/measurements", m)
 
     def _print_pc_diff(self, pc, new_m_list):
