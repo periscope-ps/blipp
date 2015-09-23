@@ -43,7 +43,12 @@ class ServiceConfigure(object):
             r = self.unis.get("/nodes/" + str(node_id))
             if not r:
                 logger.warn('_setup_node', msg="node id %s not found" % node_id)
-                node_id = None
+                r = self.unis.post("/nodes",
+                              data={
+                        "$schema": settings.SCHEMAS["nodes"],
+                        "name": hostname,
+                        "urn": urn,
+                        "id": node_id})
         if not node_id:
             r = self.unis.get("/nodes?urn=" + urn)
             if r and len(r):
