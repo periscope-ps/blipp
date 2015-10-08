@@ -10,25 +10,32 @@
 # source function library
 . /etc/rc.d/init.d/functions
 
+BLIPPD_CONF_FILE="/etc/periscope/blipp_dlt.json"
+lockfile=/var/lock/subsys/blippd
+
 RETVAL=0
 
 start() {
+        [ -f $BLIPPD_CONF_FILE ] || exit 6
 	echo -n $"Starting blippd: "
-	daemon blippd
+	daemon blippd -c $BLIPPD_CONF_FILE
 	RETVAL=$?
 	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/blippd
+	[ $RETVAL -eq 0 ] && touch $lockfile
+        return $RETVAL
 }
 
 stop() {
 	echo -n $"Stopping blippd: "
 	killproc blippd
 	echo
-	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/blippd
+	[ $RETVAL -eq 0 ] && rm -f $lockfile
+        return $RETVAL
 }
 
 restart() {
 	stop
+        sleep 1
 	start
 }
 
@@ -43,7 +50,7 @@ case "$1" in
 	restart
 	;;
   condrestart)
-	[ -f /var/lock/subsys/blippd ] && restart
+	[ -f $lockfile ] && restart
 	;;
   status)
 	status blippd
