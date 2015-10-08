@@ -23,7 +23,7 @@ OPTIONS=""
 start() {
         [ -f $BLIPPD_CONF_FILE ] || exit 6
 	echo -n $"Starting blippd: "
-	daemon blippd -D -l /var/log/blippd.log $OPTIONS
+	blippd -D -l /var/log/blippd.log $OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && touch $lockfile
