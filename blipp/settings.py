@@ -80,9 +80,10 @@ STANDALONE_DEFAULTS = {
             "probe_defaults": {
                 "collection_schedule": "builtins.simple",
                 "schedule_params": {"every": 2}, # run every 2 seconds
-                "collection_size": 10000000, # ~10 megabytes
-                "collection_ttl": 1500000, # ~17 days
-                "reporting_params": 1 # report every probe (no default aggregation)
+                "collection_size": 10000000,     # ~10 megabytes
+                "collection_ttl": 1500000,       # ~17 days
+                "reporting_params": 1,           # report every probe (no default aggregation)
+                "reporting_tolerance": 10        # store 10 on unreachable MS
             },
             "probes": {
             }
