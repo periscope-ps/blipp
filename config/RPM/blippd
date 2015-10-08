@@ -10,15 +10,20 @@
 # source function library
 . /etc/rc.d/init.d/functions
 
-BLIPPD_CONF_FILE="/etc/periscope/blipp_dlt.json"
+# source periscope configuration
+if [ -f /etc/sysconfig/blippd ]; then
+  . /etc/sysconfig/blippd
+fi
+
 lockfile=/var/lock/subsys/blippd
 
 RETVAL=0
+OPTIONS=""
 
 start() {
         [ -f $BLIPPD_CONF_FILE ] || exit 6
 	echo -n $"Starting blippd: "
-	daemon blippd -c $BLIPPD_CONF_FILE
+	daemon blippd -D -l /var/log/blippd.log $OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && touch $lockfile
