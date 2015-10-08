@@ -18,7 +18,6 @@ fi
 lockfile=/var/lock/subsys/blippd
 
 RETVAL=0
-OPTIONS=""
 
 start() {
         [ -f $BLIPPD_CONF_FILE ] || exit 6
