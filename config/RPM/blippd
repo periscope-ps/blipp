@@ -20,7 +20,6 @@ lockfile=/var/lock/subsys/blippd
 RETVAL=0
 
 start() {
-        [ -f $BLIPPD_CONF_FILE ] || exit 6
 	echo -n $"Starting blippd: "
 	blippd -D -l /var/log/blippd.log $OPTIONS
 	RETVAL=$?

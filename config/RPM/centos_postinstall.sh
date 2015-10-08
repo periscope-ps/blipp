@@ -33,4 +33,3 @@ if [ ! -f /etc/sysconfig/blippd ]; then
     cp ${SHARE}/blippd.opts /etc/sysconfig/blippd
 fi
 systemctl daemon-reload
-
