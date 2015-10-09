@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# supervisord   This scripts turns blipp on
+#
+# chkconfig:    2345 65 75
+# description:  blipp is a part of the Periscope measurement framework
+#               which also includes UNIS and the MS. 
+#
+# processname:  blippd
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+# source periscope configuration
+if [ -f /etc/sysconfig/blippd ]; then
+  . /etc/sysconfig/blippd
+fi
+
+lockfile=/var/lock/subsys/blippd
+
+RETVAL=0
+
+start() {
+	echo -n $"Starting blippd: "
+	daemon blippd -D -l /var/log/blippd.log $OPTIONS
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch $lockfile
+        return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping blippd: "
+	killproc blippd
+	echo
+	[ $RETVAL -eq 0 ] && rm -f $lockfile
+        return $RETVAL
+}
+
+restart() {
+	stop
+        sleep 1
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|force-reload|reload)
+	restart
+	;;
+  condrestart)
+	[ -f $lockfile ] && restart
+	;;
+  status)
+	status blippd
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	exit 1
+esac
+
+exit $RETVAL

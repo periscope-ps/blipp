@@ -27,6 +27,7 @@ setup(
     url="https://github.com/periscope-ps/periscope",
     description="BLiPP: Basic Lightweight Periscope Probes",
     data_files = [("/usr/share/periscope", ["config/blippd.conf",
+                                            "config/RPM/blippd",
                                             "config/RPM/blippd.service",
                                             "config/RPM/blippd.opts"])],
     install_requires=[
