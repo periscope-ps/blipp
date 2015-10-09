@@ -23,13 +23,13 @@ then
   chown root:root /etc/init.d/blippd
   chkconfig --add blippd
 elif grep -q -i "release 7" /etc/redhat-release
+then
   cp ${SHARE}/blippd.conf ${PETC}/
   cp ${SHARE}/blippd.service /etc/systemd/system/
-else
-  echo "Unsupported system"
+  systemctl daemon-reload
+  systemctl enable blippd
 fi
 
 if [ ! -f /etc/sysconfig/blippd ]; then
     cp ${SHARE}/blippd.opts /etc/sysconfig/blippd
 fi
-systemctl daemon-reload

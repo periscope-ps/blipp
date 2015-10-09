@@ -2,6 +2,7 @@
 #
 # supervisord   This scripts turns blipp on
 #
+# chkconfig:    2345 65 75
 # description:  blipp is a part of the Periscope measurement framework
 #               which also includes UNIS and the MS. 
 #
@@ -21,7 +22,7 @@ RETVAL=0
 
 start() {
 	echo -n $"Starting blippd: "
-	blippd -D -l /var/log/blippd.log $OPTIONS
+	daemon blippd -D -l /var/log/blippd.log $OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && touch $lockfile
