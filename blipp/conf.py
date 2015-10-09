@@ -31,8 +31,6 @@ class ServiceConfigure(object):
         r = self.unis.get("/services/" + self.config["id"])
         if not r:
             logger.warn('refresh', msg="refresh failed")
-            logger.warn('refresh', msg="re-enable service")
-            self._setup_service()
         else:
             self.config = r
 
@@ -109,11 +107,9 @@ class ServiceConfigure(object):
             merge_dicts(config, r)
 
         # always update UNIS with the merged config
-        r = None
         if config.get("id", None):
             r = self.unis.put("/services/" + config["id"], data=config)
-        
-        if not r:
+        else:
             r = self.unis.post("/services", data=config)
         if r:
             merge_dicts(config, r)
