@@ -64,7 +64,7 @@ class BlippConfigure(ServiceConfigure):
         return probe
 
     def refresh(self):
-        super(BlippConfigure, self).refresh()
+        interval = super(BlippConfigure, self).refresh()
         self.initial_probes = self._strip_probes(self.config)
         if self.initial_probes:
             self._post_probes()
@@ -79,6 +79,8 @@ class BlippConfigure(ServiceConfigure):
                 merge_into(m["configuration"], self.probe_defaults)
                 if size_orig < len(m["configuration"]):
                     self.unis.put("/measurements/"+m["id"], m)
+        
+        return interval
 
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])

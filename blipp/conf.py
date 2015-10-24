@@ -2,6 +2,7 @@ from unis_client import UNISInstance
 import settings
 import pprint
 from utils import merge_dicts
+import requests.exceptions.ConnectionError as ConnectionError
 
 logger = settings.get_logger('conf')
 
@@ -22,17 +23,26 @@ class ServiceConfigure(object):
         self.config = initial_config
         self.unis = UNISInstance(self.config)
         self.service_setup = False
+        self.exponential_backoff = 1
 
     def initialize(self):
         self._setup_node(self.node_id)
         self._setup_service()
 
     def refresh(self):
-        r = self.unis.get("/services/" + self.config["id"])
-        if not r:
-            logger.warn('refresh', msg="refresh failed")
-        else:
-            self.config = r
+        try:
+            r = self.unis.get("/services/" + self.config["id"])
+            if not r:
+                logger.warn('refresh', msg="refresh failed")
+                logger.warn('refresh', msg="re-enable service")
+                self._setup_service()
+            else:
+                self.config = r
+                
+            return 0
+        except ConnectionError:
+            self.exponential_backoff = self.exponential_backoff * 2
+            return self.exponential_backoff
 
     def _setup_node(self, node_id):
         config = self.config
@@ -107,9 +117,11 @@ class ServiceConfigure(object):
             merge_dicts(config, r)
 
         # always update UNIS with the merged config
+        r = None
         if config.get("id", None):
             r = self.unis.put("/services/" + config["id"], data=config)
-        else:
+        
+        if not r:
             r = self.unis.post("/services", data=config)
         if r:
             merge_dicts(config, r)

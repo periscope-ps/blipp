@@ -55,13 +55,13 @@ class Arbiter():
 
     def reload_all(self):
         self._check_procs()
-        self.config_obj.refresh()
+        interval = self.config_obj.refresh()
         self._cleanup_stopped_probes()
         if self.config_obj.get("status", "ON").upper() == "OFF":
             self._stop_all()
-            return time.time()
+            return time.time(), interval
         #self._check_procs()
-        return self.run_probes()
+        return self.run_probes(), interval
         
     def _start_new_probe(self, m):
         logger.info("_start_new_probe", name=m["configuration"]["name"])
@@ -151,6 +151,6 @@ def main(config):
     check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
     a.run_probes()
     while s.listen(last_reload_time + check_interval - time.time()):
-        last_reload_time = a.reload_all()
-        check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
+        last_reload_time, suggested_interval = a.reload_all()
+        check_interval = max((float)(config["properties"]["configurations"]["unis_poll_interval"]), suggested_interval)
         logger.info("main", msg="check interval %d"%check_interval)

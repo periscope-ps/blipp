@@ -2,6 +2,7 @@ import http
 import json
 import settings
 import re
+import requests.exceptions.ConnectionError as ConnectionError
 
 logger = settings.get_logger('periscope_client')
 
@@ -26,13 +27,19 @@ class PeriscopeClient:
                 r = http.make_request(rtype, url, headers, json.dumps(data),
                                       config.get('ssl_cert', None), config.get('ssl_key', None),
                                       config['ssl_cafile'])
-            except:
+            except Exception as e:
+                if isinstance(e, ConnectionError):
+                    raise ConnectionError()
+                
                 logger.info("do_req", msg="Could not reach %s" % url)
                 return None
         else:
             try:
                 r = http.make_request(rtype, url, headers, json.dumps(data))
-            except:
+            except Exception as e:
+                if isinstance(e, ConnectionError):
+                    raise ConnectionError()
+                
                 logger.info("do_req", msg="Could not reach %s" % url)
                 return None
         try:
