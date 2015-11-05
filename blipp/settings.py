@@ -4,20 +4,20 @@ import netifaces
 import utils
 
 SCHEMAS = {
-    'networkresources': 'http://unis.incntre.iu.edu/schema/20140214/networkresource#',
-    'nodes': 'http://unis.incntre.iu.edu/schema/20140214/node#',
-    'domains': 'http://unis.incntre.iu.edu/schema/20140214/domain#',
-    'ports': 'http://unis.incntre.iu.edu/schema/20140214/port#',
-    'links': 'http://unis.incntre.iu.edu/schema/20140214/link#',
-    'paths': 'http://unis.incntre.iu.edu/schema/20140214/path#',
-    'networks': 'http://unis.incntre.iu.edu/schema/20140214/network#',
-    'topologies': 'http://unis.incntre.iu.edu/schema/20140214/topology#',
-    'services': 'http://unis.incntre.iu.edu/schema/20140214/service#',
-    'blipp': 'http://unis.incntre.iu.edu/schema/20140214/blipp#',
-    'metadata': 'http://unis.incntre.iu.edu/schema/20140214/metadata#',
-    'datum': 'http://unis.incntre.iu.edu/schema/20140214/datum#',
-    'data': 'http://unis.incntre.iu.edu/schema/20140214/data#',
-    'measurement': 'http://unis.incntre.iu.edu/schema/20140214/measurement#',
+    'networkresources': 'http://unis.crest.iu.edu/schema/20151104/networkresource#',
+    'nodes': 'http://unis.crest.iu.edu/schema/20151104/node#',
+    'domains': 'http://unis.crest.iu.edu/schema/20151104/domain#',
+    'ports': 'http://unis.crest.iu.edu/schema/20151104/port#',
+    'links': 'http://unis.crest.iu.edu/schema/20151104/link#',
+    'paths': 'http://unis.crest.iu.edu/schema/20151104/path#',
+    'networks': 'http://unis.crest.iu.edu/schema/20151104/network#',
+    'topologies': 'http://unis.crest.iu.edu/schema/20151104/topology#',
+    'services': 'http://unis.crest.iu.edu/schema/20151104/service#',
+    'blipp': 'http://unis.crest.iu.edu/schema/20151104/blipp#',
+    'metadata': 'http://unis.crest.iu.edu/schema/20151104/metadata#',
+    'datum': 'http://unis.crest.iu.edu/schema/20151104/datum#',
+    'data': 'http://unis.crest.iu.edu/schema/20151104/data#',
+    'measurement': 'http://unis.crest.iu.edu/schema/20151104/measurement#',
     }
 
 MIME = {

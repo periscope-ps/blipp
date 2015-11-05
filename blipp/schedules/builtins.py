@@ -1,11 +1,20 @@
 import time
 import sys
-import calendar
-import dateutil.parser
+from dateutil import tz, parser
 
 def scheduled(service, measurement):
-    for t in measurement["scheduled_times"]:
-        yield calendar.timegm(dateutil.parser.parse(t["start"]).utctimetuple())
+    time_slots = list(measurement["scheduled_times"])
+    params = measurement["configuration"]["schedule_params"]
+    every = float(params["every"])
+    while len(time_slots) > 0:
+        time_slot = time_slots.pop(0)
+        now = time.time()
+        this_start = time.mktime(parser.parse(time_slot["start"]).astimezone(tz.tzlocal()).timetuple())
+        this_end = time.mktime(parser.parse(time_slot["end"]).astimezone(tz.tzlocal()).timetuple())
+        
+        while now < this_end:
+            yield max(now, this_start)
+            now = max(time.time(), now + every)
 
 def onetime(service, measurement):
     params = measurement["configuration"]["schedule_params"]
@@ -27,3 +36,4 @@ def simple(service, measurement):
 # def recursive_rep(tup_list, start_time=None):
 #     if not start_time:
 #         start_time = time.time()
+
