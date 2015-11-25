@@ -23,7 +23,7 @@ class BlippConfigure(ServiceConfigure):
     def initialize(self):
         super(BlippConfigure, self).initialize()
         if not self.service_setup:
-            logger.info("initialize", msg="Could not reach UNIS to initialize service")
+            logger.error("initialize", msg="Could not reach UNIS to initialize service")
             exit(-1)
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
@@ -79,6 +79,11 @@ class BlippConfigure(ServiceConfigure):
                 merge_into(m["configuration"], self.probe_defaults)
                 if size_orig < len(m["configuration"]):
                     self.unis.put("/measurements/"+m["id"], m)
+        else:
+            ''' If measurements don't exist then create them again - i.e register them again '''
+            self.measurements = get_most_recent(self.measurements)
+            for m in self.measurements:
+                self.unis.post("/measurements/", m)
         
         return interval
 

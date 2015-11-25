@@ -22,11 +22,14 @@ class ServiceConfigure(object):
         self.urn = urn
         self.config = initial_config
         self.unis = UNISInstance(self.config)
+        self.node_setup = False
         self.service_setup = False
         self.exponential_backoff = 1
 
     def initialize(self):
-        self._setup_node(self.node_id)
+        r = self._setup_node(self.node_id)
+        if not self.node_setup:
+            return
         self._setup_service()
 
     def refresh(self):
@@ -46,6 +49,7 @@ class ServiceConfigure(object):
 
     def _setup_node(self, node_id):
         config = self.config
+        props = self.config["properties"]["configurations"]
         logger.debug('_setup_node', config=pprint.pformat(config))
         hostname = settings.HOSTNAME
         urn = settings.HOST_URN if not self.urn else self.urn
@@ -64,7 +68,7 @@ class ServiceConfigure(object):
             if r and len(r):
                 r = r[0]
                 logger.info('_setup_node',
-                            msg="found node with our URN and id %s" % r["id"])
+                            msg="Found node with our URN and id %s" % r["id"])
             else:
                 r = self.unis.post("/nodes",
                               data={
@@ -80,10 +84,11 @@ class ServiceConfigure(object):
             self.node_setup = True
         else:
             config["runningOn"] = {"href": ""}
-            logger.warn('_setup_node', msg="Unable to set up node in UNIS")
+            logger.warn('_setup_node', msg="Unable to set up BLiPP node in UNIS at %s" % props["unis_url"])
 
     def _setup_service(self):
         config = self.config
+        props = self.config["properties"]["configurations"]
         logger.debug('_setup_service', config=pprint.pformat(config))
         r = None
         if config.get("id", None):
@@ -111,7 +116,7 @@ class ServiceConfigure(object):
             else:
                 logger.warn('_setup_service',
                             msg="no service found by id or querying "\
-                                "...creating new service")
+                                "...creating new service at %s" % props["unis_url"])
 
         if r:
             merge_dicts(config, r)
