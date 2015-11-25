@@ -23,7 +23,7 @@ class BlippConfigure(ServiceConfigure):
     def initialize(self):
         super(BlippConfigure, self).initialize()
         if not self.service_setup:
-            logger.info("initialize", msg="Could not reach UNIS to initialize service")
+            logger.error("initialize", msg="Could not reach UNIS to initialize service")
             exit(-1)
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
