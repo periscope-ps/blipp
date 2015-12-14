@@ -71,9 +71,10 @@ NODE_INFO_FILE="/usr/local/etc/node.info"
 STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],
     "status": "ON",
-    "serviceType": "http://some_schema_domain/blipp",
+    "serviceType": "ps:tools:blipp",
     "properties": {
         "configurations": {
+            "unis_url": "http://localhost:8888",
             "unis_poll_interval":300,
             "use_ssl": "",
 	    "ssl_cafile": "",
@@ -175,7 +176,7 @@ def add_filehandler(logfile):
         fileHandler = logging.handlers.RotatingFileHandler(logfile, maxBytes = 500000, backupCount = 5)
         fileHandler.setFormatter(logging.Formatter("%(message)s"))
         log.addHandler(fileHandler)
-    except exp as AttributeError:
+    except  AttributeError as exp:
         log.error("Could not attach File Logger: {exp}".format(exp = exp))
 
 def set_level(level):
