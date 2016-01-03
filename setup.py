@@ -39,7 +39,8 @@ setup(
         "psutil",
         "docopt",
         "python-daemon>=1.5",
-        "python-dateutil"
+        "python-dateutil",
+        "unittest2"
     ],
     dependency_links=[
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",
