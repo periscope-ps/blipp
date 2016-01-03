@@ -2,7 +2,7 @@ import http
 import json
 import settings
 import re
-import requests.exceptions.ConnectionError as ConnectionError
+from requests.exceptions import ConnectionError
 
 logger = settings.get_logger('periscope_client')
 

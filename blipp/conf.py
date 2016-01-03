@@ -2,7 +2,7 @@ from unis_client import UNISInstance
 import settings
 import pprint
 from utils import merge_dicts
-import requests.exceptions.ConnectionError as ConnectionError
+from requests.exceptions import ConnectionError
 
 logger = settings.get_logger('conf')
 
