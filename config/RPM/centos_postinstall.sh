@@ -24,6 +24,7 @@ chown ${USER}:${USER} ${PETC}
 touch ${LOG}
 chown ${USER}:${USER} ${LOG}
 
+cp ${SHARE}/blippd.conf ${PETC}/
 if grep -q -i "release 6" /etc/redhat-release
 then
   cp ${SHARE}/blippd /etc/init.d/blippd
@@ -32,7 +33,6 @@ then
   chkconfig --add blippd
 elif grep -q -i "release 7" /etc/redhat-release
 then
-  cp ${SHARE}/blippd.conf ${PETC}/
   cp ${SHARE}/blippd.service /etc/systemd/system/
   systemctl daemon-reload
   systemctl enable blippd
