@@ -65,6 +65,13 @@ class BlippConfigure(ServiceConfigure):
 
     def refresh(self):
         interval = super(BlippConfigure, self).refresh()
+        if interval != 0:
+            return interval
+        
+        # unis.get returns a list of config
+        if isinstance(self.config, list):
+            self.config = self.config[0]
+        
         self.initial_probes = self._strip_probes(self.config)
         if self.initial_probes:
             self._post_probes()
