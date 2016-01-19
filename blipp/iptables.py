@@ -4,18 +4,25 @@ from utils import full_event_types
 import shlex
 import settings
 
-logger = settings.get_logger('traceroute_probe')
+logger = settings.get_logger('iptables_probe')
 CHAINNAME = "CCHAIN"
 
 class Probe:
+    '''
+    Linux kernel can do many things with command "iptables". Here is a sample of using iptables to count
+    incoming SSH packets. The corresponding config JSON file "counting_measurement.json" can be found in sample_config directory
+    '''
 
     def __init__(self, service, measurement):
         self.service = service
         self.measurement = measurement
         self.config = measurement["configuration"]
         
+        # add a new chain into the default table FILTER
         os.system("sudo iptables -N " + CHAINNAME)
+        # insert a rule at the default position 1 of chain INPUT, saying to match on protocol TCP by destination 22, JUMP to the new chain
         os.system("sudo iptables -I INPUT -p tcp -m tcp --dport 22 -j " + CHAINNAME)
+        # new chain got a rule, which accept everything
         os.system("sudo iptables -I " + CHAINNAME + " -j ACCEPT")
 
         self.command = self._substitute_command(str(self.config.get("command")), self.config)
