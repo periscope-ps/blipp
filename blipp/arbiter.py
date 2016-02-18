@@ -152,5 +152,5 @@ def main(config):
     a.run_probes()
     while s.listen(last_reload_time + check_interval - time.time()):
         last_reload_time, suggested_interval = a.reload_all()
-        check_interval = max((float)(config["properties"]["configurations"]["unis_poll_interval"]), suggested_interval)
+        check_interval = min((float)(config["properties"]["configurations"]["unis_max_backoff"]), suggested_interval)
         logger.info("main", msg="check interval %d"%check_interval)

@@ -193,11 +193,14 @@ class Probe:
 
     def get_interfaces_in_unis(self):
         node = self.unis.get(self.service["runningOn"]["href"])
+        node = node[0]
         ports = []
         if node:
             port_list = node.get('ports', [])
             for port in port_list:
-                ports.append(self.unis.get(port['href']))
+                p = self.unis.get(port['href'])
+                p = p[0]
+                ports.append(p)
         return ports
 
     def _find_or_post_port(self, ports, local_port, matching_method):

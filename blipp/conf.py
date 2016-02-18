@@ -1,3 +1,4 @@
+import time
 from unis_client import UNISInstance
 import settings
 import pprint
@@ -24,7 +25,7 @@ class ServiceConfigure(object):
         self.unis = UNISInstance(self.config)
         self.node_setup = False
         self.service_setup = False
-        self.exponential_backoff = 1
+        self.exponential_backoff = self.config["properties"]["configurations"]["unis_poll_interval"]
 
     def initialize(self):
         r = self._setup_node(self.node_id)
@@ -40,9 +41,13 @@ class ServiceConfigure(object):
                 logger.warn('refresh', msg="re-enable service")
                 self._setup_service()
             else:
-                self.config = r
+                self.config = r[0]
+                self.exponential_backoff = self.config['properties']['configurations']['unis_poll_interval']
                 
-            return 0
+                if time.time() * 1e+6 + self.config['properties']['configurations']['unis_poll_interval'] >\
+                    self.config['ts'] + self.config['ttl'] * 1e+6:
+                    self._setup_service()
+            return self.exponential_backoff
         except ConnectionError:
             self.exponential_backoff = self.exponential_backoff * 2
             return self.exponential_backoff
@@ -78,6 +83,8 @@ class ServiceConfigure(object):
             if r:
                 self.node_id = r["id"]
         if r:
+            if isinstance(r, list):
+                r = r[0]
             config["runningOn"] = {
                 "href": r["selfRef"],
                 "rel": "full"}
@@ -118,6 +125,8 @@ class ServiceConfigure(object):
                             msg="no service found by id or querying "\
                                 "...creating new service at %s" % props["unis_url"])
 
+        if isinstance(r, list):
+            r = r[0]
         if r:
             merge_dicts(config, r)
 

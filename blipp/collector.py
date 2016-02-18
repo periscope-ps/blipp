@@ -1,6 +1,7 @@
 from ms_client import MSInstance
 from data_logger import DataLogger
 from unis_client import UNISInstance
+from requests.exceptions import ConnectionError
 import settings
 logger = settings.get_logger('collector')
 
@@ -75,7 +76,11 @@ class Collector:
         for mid, data in self.mid_to_data.iteritems():
             if len(data):
                 post_data.append({"mid":mid, "data":data})
-        ms_ret = self.ms.post_data(post_data)
+        try:
+            ms_ret = self.ms.post_data(post_data)
+        except ConnectionError:
+            ms_ret = None
+        
         dl_ret = self.dl.write_data(post_data, self.mid_to_et)
         clim   = self.config["reporting_tolerance"] * self.config["reporting_params"]
         if not ms_ret and not dl_ret and self.num_collected < clim:

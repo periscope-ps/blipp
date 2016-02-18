@@ -1,4 +1,5 @@
 import settings
+from utils import get_most_recent
 from periscope_client import PeriscopeClient
 
 logger = settings.get_logger('unis_client')
@@ -66,6 +67,10 @@ class UNISInstance:
         # Update the node to have these ports as well
         if port_post:
             node_rep = self.get(self.service["runningOn"]["href"])
+            if isinstance(node_rep, list):
+                node_rep = get_most_recent(node_rep)
+                if len(node_rep) == 1:
+                    node_rep = node_rep[0]
             node_rep.setdefault("ports", []).append({"href":port_post["selfRef"],
                                                      "rel": "full"})
             self.put(node_rep["selfRef"], data=node_rep)
