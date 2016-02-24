@@ -7,7 +7,9 @@
   "description": "BLiPP running locally",
   "properties": {
     "configurations": {
-      "unis_url":"http://localhost:8888",
+      "unis_max_backoff": 3600,
+      "unis_poll_interval": 60,
+      "unis_url":"http://192.168.122.159:8888",
       "use_ssl": false,
       "ssl_cert": "/usr/local/etc/certs/mp_cert.pem",
       "ssl_key": "/usr/local/etc/certs/mp_key.pem",
@@ -19,7 +21,7 @@
        "reporting_tolerance": 10,
        "collection_size":100000,
        "collection_ttl":1500000,
-       "ms_url": "http://localhost:8888"
+       "ms_url": "http://192.168.122.159:8888"
       },
       "probes":{
 	"cpu":{

@@ -17,12 +17,15 @@ THIS=`pwd`/$0
 tail -n +$SKIP $THIS | tar -xz
 
 # Installation steps for LAMP Toolkit
-DIR=blipp
+DIR=blipp-idms
 ETC=/usr/local/etc
 
-apt-get -y install python-setuptools python-dev python-zmq python-dateutil libnl-dev
+apt-get -y install python-setuptools python-dev python-zmq python-dateutil libnl-dev iperf
 cd ${DIR}
 python ./setup.py install 
+
+# start iperf server
+iperf -s > /dev/null 2>&1 &
 
 install -D config/blipp_default.json ${ETC}
 

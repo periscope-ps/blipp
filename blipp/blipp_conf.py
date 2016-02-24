@@ -65,8 +65,6 @@ class BlippConfigure(ServiceConfigure):
 
     def refresh(self):
         interval = super(BlippConfigure, self).refresh()
-        if interval != 0:
-            return interval
         
         # unis.get returns a list of config
         if isinstance(self.config, list):
@@ -85,7 +83,8 @@ class BlippConfigure(ServiceConfigure):
                 size_orig = len(m["configuration"])
                 merge_into(m["configuration"], self.probe_defaults)
                 if size_orig < len(m["configuration"]):
-                    self.unis.put("/measurements/"+m["id"], m)
+                    r = self.unis.put("/measurements/"+m["id"], m)
+                    m['ts'] = r['ts']
         else:
             ''' If measurements don't exist then create them again - i.e register them again '''
             self.measurements = get_most_recent(self.measurements)
