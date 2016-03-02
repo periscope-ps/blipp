@@ -75,6 +75,7 @@ STANDALONE_DEFAULTS = {
     "properties": {
         "configurations": {
             "unis_url": "http://localhost:8888",
+            "unis_max_backoff": 3600,
             "unis_poll_interval":300,
             "use_ssl": "",
 	    "ssl_cafile": "",
