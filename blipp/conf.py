@@ -44,7 +44,7 @@ class ServiceConfigure(object):
                 self.config = r[0]
                 self.exponential_backoff = self.config['properties']['configurations']['unis_poll_interval']
                 
-                if time.time() * 1e+6 + self.config['properties']['configurations']['unis_poll_interval'] >\
+                if time.time() * 1e+6 + self.config['properties']['configurations']['unis_poll_interval'] * 1e+6 >\
                     self.config['ts'] + self.config['ttl'] * 1e+6:
                     self._setup_service()
             return self.exponential_backoff
