@@ -148,7 +148,7 @@ def main(config):
     a = Arbiter(config)
     s = ConfigServer(config)
     last_reload_time = time.time()
-    check_interval = (float)(config["properties"]["configurations"]["unis_poll_interval"])
+    check_interval = int(config["properties"]["configurations"]["unis_poll_interval"])
     a.run_probes()
     while s.listen(last_reload_time + check_interval - time.time()):
         last_reload_time, suggested_interval = a.reload_all()

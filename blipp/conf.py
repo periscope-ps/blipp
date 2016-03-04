@@ -25,7 +25,7 @@ class ServiceConfigure(object):
         self.unis = UNISInstance(self.config)
         self.node_setup = False
         self.service_setup = False
-        self.exponential_backoff = self.config["properties"]["configurations"]["unis_poll_interval"]
+        self.exponential_backoff = int(self.config["properties"]["configurations"]["unis_poll_interval"])
 
     def initialize(self):
         r = self._setup_node(self.node_id)
@@ -41,12 +41,12 @@ class ServiceConfigure(object):
                 logger.warn('refresh', msg="re-enable service")
                 self._setup_service()
             else:
-                self.config = r[0]
-                self.exponential_backoff = self.config['properties']['configurations']['unis_poll_interval']
-                
-                if time.time() * 1e+6 + self.config['properties']['configurations']['unis_poll_interval'] * 1e+6 >\
+                self.config = r
+                if time.time() * 1e+6 + int(self.config['properties']['configurations']['unis_poll_interval']) * 1e+6 >\
                     self.config['ts'] + self.config['ttl'] * 1e+6:
                     self._setup_service()
+                    
+            self.exponential_backoff = int(self.config['properties']['configurations']['unis_poll_interval'])
             return self.exponential_backoff
         except ConnectionError:
             self.exponential_backoff = self.exponential_backoff * 2
@@ -127,6 +127,7 @@ class ServiceConfigure(object):
 
         if isinstance(r, list):
             r = r[0]
+            
         if r:
             merge_dicts(config, r)
 

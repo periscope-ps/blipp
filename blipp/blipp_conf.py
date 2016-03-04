@@ -66,6 +66,9 @@ class BlippConfigure(ServiceConfigure):
     def refresh(self):
         interval = super(BlippConfigure, self).refresh()
         
+        if interval != int(self.config['properties']['configurations']['unis_poll_interval']):
+            return interval
+        
         # unis.get returns a list of config
         if isinstance(self.config, list):
             self.config = self.config[0]
