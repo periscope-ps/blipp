@@ -113,10 +113,6 @@ class ServiceConfigure(object):
                 for i in range(len(rlist)):
                     r = self.unis.get('/services/' + rlist[i]["id"])
                     if r:
-                        if isinstance(r, list):
-                            logger.warn('_setup_service',
-                                        msg="id not unique... taking first result")
-                            r = r[0]
                         logger.info('_setup_service',
                                     msg="%s service found with id %s" % (config["name"], r["id"]))
                         break
@@ -124,11 +120,8 @@ class ServiceConfigure(object):
                 logger.warn('_setup_service',
                             msg="no service found by id or querying "\
                                 "...creating new service at %s" % props["unis_url"])
-
-        if isinstance(r, list):
-            r = r[0]
             
-        if r:
+        if isinstance(r, dict) and r:
             merge_dicts(config, r)
 
         # always update UNIS with the merged config
