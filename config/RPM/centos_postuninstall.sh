@@ -12,8 +12,11 @@ then
     rm -f /etc/init.d/blippd
 elif grep -q -i "release 7" /etc/redhat-release
 then
-    systemctl disable blippd
-    rm -f /etc/systemd/system/blippd.service
+    if [ "$1" = "0" ]; then
+        # Perform tasks to prepare for the uninstallation
+        systemctl disable blippd
+        rm -f /etc/systemd/system/blippd.service
+    fi
     systemctl daemon-reload
 fi
 
