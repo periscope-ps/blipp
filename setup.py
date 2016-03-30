@@ -14,7 +14,7 @@
 
 from setuptools import setup
 
-version = "0.1.dev"
+version = "2.0.dev"
 
 setup(
     name="blipp",
