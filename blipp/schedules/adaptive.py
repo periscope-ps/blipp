@@ -107,7 +107,7 @@ def build_basic_schedule(start, td_every,
             if len(schedule) >= num_to_schedule:
                 break
         cur = t["end"]
-     # finish building schedule if there are no more conflicts
+    # finish building schedule if there are no more conflicts
     while len(schedule) < num_to_schedule:
         s = datetime_to_dtstring(cur)
         e = datetime_to_dtstring(cur+td_duration)

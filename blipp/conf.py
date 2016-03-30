@@ -131,7 +131,7 @@ class ServiceConfigure(object):
         
         if not r:
             r = self.unis.post("/services", data=config)
-        if r:
+        if r and isinstance(r, list):
             merge_dicts(config, r)
 
         if r:
