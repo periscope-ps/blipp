@@ -72,6 +72,7 @@ STANDALONE_DEFAULTS = {
     "$schema": SCHEMAS["services"],
     "status": "ON",
     "serviceType": "ps:tools:blipp",
+    "ttl": 600,
     "properties": {
         "configurations": {
             "unis_url": "http://localhost:8888",
