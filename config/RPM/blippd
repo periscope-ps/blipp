@@ -1,12 +1,24 @@
-#!/bin/bash
+#!/bin/sh
 #
-# supervisord   This scripts turns blipp on
+# blippd        SysVInit script for blippd
 #
 # chkconfig:    2345 65 75
 # description:  blipp is a part of the Periscope measurement framework
 #               which also includes UNIS and the MS. 
 #
 # processname:  blippd
+
+### BEGIN INIT INFO
+# Provides: blippd
+# Required-Start: network
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description:
+# Description:
+### END INIT INFO
 
 # source function library
 . /etc/rc.d/init.d/functions

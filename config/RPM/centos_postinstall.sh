@@ -30,12 +30,12 @@ then
   cp ${SHARE}/blippd /etc/init.d/blippd
   chmod +x /etc/init.d/blippd
   chown root:root /etc/init.d/blippd
-  chkconfig --add blippd
+  /sbin/chkconfig --add blippd
 elif grep -q -i "release 7" /etc/redhat-release
 then
   cp ${SHARE}/blippd.service /etc/systemd/system/
-  systemctl daemon-reload
-  systemctl enable blippd
+  /usr/bin/systemctl daemon-reload
+  /usr/bin/systemctl enable blippd
 fi
 
 if [ ! -f /etc/sysconfig/blippd ]; then
