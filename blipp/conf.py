@@ -28,10 +28,13 @@ class ServiceConfigure(object):
         self.exponential_backoff = int(self.config["properties"]["configurations"]["unis_poll_interval"])
 
     def initialize(self):
-        r = self._setup_node(self.node_id)
-        if not self.node_setup:
+        try:
+            r = self._setup_node(self.node_id)
+            if not self.node_setup:
+                return
+            self._setup_service()
+        except ConnectionError:
             return
-        self._setup_service()
 
     def refresh(self):
         try:

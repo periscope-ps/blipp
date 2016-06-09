@@ -226,7 +226,9 @@ main_config = ["unis_url", "ms_url", "data_file", "ssl_cert", "ssl_key",
                "ssl_cafile", "unis_poll_interval", "use_ssl"]
 probe_map = {"registration_probe": ["service_type", "service_name", "service_description",
                                     "service_accesspoint", "pidfile", "process_name"],
-             "some other probe": ["blah", "blah2"]}
+             "net": ["unis_url"],
+             "cpu": ["proc_dir"],
+             "mem": []}
 
 for key in main_config:
     try:
@@ -250,7 +252,7 @@ for section in config.sections():
         for key in probe_map[module]:
             try:
                 value = config.get(section, key)
-                conf.update({key: value})
+                conf.update({'kwargs': {key: value}})
             except:
                 pass
         STANDALONE_DEFAULTS["properties"]["configurations"]["probes"].update({section: conf})
