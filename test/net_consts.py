@@ -1,3 +1,15 @@
+# =============================================================================
+#  periscope-ps (blipp)
+#
+#  Copyright (c) 2013-2016, Trustees of Indiana University,
+#  All rights reserved.
+#
+#  This software may be modified and distributed under the terms of the BSD
+#  license.  See the COPYING file for details.
+#
+#  This software was created at the Indiana University Center for Research in
+#  Extreme Scale Technologies (CREST).
+# =============================================================================
 node1 = {
     "$schema": "http://unis.incntre.iu.edu/schema/20140214/node#",
     "name": "VM-4",
