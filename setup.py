@@ -26,7 +26,7 @@
 
 from setuptools import setup
 
-version = "2.0.dev"
+version = "2.1.dev"
 
 setup(
     name="blipp",
