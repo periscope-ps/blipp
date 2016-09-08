@@ -262,9 +262,10 @@ for section in config.sections():
         except:
             pass
         for key in probe_map[module]:
+            print key
             try:
                 value = config.get(section, key)
-                conf.update({'kwargs': {key: value}})
+                conf.update({key: value})
             except:
                 pass
         STANDALONE_DEFAULTS["properties"]["configurations"]["probes"].update({section: conf})

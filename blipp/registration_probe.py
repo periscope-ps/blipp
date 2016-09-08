@@ -33,12 +33,25 @@ class Probe:
             logger.error("__init__", msg="Must specify service_type!")
 
         try:
+            self.accessPoint = self.config["service_accesspoint"]
+        except Exception:
+            logger.error("__init__", msg="Must specify access point!")
+
+        try:
             self.pidfile = self.config.get("pidfile", None)
         except Exception:
             logger.warn("__init__", msg="Config does not specify pidfile")
 
         self.pname = self.config.get("process_name", None)
-        #self.et_string = "ps:tools:blipp:netlogger:"
+
+        # check for existing service given accessPoint and serviceType
+        try:
+            service = self.unis.get("/services?accessPoint=%s&serviceType=%s" %
+                                    (self.accessPoint, self.serviceType))
+            if service and len(service):
+                self.id = service[0]["id"]
+        except Exception as e:
+            logger.error("%s" % e)
 
     def get_data(self):
         stat = "UNKNOWN"
@@ -71,7 +84,7 @@ class Probe:
         if self.pname:
             processes = psutil.process_iter()
             for p in processes:
-                if p.name == self.pname:
+                if p.name() == self.pname:
                     stat = "ON"
 
         self.send_service(status=stat)
