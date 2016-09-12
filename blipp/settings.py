@@ -237,7 +237,8 @@ config.read(CONFIG_FILE)
 main_config = ["unis_url", "ms_url", "data_file", "ssl_cert", "ssl_key",
                "ssl_cafile", "unis_poll_interval", "use_ssl"]
 probe_map = {"registration_probe": ["service_type", "service_name", "service_description",
-                                    "service_accesspoint", "pidfile", "process_name"],
+                                    "service_accesspoint", "pidfile", "process_name",
+                                    "service_ttl"],
              "net": ["unis_url"],
              "cpu": ["proc_dir"],
              "mem": []}
@@ -258,11 +259,10 @@ for section in config.sections():
         conf.update({"probe_module": module})
         # set the schedule interval if present (otherwise will get probe default)
         try:
-            conf.update({"schedule_params": {"every": (int)(config.get(section, "schedule"))}})
+            conf.update({"schedule_params": {"every": (int)(config.get(section, "interval"))}})
         except:
             pass
         for key in probe_map[module]:
-            print key
             try:
                 value = config.get(section, key)
                 conf.update({key: value})

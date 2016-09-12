@@ -19,6 +19,8 @@ from unis_client import UNISInstance
 logger = settings.get_logger("registration_probe")
 
 class Probe:
+    TTL_DEFAULT = 600
+    
     def __init__(self, service, measurement):
         self.config = measurement["configuration"]
         self.service = service
@@ -115,6 +117,10 @@ class Probe:
         except:
             service_desc.update({"runningOn": {"href": self.service["runningOn"]["href"],
                                                "rel": "full"}})
+        try:
+            service_desc.update({"ttl": self.config["service_ttl"]})
+        except:
+            service_desc.update({"ttl": Probe.TTL_DEFAULT})
 
         if not self.id:
             ret = self.unis.post("/services", service_desc)
