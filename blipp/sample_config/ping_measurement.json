@@ -1,5 +1,5 @@
 {
-    "$schema": "http://unis.incntre.iu.edu/schema/20140214/measurement#", 
+    "$schema": "http://unis.crest.iu.edu/schema/20140214/measurement#", 
     "service": "http://localhost:8888/services/535ff2a59449314ec5630ee3",
     "ts": 1398785926407953, 
     "eventTypes": [
