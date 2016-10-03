@@ -1,7 +1,11 @@
---- 
+language: python 
+python:
+  - "2.7"
+virtualenv:
+  system_site_packages: true
 install: 
   - "pip install ."
-language: python
+script: "python test/test_utils.py"
 notifications: 
   email: 
     on_failure: change
@@ -9,9 +13,3 @@ notifications:
     recipients: 
       - dlt@crest.iu.edu
   slack: "crest-networks:nctOxrMsZdnYU8jGrkpSjpvf"
-python: 
-  - "2.7"
-script: "python test/test_utils.py"
-virtualenv: 
-  system_site_packages: true
-
