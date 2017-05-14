@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=blipp
 EnvironmentFile=/etc/sysconfig/blippd
-ExecStart=/usr/bin/blippd -D -l /var/log/blippd.log $OPTIONS
+ExecStart=/usr/bin/blippd -D -l /var/log/periscope/blippd.log $OPTIONS
 Restart=on-abort
 
 [Install]
