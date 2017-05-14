@@ -2,7 +2,7 @@
     "status": "ON",
     "properties": {
 	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu",
+	    "unis_url":"http://dev.crest.iu.edu",
 	    "probe_defaults": {
 		"collection_schedule":"builtins.simple",
 		"schedule_params": {
@@ -11,7 +11,7 @@
 		"reporting_params":4,
 		"collection_size":10000000,
 		"collection_ttl":1500000,
-		"ms_url":"http://dev.incntre.iu.edu"
+		"ms_url":"http://dev.crest.iu.edu"
 	    },
 	    "probes":{
 		"my_cpu_probe": {

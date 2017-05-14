@@ -1,22 +1,22 @@
 {
     "properties": {
 	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu",
+	    "unis_url":"http://dev.crest.iu.edu",
 	    "probe_defaults": {
 		"collection_schedule":"builtins.simple",
 		"schedule_params": {
 		    "every": 20
 		},
 		"reporting_params":7,
-		"ms_url":"http://dev.incntre.iu.edu"
+		"ms_url":"http://dev.crest.iu.edu"
 	    },
 	    "probes":{
 		"ping_schema": {
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/ping",
+		    "$schema": "http://unis.crest.iu.edu/schema/blippmeasurements/20130429/ping",
 		    "address": "iu.edu"
 		},
 		"iperf_schema": {
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130429/iperf",
+		    "$schema": "http://unis.crest.iu.edu/schema/blippmeasurements/20130429/iperf",
 		    "--client": "someone_running_iperf_server.com"
 		},
 		"cpu":{

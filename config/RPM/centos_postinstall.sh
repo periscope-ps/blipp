@@ -13,28 +13,37 @@
 #!/bin/bash
 
 USER=blipp
+GROUP=periscope
 HOME=/var/lib/blipp
 PETC=/etc/periscope
 SHARE=/usr/share/periscope
-LOG=/var/log/blippd.log
+LOGDIR=/var/log/periscope
+LOG=${LOGDIR}/blippd.log
 
-/usr/bin/getent group ${USER} || /usr/sbin/groupadd -r ${USER}
+/usr/bin/getent group ${GROUP} || /usr/sbin/groupadd -r ${GROUP}
 /usr/bin/getent passwd ${USER} || /usr/sbin/useradd -r -d ${HOME} -s /sbin/nologin -g ${USER} ${USER}
+/usr/sbin/usermod -a -G ${GROUP} ${USER}
 
 if [ ! -d ${HOME} ]; then
-    mkdir ${HOME}
+    mkdir -p ${HOME}
 fi
 
-chown ${USER}:${USER} ${HOME}
+chown ${USER}:${GROUP} ${HOME}
 
 if [ ! -d ${PETC} ]; then
-    mkdir ${PETC}
+    mkdir -p ${PETC}
 fi
 
-chown ${USER}:${USER} ${PETC}
+if [ ! -d ${LOGDIR} ]; then
+    mkdir -p /var/log/periscope
+fi
+
+chown ${USER}:${GROUP} ${PETC}
+chown ${USER}:${GROUP} ${LOGDIR}
+chmod g+rwxs ${LOGDIR}
 
 touch ${LOG}
-chown ${USER}:${USER} ${LOG}
+chown ${USER}:${GROUP} ${LOG}
 
 cp ${SHARE}/blippd.conf ${PETC}/
 if grep -q -i "release 6" /etc/redhat-release

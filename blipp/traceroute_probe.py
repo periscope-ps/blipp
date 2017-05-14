@@ -56,20 +56,27 @@ class Probe:
         matches = self.data_regex.finditer(stdout)
         if not matches:
             raise NonMatchingOutputError(stdout)
-        k = None
-        v = []
+        ret = {'hopip': []}
+        previous_hop = None
+        hop_list = {}
         for m in matches:
             d = m.groupdict()
-            k = d.keys()[0]
-            v.extend(map(lambda x: x[1:-1], d.values()))
-            
-        return {k: v}
+            current_hop = d['hop']
+            if not previous_hop and not current_hop:
+                continue
+            elif not current_hop:
+                current_hop = previous_hop
 
+            hop_list.setdefault(current_hop, []).append(d['hopip'] and d['hopip'][1:-1] or '*')
+
+            previous_hop = current_hop
+
+        for i in range(len(hop_list)):
+            ret['hopip'].append(hop_list[str(i + 1)])
+
+        return ret
+    
     def _substitute_command(self, command, config):
-        ''' command in form "ping $ADDRESS"
-        config should have substitutions like "address": "example.com"
-        Note; now more complex
-        '''
         command = shlex.split(command)
         ret = []
         for item in command:

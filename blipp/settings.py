@@ -16,20 +16,20 @@ import netifaces
 import utils
 
 SCHEMAS = {
-    'networkresources': 'http://unis.crest.iu.edu/schema/20151104/networkresource#',
-    'nodes': 'http://unis.crest.iu.edu/schema/20151104/node#',
-    'domains': 'http://unis.crest.iu.edu/schema/20151104/domain#',
-    'ports': 'http://unis.crest.iu.edu/schema/20151104/port#',
-    'links': 'http://unis.crest.iu.edu/schema/20151104/link#',
-    'paths': 'http://unis.crest.iu.edu/schema/20151104/path#',
-    'networks': 'http://unis.crest.iu.edu/schema/20151104/network#',
-    'topologies': 'http://unis.crest.iu.edu/schema/20151104/topology#',
-    'services': 'http://unis.crest.iu.edu/schema/20151104/service#',
-    'blipp': 'http://unis.crest.iu.edu/schema/20151104/blipp#',
-    'metadata': 'http://unis.crest.iu.edu/schema/20151104/metadata#',
-    'datum': 'http://unis.crest.iu.edu/schema/20151104/datum#',
-    'data': 'http://unis.crest.iu.edu/schema/20151104/data#',
-    'measurement': 'http://unis.crest.iu.edu/schema/20151104/measurement#',
+    'networkresources': 'http://unis.crest.iu.edu/schema/20160630/networkresource#',
+    'nodes': 'http://unis.crest.iu.edu/schema/20160630/node#',
+    'domains': 'http://unis.crest.iu.edu/schema/20160630/domain#',
+    'ports': 'http://unis.crest.iu.edu/schema/20160630/port#',
+    'links': 'http://unis.crest.iu.edu/schema/20160630/link#',
+    'paths': 'http://unis.crest.iu.edu/schema/20160630/path#',
+    'networks': 'http://unis.crest.iu.edu/schema/20160630/network#',
+    'topologies': 'http://unis.crest.iu.edu/schema/20160630/topology#',
+    'services': 'http://unis.crest.iu.edu/schema/20160630/service#',
+    'blipp': 'http://unis.crest.iu.edu/schema/20160630/blipp#',
+    'metadata': 'http://unis.crest.iu.edu/schema/20160630/metadata#',
+    'datum': 'http://unis.crest.iu.edu/schema/20160630/datum#',
+    'data': 'http://unis.crest.iu.edu/schema/20160630/data#',
+    'measurement': 'http://unis.crest.iu.edu/schema/20160630/measurement#',
     }
 
 MIME = {
@@ -237,7 +237,8 @@ config.read(CONFIG_FILE)
 main_config = ["unis_url", "ms_url", "data_file", "ssl_cert", "ssl_key",
                "ssl_cafile", "unis_poll_interval", "use_ssl"]
 probe_map = {"registration_probe": ["service_type", "service_name", "service_description",
-                                    "service_accesspoint", "pidfile", "process_name"],
+                                    "service_accesspoint", "pidfile", "process_name",
+                                    "service_ttl"],
              "net": ["unis_url"],
              "cpu": ["proc_dir"],
              "mem": []}
@@ -258,13 +259,13 @@ for section in config.sections():
         conf.update({"probe_module": module})
         # set the schedule interval if present (otherwise will get probe default)
         try:
-            conf.update({"schedule_params": {"every": (int)(config.get(section, "schedule"))}})
+            conf.update({"schedule_params": {"every": (int)(config.get(section, "interval"))}})
         except:
             pass
         for key in probe_map[module]:
             try:
                 value = config.get(section, key)
-                conf.update({'kwargs': {key: value}})
+                conf.update({key: value})
             except:
                 pass
         STANDALONE_DEFAULTS["properties"]["configurations"]["probes"].update({section: conf})

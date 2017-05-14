@@ -1,13 +1,13 @@
 // sample config file for blipp - designed to match unis service definition
 // with blipp specific stuff under ["properties"]["configurations"]
-// service schema http://unis.incntre.iu.edu/schema/20140214/service
+// service schema http://unis.crest.iu.edu/schema/20140214/service
 // configuration schema is ###TODO
 // This conf file schema deviates from the service schema only in that it
 // may not require all fields that the schema does
 {
     "status": "ON", // blipp check's for OFF... anything else is ON
     "id": 12345678990, // UNIS adds this
-    "selfRef": "https://dev.incntre.iu.edu/services/a733g252367890", // blipp doesn't use this... unis adds it
+    "selfRef": "https://dev.crest.iu.edu/services/a733g252367890", // blipp doesn't use this... unis adds it
     "accessPoint": "", // not relevant to blipp (yet?)
     "serviceType": "http://some_schema_domain/blipp", // required to post - blipp puts in automatically
     "name": "blipp", // blipp uses this to query unis if no service_id is provided
@@ -15,13 +15,13 @@
     "ts": 2098340983223, // unis inserts this when the config gets sent to it
     "description": "blipp desc", // will be added by defaults if not specified
     "runningOn":{ // this get's passed on to the probe config
-	"href":"http://dev.incntre.iu.edu/nodes/hikerbear",
+	"href":"http://dev.crest.iu.edu/nodes/hikerbear",
 	"rel":"full"
     },
     "properties": {
 	"geni": {"slice_uuid": "someuuid387234deadbeef"}, // slice uuid used for geni auth
 	"configurations": {
-	    "unis_url":"http://dev.incntre.iu.edu",
+	    "unis_url":"http://dev.crest.iu.edu",
 	    "config_file": "/usr/local/etc/blippconfig.json",
 	    "unis_poll_interval": 300, // reload config from unis every 300 seconds
 	    "use_ssl": false, // JSON boolean value
@@ -40,7 +40,7 @@
 		"reporting_params": 10, // send data every 10 measurements collected
 		"collection_size":10000000, // collection size (bytes) to be created in MS
 		"collection_ttl":1500000, // collection ttl (seconds) for collection in MS
-		"ms_url":"http://dev.incntre.iu.edu" // MS can be specified per probe
+		"ms_url":"http://dev.crest.iu.edu" // MS can be specified per probe
 	    },
 	    // blipp will look for ms_instance and auth_uuid in node.info
 	    "gemini_node_info":"/usr/local/etc/node.info",
@@ -103,7 +103,7 @@
 		    // including what probe_module to use, and other
 		    // configuration options. Specifying any of them
 		    // can override the default value
-		    "$schema": "http://unis.incntre.iu.edu/schema/blippmeasurements/20130416/ping",
+		    "$schema": "http://unis.crest.iu.edu/schema/blippmeasurements/20130416/ping",
 		    "address": "iu.edu"
 		}
 	    }
