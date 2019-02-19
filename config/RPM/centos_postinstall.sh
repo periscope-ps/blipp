@@ -21,7 +21,7 @@ LOGDIR=/var/log/periscope
 LOG=${LOGDIR}/blippd.log
 
 /usr/bin/getent group ${GROUP} || /usr/sbin/groupadd -r ${GROUP}
-/usr/bin/getent passwd ${USER} || /usr/sbin/useradd -r -d ${HOME} -s /sbin/nologin -g ${USER} ${USER}
+/usr/bin/getent passwd ${USER} || /usr/sbin/useradd -r -d ${HOME} -s /sbin/nologin ${USER}
 /usr/sbin/usermod -a -G ${GROUP} ${USER}
 
 if [ ! -d ${HOME} ]; then
@@ -38,8 +38,8 @@ if [ ! -d ${LOGDIR} ]; then
     mkdir -p /var/log/periscope
 fi
 
-chown ${USER}:${GROUP} ${PETC}
-chown ${USER}:${GROUP} ${LOGDIR}
+chgrp ${GROUP} ${PETC}
+chgrp ${GROUP} ${LOGDIR}
 chmod g+rwxs ${LOGDIR}
 
 touch ${LOG}
