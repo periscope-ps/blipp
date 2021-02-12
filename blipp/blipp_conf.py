@@ -10,11 +10,11 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from conf import ServiceConfigure
-from utils import merge_into, blipp_import, get_most_recent
-from schema_cache import SchemaCache
-import settings
-from validation import validate_add_defaults
+from .conf import ServiceConfigure
+from .utils import merge_into, blipp_import, get_most_recent
+from .schema_cache import SchemaCache
+from . import settings
+from .validation import validate_add_defaults
 
 import pprint
 
@@ -35,7 +35,8 @@ class BlippConfigure(ServiceConfigure):
     def initialize(self):
         super(BlippConfigure, self).initialize()
         if not self.service_setup:
-            logger.error("initialize", msg="Could not reach UNIS to initialize service")
+            #logger.error("initialize", msg="Could not reach UNIS to initialize service")
+            logger.error(msg="Could not reach UNIS to initialize service")
             exit(-1)
         self.initial_measurements = self.unis.get("/measurements?service=" +
                                                   self.config["selfRef"])
@@ -52,12 +53,12 @@ class BlippConfigure(ServiceConfigure):
 
     def _post_probes(self):
         failed_probes = {}
-        for name,probe in self.initial_probes.items():
+        for name,probe in list(self.initial_probes.items()):
             probe.update({"name": name})
             try:
                 probe = self._validate_schema_probe(probe)
             except Exception as e:
-                logger.exc('_post_probes', e)
+                #logger.exc('_post_probes', e) 
                 continue # skip this probe
             r = self._post_measurement(probe)
             if not r:
@@ -67,7 +68,7 @@ class BlippConfigure(ServiceConfigure):
                 self.measurements.append(r)
         self.initial_probes = failed_probes
         if failed_probes:
-            logger.warn('_post_probes', failed_probes=pprint.pformat(failed_probes))
+            logger.warning(msg=pprint.pformat(failed_probes))
 
     def _validate_schema_probe(self, probe):
         if "$schema" in probe:
@@ -114,12 +115,12 @@ class BlippConfigure(ServiceConfigure):
     def _post_measurement(self, probe):
         probe_mod = blipp_import(probe["probe_module"])
         if "EVENT_TYPES" in probe_mod.__dict__:
-            eventTypes = probe_mod.EVENT_TYPES.values()
+            eventTypes = list(probe_mod.EVENT_TYPES.values())
         else:
             try:
-                eventTypes = probe["eventTypes"].values()
+                eventTypes = list(probe["eventTypes"].values())
             except KeyError:
-                logger.warn("_post_measurement", msg="No eventTypes present")
+                logger.warning(msg="No eventTypes present")
                 eventTypes = []
 
         measurement = {}
@@ -143,7 +144,7 @@ class BlippConfigure(ServiceConfigure):
             elif m not in self.initial_measurements:
                 measurements.append(m)
         
-        return filter(lambda m: m["configuration"].get("status", "ON").upper()=="ON", measurements)
+        return [m for m in measurements if m["configuration"].get("status", "ON").upper()=="ON"]
 
     def _strip_probes(self, initial_config):
         probes = {}
@@ -159,7 +160,7 @@ class BlippConfigure(ServiceConfigure):
             pass
         
         if probes:
-            for probe in probes.values():
+            for probe in list(probes.values()):
                 merge_into(probe, self.probe_defaults)
 
         return probes

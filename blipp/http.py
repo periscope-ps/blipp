@@ -11,7 +11,7 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import requests
-import settings
+from . import settings
 import pprint
 import json
 

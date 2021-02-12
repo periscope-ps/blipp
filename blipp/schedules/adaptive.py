@@ -45,8 +45,7 @@ def simple_avoid(service, measurement):
 
     while True:
         wait_time = random.random()*max_wait
-        logger.info("simple_avoid",
-                    msg="random wait initiated",
+        logger.info(msg="random wait initiated",
                     wait_time=wait_time,
                     probe=config["name"])
         # wait randomly then regenerate schedule
@@ -69,13 +68,12 @@ def simple_avoid(service, measurement):
         del measurement["ts"]
         measurement = unis.put("/measurements/" + measurement["id"], data=measurement)
 
-        logger.debug("simple_avoid", msg="finish generation",
+        logger.debug(msg="finish generation",
                      duration=time.time()-start_scheduler)
 
         conflicting_times = check_schedule(unis, measurement)
         if conflicting_times:
-            logger.info("simple_avoid",
-                        msg="conflict detected",
+            logger.info(msg="conflict detected",
                         probe=config["name"])
         else:
             # generate finishing times
@@ -98,7 +96,7 @@ def check_schedule(unis, measurement):
         while dateutil.parser.parse(schedule[i]["end"]) <= c["start"]:
             i += 1
         if dateutil.parser.parse(schedule[i]["start"]) < c["end"]:
-            logger.warn("check_schedule", stime=pformat(schedule[i]),
+            logger.warning("check_schedule", stime=pformat(schedule[i]),
                         ctime={
                             "start": datetime_to_dtstring(c["start"]),
                             "end": datetime_to_dtstring(c["end"])
@@ -134,9 +132,7 @@ def get_conflicting_measurements(unis, measurement):
             unis.get(
                 "/measurements?configuration.resources.ref=" +
                 resource["ref"]))
-        meas_for_resource = filter(
-            lambda m: False if m["id"] == measurement["id"] else True,
-            meas_for_resource)
+        meas_for_resource = [m for m in meas_for_resource if m["id"] != measurement["id"]]
         conflicting_measurements.extend(meas_for_resource)
     return conflicting_measurements
 

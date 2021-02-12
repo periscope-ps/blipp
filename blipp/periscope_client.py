@@ -10,9 +10,9 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import http
+from . import http
 import json
-import settings
+from . import settings
 import re
 from requests.exceptions import ConnectionError
 
@@ -43,7 +43,7 @@ class PeriscopeClient:
                 if isinstance(e, ConnectionError):
                     raise ConnectionError()
                 
-                logger.info("do_req", msg="Could not reach %s" % url)
+                logger.info(msg="Could not reach %s" % url)
                 return None
         else:
             try:
@@ -52,7 +52,7 @@ class PeriscopeClient:
                 if isinstance(e, ConnectionError):
                     raise ConnectionError()
                 
-                logger.info("do_req", msg="Could not reach %s" % url)
+                logger.info(msg="Could not reach %s" % url)
                 return None
         try:
             return json.loads(r)

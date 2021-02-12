@@ -12,9 +12,9 @@
 # =============================================================================
 import subprocess
 import re
-from utils import full_event_types
+from .utils import full_event_types
 import shlex
-import settings
+from . import settings
 
 logger = settings.get_logger('cmd_line_probe')
 
@@ -47,7 +47,7 @@ class Probe:
         try:
             data = self._extract_data(output[0])
         except NonMatchingOutputError as e:
-            logger.exc("get_data", e)
+            #logger.exc("get_data", e)
             return {}
         data = full_event_types(data, self.EVENT_TYPES)
         return data
@@ -79,7 +79,8 @@ class Probe:
                         ret.append(str(val))
             elif item:
                 ret.append(item)
-        logger.info('substitute_command', cmd=ret, name=self.config['name'])
+        #logger.info('substitute_command', cmd=ret, name=self.config['name'])
+        logger.info(name=self.config['name'])
         return ret
 
 

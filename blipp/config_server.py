@@ -14,10 +14,10 @@
 Server for blipp configuration and control via cmd line interface.
 '''
 import zmq
-import settings
+from . import settings
 import json
 import time
-from config_server_api import RELOAD, GET_CONFIG, POLL_CONFIG
+from .config_server_api import RELOAD, GET_CONFIG, POLL_CONFIG
 
 
 logger = settings.get_logger('config_server')
@@ -34,7 +34,7 @@ class ConfigServer:
         cur_time = time.time()
         finish_time = cur_time + timeout
         while cur_time < finish_time:
-            logger.info("listen", msg="polling for %d"%(finish_time-cur_time))
+            logger.info(msg="polling for %d"%(finish_time-cur_time))
             if self.socket.poll((finish_time - cur_time)*1000):
                 message = self.socket.recv()
                 ret = self._handle_message(message)

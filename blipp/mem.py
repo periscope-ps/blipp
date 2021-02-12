@@ -12,7 +12,7 @@
 # =============================================================================
 import resource
 import os
-from utils import full_event_types
+from .utils import full_event_types
 
 class Proc:
     """Wrapper to opening files in /proc

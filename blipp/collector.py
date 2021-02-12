@@ -10,11 +10,11 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from ms_client import MSInstance
-from data_logger import DataLogger
-from unis_client import UNISInstance
+from .ms_client import MSInstance
+from .data_logger import DataLogger
+from .unis_client import UNISInstance
 from requests.exceptions import ConnectionError
-import settings
+from . import settings
 logger = settings.get_logger('collector')
 
 class Collector:
@@ -45,11 +45,11 @@ class Collector:
         Called (by probe_runner) to insert new data into this collector object.
         '''
         mids = self.mids
-        for subject, met_val in data.iteritems():
+        for subject, met_val in data.items():
             if "ts" in met_val:
                 ts = met_val["ts"]
                 del met_val["ts"]
-            for metric, value in met_val.iteritems():
+            for metric, value in met_val.items():
                 if metric not in self.measurement["eventTypes"]:
                     self._add_et(metric)
                 if not metric in mids.get(subject, {}):
@@ -85,7 +85,7 @@ class Collector:
         Send all data collected so far, then clear stored data.
         '''
         post_data = []
-        for mid, data in self.mid_to_data.iteritems():
+        for mid, data in self.mid_to_data.items():
             if len(data):
                 post_data.append({"mid":mid, "data":data})
         try:

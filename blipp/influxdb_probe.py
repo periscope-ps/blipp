@@ -14,10 +14,10 @@ from requests.exceptions import ConnectionError
 import subprocess
 import json
 import shlex
-import settings
+from . import settings
 import datetime
 import calendar
-from unis_client import UNISInstance
+from .unis_client import UNISInstance
 
 logger = settings.get_logger('influxdb_probe')
 
@@ -69,7 +69,7 @@ class Probe:
         try:
             data = self._extract_data(output[0])
         except ValueError as e:
-            logger.exc("get_data", e)
+            #logger.exc("get_data", e)
             return {}
         # sample data [{'wsu.stor1-href': {ts: <ts>, et: [instance, type, type_instance, value]}},
         #              {'um.stor2-href': {ts: <ts>, et: [instance, type, type_instance, value]}}]
@@ -142,7 +142,7 @@ class Probe:
         j = json_output['results'][0]['series'][0]['columns'].index('host')
         k = json_output['results'][0]['series'][0]['columns'].index('instance')
         e = json_output['results'][0]['series'][0]['columns'].index(event_column)
-        ret = map(lambda x: normalize(x, i, j, k, e, table_name), json_output['results'][0]['series'][0]['values'])
+        ret = [normalize(x, i, j, k, e, table_name) for x in json_output['results'][0]['series'][0]['values']]
         ret = [x for x in ret if x]
         
         if table_name == ETHTABLE:
@@ -152,13 +152,13 @@ class Probe:
             # ts is chosen randomly from the same subject-et items
             tmp = dict()
             for data in ret:
-                et = filter(lambda x: x != 'ts', data.itervalues().next().keys())[0]
-                if (data.iterkeys().next(), et) in tmp:
-                    tmp[(data.iterkeys().next(), et)][et] += data.itervalues().next()[et]
+                et = [x for x in iter(data.values()).next().keys() if x != 'ts'][0]
+                if (next(iter(data.keys())), et) in tmp:
+                    tmp[(next(iter(data.keys())), et)][et] += iter(data.values()).next()[et]
                 else:
-                    tmp[(data.iterkeys().next(), et)] = data.itervalues().next()
+                    tmp[(next(iter(data.keys())), et)] = next(iter(data.values()))
             ret = []
-            for k, v in tmp.iteritems():
+            for k, v in tmp.items():
                 ret.append({k[0]: v})
         
         return ret

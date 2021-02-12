@@ -11,11 +11,11 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import os
-import ethtool
+from . import ethtool
 import netifaces
-from unis_client import UNISInstance
-import settings
-from utils import full_event_types, blipp_import_method
+from .unis_client import UNISInstance
+from . import settings
+from .utils import full_event_types, blipp_import_method
 import re
 
 logger = settings.get_logger('net')
@@ -104,7 +104,7 @@ class Probe:
             line = line.replace(':', ' ')
             line = line.split()
             iface = line.pop(0)
-            face_data = dict(zip(headers, line))
+            face_data = dict(list(zip(headers, line)))
             self._vals_to_int(face_data)
             errors = face_data.pop('errs_in') + face_data.pop('errs_out')
             drops = face_data.pop('drop_in') + face_data.pop('drop_out')
@@ -118,7 +118,7 @@ class Probe:
         return data
 
     def _vals_to_int(self, adict):
-        for k,v in adict.items():
+        for k,v in list(adict.items()):
             adict[k] = int(v)
         return adict
 
@@ -154,11 +154,10 @@ class Probe:
         for face in netifaces.interfaces():
             local_port_dict = self._build_port_dict(face)
             portRef = self._find_or_post_port(unis_ports, local_port_dict, self.port_match_method)
-            if isinstance(portRef, str) or isinstance(portRef, unicode):
+            if isinstance(portRef, str) or isinstance(portRef, str):
                 subjects[face]=portRef
             else:
-                logger.warn('get_interface_subjects',
-                            msg="subject for face %s is of an unexpected type %s, portRef=%s"%(face,
+                logger.warning(msg="subject for face %s is of an unexpected type %s, portRef=%s"%(face,
                                                                                                type(portRef),
                                                                                                portRef))
                 subjects[face]="unexpected type"
@@ -193,8 +192,10 @@ class Probe:
                     addr = {"type": t, "address": a['addr']}
                     post_dict['properties'][t] = addr
             except Exception as e:
-                logger.exc('get_interface_subjects', e)
-
+                #logger.exc('get_interface_subjects', e)
+                # logging.exc appears to be deprecated, as the interpreter
+                #   doesn't recognize it
+                pass
             # TODO some sort of verification here that capacity is right
         post_dict['name'] = port_name
         post_dict['capacity'] = capacity
@@ -221,6 +222,5 @@ class Probe:
         if post:
             return post["selfRef"]
         else:
-            logger.warn('_find_or_post_port',
-                        msg="post seems to have failed... subject for %s will be wrong" % local_port['name'])
+            logger.warning(msg="post seems to have failed... subject for %s will be wrong" % local_port['name'])
             return "failed"

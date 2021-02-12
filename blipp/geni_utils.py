@@ -10,7 +10,7 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from utils import clean_mac
+from .utils import clean_mac
 
 def mac_match(geni_port, local_port):
     try:

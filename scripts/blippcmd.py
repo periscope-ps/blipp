@@ -45,13 +45,13 @@ class BlippCmd(cmd.Cmd):
         try:
             cwc, new_wd_list = self._conf_for_list(new_wd_list)
         except ConfigurationError as e:
-            print col.FAIL + str(e) + col.ENDC
+            print(col.FAIL + str(e) + col.ENDC)
             return
         self.cwd_list = new_wd_list
         self.cwc = cwc
 
     def complete_cd(self, text, l, b, e):
-        return [ x for x,y in self.cwc.iteritems()
+        return [ x for x,y in self.cwc.items()
                  if isinstance(y, dict) and x.startswith(text) ]
 
     def do_ls(self, key):
@@ -62,16 +62,16 @@ class BlippCmd(cmd.Cmd):
             try:
                 conf = conf[key]
             except KeyError:
-                print "No such key %s" % key
+                print("No such key %s" % key)
                 return
-        for k,v in conf.iteritems():
+        for k,v in conf.items():
             if isinstance(v, dict):
-                print col.DIR + k + col.ENDC
+                print(col.DIR + k + col.ENDC)
             else:
-                print "%s: %s" % (k, v)
+                print("%s: %s" % (k, v))
 
     def complete_ls(self, text, l, b, e):
-        return [ x for x,y in self.cwc.iteritems()
+        return [ x for x,y in self.cwc.items()
                  if isinstance(y, dict) and x.startswith(text) ]
 
     def do_lsd(self, key):
@@ -82,17 +82,17 @@ class BlippCmd(cmd.Cmd):
             try:
                 conf = conf[key]
             except KeyError:
-                print "No such key %s" % key
+                print("No such key %s" % key)
         pprint.pprint(conf)
 
     def complete_lsd(self, text, l, b, e):
-        return [ x for x,y in self.cwc.iteritems()
+        return [ x for x,y in self.cwc.items()
                  if isinstance(y, dict) and x.startswith(text) ]
 
     def do_pwd(self, key):
         '''Show current path in config separated by slashes
         pwd'''
-        print "/" + "/".join(self.cwd_list)
+        print("/" + "/".join(self.cwd_list))
 
     def do_show(self, none):
         '''Get config from blipp if there are no changes since last get
@@ -100,11 +100,11 @@ class BlippCmd(cmd.Cmd):
         socket.send(POLL_CONFIG)
         msg = socket.recv()
         if not msg:
-            print pprint.pformat(self.config)
+            print(pprint.pformat(self.config))
         else:
             self.config = json.loads(msg)
             self._set_cwc()
-            print pprint.pformat(self.config)
+            print(pprint.pformat(self.config))
             self.unis = UNISInstance(self.config)
 
     def do_set(self, line):
@@ -112,14 +112,14 @@ class BlippCmd(cmd.Cmd):
         set <key> <value>'''
         line = shlex.split(line)
         if len(line)<2:
-            print "Usage: set <key> <value>"
+            print("Usage: set <key> <value>")
             return
         val = self._val_from_input(line[1])
         self.cwc[line[0]] = val
 
     def complete_set(self, text, l, b, e):
         if b==4:
-            return [ x for x,y in self.cwc.iteritems()
+            return [ x for x,y in self.cwc.items()
                      if x.startswith(text) ]
         else:
             return []
@@ -130,10 +130,10 @@ class BlippCmd(cmd.Cmd):
         try:
             del self.cwc[key]
         except KeyError:
-            print col.FAIL + "Error: Key %s not found" % key + col.ENDC
+            print(col.FAIL + "Error: Key %s not found" % key + col.ENDC)
 
     def complete_del(self, text, l, b, e):
-        return [ x for x in self.cwc.keys()
+        return [ x for x in list(self.cwc.keys())
                  if x.startswith(text) ]
 
     def do_reload(self, none):
@@ -143,13 +143,13 @@ class BlippCmd(cmd.Cmd):
         self.do_put("")
         socket.send(RELOAD)
         msg = socket.recv()
-        print msg
+        print(msg)
 
     def do_put(self, none):
         '''Push current configuration to unis
         put'''
         if not self.unis:
-            print col.FAIL + "ERROR: no unis?" + col.ENDC
+            print(col.FAIL + "ERROR: no unis?" + col.ENDC)
             return
         self.unis.put("/services/" + self.config["id"], self.config)
 

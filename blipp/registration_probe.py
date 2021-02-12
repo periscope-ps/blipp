@@ -10,11 +10,11 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import settings
+from . import settings
 import os
 import errno
 import psutil
-from unis_client import UNISInstance
+from .unis_client import UNISInstance
 
 logger = settings.get_logger("registration_probe")
 
@@ -32,17 +32,17 @@ class Probe:
         try:
             self.serviceType = self.config["service_type"]
         except Exception:
-            logger.error("__init__", msg="Must specify service_type!")
+            logger.error(msg="Must specify service_type!")
 
         try:
             self.accessPoint = self.config["service_accesspoint"]
         except Exception:
-            logger.error("__init__", msg="Must specify access point!")
+            logger.error(msg="Must specify access point!")
 
         try:
             self.pidfile = self.config.get("pidfile", None)
         except Exception:
-            logger.warn("__init__", msg="Config does not specify pidfile")
+            logger.warning(msg="Config does not specify pidfile")
 
         self.pname = self.config.get("process_name", None)
 
@@ -65,18 +65,18 @@ class Probe:
                 self.pidfile = open(self.config["pidfile"])
                 pid = self.pidfile.read().rstrip()
             except IOError:
-                logger.warn("__init__", msg="Could not open pidfile: %s" % self.config["pidfile"])
+                logger.warning(msg="Could not open pidfile: %s" % self.config["pidfile"])
             if pid:
                 try:
                     os.kill(int(pid), 0)
                     stat = "ON"
-                except OSError, err:
+                except OSError as err:
                     if err.errno == errno.ESRCH:
                         stat = "OFF"
                     elif err.errno == errno.EPERM:
-                        logger.warn("get_data", msg="No permission to signal this process: %s" % pid)
+                        logger.warning(msg="No permission to signal this process: %s" % pid)
                     else:
-                        logger.warn("get_data", msg="Uknown error: %s" % error.errno)
+                        logger.warn(msg="Uknown error: %s" % error.errno)
                 #We could assume if the pidfile exists, the process is running
                 #if stat is "UNKNOWN" and os.path.exists("/proc/"+pid):
                 #    stat = "ON"

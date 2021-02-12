@@ -20,7 +20,7 @@ def add_defaults(data, schema):
     # assume data is valide with schema
     if not "properties" in schema:
         return
-    for key, inner_schema in schema["properties"].items():
+    for key, inner_schema in list(schema["properties"].items()):
         if not key in data:
             if "default" in inner_schema:
                 data[key] = inner_schema["default"]

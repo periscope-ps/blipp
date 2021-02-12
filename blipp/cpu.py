@@ -11,7 +11,7 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import os
-from utils import full_event_types
+from .utils import full_event_types
 
 class Proc:
     """Wrapper to opening files in /proc
@@ -69,23 +69,23 @@ class Probe:
                                # just before function call
         fields = line.split()
         key = fields[0]
-        v = map(int, fields[1:])
+        v = list(map(int, fields[1:]))
 
         # basic values
-        cpudata = dict(zip(('user', 'nice', 'system', 'idle'), v[0:4]))
+        cpudata = dict(list(zip(('user', 'nice', 'system', 'idle'), v[0:4])))
         # extended values
         if len(v) >= 7:
-            cpudata.update(dict(zip(('iowait', 'hwirq', 'swirq'),
-                                    v[4:7])))
+            cpudata.update(dict(list(zip(('iowait', 'hwirq', 'swirq'),
+                                    v[4:7]))))
         # steal and guest if available
         if len(v) >=9:
-            cpudata.update(dict(zip(('steal', 'guest'), v[7:9])))
+            cpudata.update(dict(list(zip(('steal', 'guest'), v[7:9]))))
         # calculate deltas and scale
         prev_values = self._prev_cpu_hz
         prev_total = self._prev_cpu_total_hz
         total_hz = sum(v)
         total_elapsed_hz = total_hz - prev_total
-        for key, value in cpudata.items():
+        for key, value in list(cpudata.items()):
             prev = prev_values.get(key, 0.0)
             elapsed_hz = value - prev
             if total_elapsed_hz == 0:
@@ -132,7 +132,7 @@ class CPUInfo:
         for line in stat_file:
             fields = line.split()
             key = fields[0]
-            v = map(int, fields[1:])
+            v = list(map(int, fields[1:]))
             # cpu
             if key.startswith('cpu'):
                 if key == 'cpu':
@@ -144,20 +144,20 @@ class CPUInfo:
                     core = int(key[3:])
                 idx = (cpu, core)
                 # basic values
-                cpudata = dict(zip(('user', 'nice', 'system', 'idle'), v[0:4]))
+                cpudata = dict(list(zip(('user', 'nice', 'system', 'idle'), v[0:4])))
                 # extended values
                 if len(v) >= 7:
-                    cpudata.update(dict(zip(('iowait', 'hwirq', 'swirq'),
-                                            v[4:7])))
+                    cpudata.update(dict(list(zip(('iowait', 'hwirq', 'swirq'),
+                                            v[4:7]))))
                 # steal and guest if available
                 if len(v) >=9:
-                    cpudata.update(dict(zip(('steal', 'guest'), v[7:9])))
+                    cpudata.update(dict(list(zip(('steal', 'guest'), v[7:9]))))
                 # calculate deltas and scale
                 prev_values = self._prev_cpu_hz.get(idx, {})
                 prev_total = self._prev_cpu_total_hz.get(idx, 0.0)
                 total_hz = sum(v)
                 total_elapsed_hz = total_hz - prev_total
-                for key, value in cpudata.items():
+                for key, value in list(cpudata.items()):
                     prev = prev_values.get(key, 0.0)
                     elapsed_hz = value - prev
                     if total_elapsed_hz == 0:

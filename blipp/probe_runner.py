@@ -10,11 +10,11 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import settings
+from . import settings
 import time
 import socket
-from collector import Collector
-from utils import blipp_import
+from .collector import Collector
+from .utils import blipp_import
 import pprint
 
 HOSTNAME = socket.gethostname()
@@ -37,7 +37,7 @@ class ProbeRunner:
 
     def run(self, conn):
         for nextt in self.scheduler:
-            logger.debug("run", msg="got time from scheduler", time=nextt)
+            logger.debug(msg="got time from scheduler", time=nextt)
             if conn.poll():
                 if conn.recv() == "stop":
                     self._cleanup()
@@ -57,7 +57,7 @@ class ProbeRunner:
                 self.collector.insert(self._normalize(data), ts)
 
     def _normalize(self, data):
-        if isinstance(data.itervalues().next(), dict):
+        if isinstance(next(iter(data.values())), dict):
             return data
         subject = self.service["runningOn"]["href"]
         return dict({subject: data})
@@ -66,7 +66,8 @@ class ProbeRunner:
     def setup(self):
         config = self.config
         logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
-        logger.warn('NODE: ' + HOSTNAME, name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
+        #logger.warn('NODE: ' + HOSTNAME, name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
+        logger.warning(msg='NODE: ' + HOSTNAME)
         probe_mod = blipp_import(config["probe_module"])
         self.probe = probe_mod.Probe(self.service, self.measurement)
 
@@ -76,7 +77,8 @@ class ProbeRunner:
             sched_file, sched_name = "builtins", config["collection_schedule"]
 
         logger.info('setup', sched_file=sched_file, sched_name=sched_name)
-        logger.warn('NODE: ' + HOSTNAME, sched_file=sched_file, sched_name=sched_name)
+        #logger.warn('NODE: ' + HOSTNAME, sched_file=sched_file, sched_name=sched_name)
+        logger.warning(msg='NODE: ' + HOSTNAME)
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
         self.collector = Collector(self.service, self.measurement)
@@ -86,5 +88,5 @@ class ProbeRunner:
         '''
         Used for graceful exit. Clear any outstanding unreported data.
         '''
-        logger.debug('_cleanup', name=self.config['name'])
+        logger.debug(name=self.config['name'])
         self.collector.report()

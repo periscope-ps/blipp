@@ -10,9 +10,9 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import settings
-from utils import get_most_recent
-from periscope_client import PeriscopeClient
+from . import settings
+from .utils import get_most_recent
+from .periscope_client import PeriscopeClient
 
 logger = settings.get_logger('unis_client')
 

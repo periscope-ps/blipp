@@ -11,10 +11,10 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import time
-from unis_client import UNISInstance
-import settings
+from .unis_client import UNISInstance
+from . import settings
 import pprint
-from utils import merge_dicts
+from .utils import merge_dicts
 from requests.exceptions import ConnectionError
 
 logger = settings.get_logger('conf')
@@ -52,8 +52,8 @@ class ServiceConfigure(object):
         try:
             r = self.unis.get("/services/" + self.config["id"])
             if not r:
-                logger.warn('refresh', msg="refresh failed")
-                logger.warn('refresh', msg="re-enable service")
+                logger.warning(msg="refresh failed")
+                logger.warning(msg="re-enable service")
                 self._setup_service()
             else:
                 self.config = r
@@ -76,7 +76,7 @@ class ServiceConfigure(object):
         if node_id:
             r = self.unis.get("/nodes/" + str(node_id))
             if not r:
-                logger.warn('_setup_node', msg="node id %s not found" % node_id)
+                logger.warning(msg="node id %s not found" % node_id)
                 r = self.unis.post("/nodes",
                               data={
                         "$schema": settings.SCHEMAS["nodes"],
@@ -87,8 +87,7 @@ class ServiceConfigure(object):
             r = self.unis.get("/nodes?urn=" + urn)
             if r and len(r):
                 r = r[0]
-                logger.info('_setup_node',
-                            msg="Found node with our URN and id %s" % r["id"])
+                logger.info(msg="Found node with our URN and id %s" % r["id"])
             else:
                 r = self.unis.post("/nodes",
                               data={
@@ -106,7 +105,7 @@ class ServiceConfigure(object):
             self.node_setup = True
         else:
             config["runningOn"] = {"href": ""}
-            logger.warn('_setup_node', msg="Unable to set up BLiPP node in UNIS at %s" % props["unis_url"])
+            logger.warning(msg="Unable to set up BLiPP node in UNIS at %s" % props["unis_url"])
 
     def _setup_service(self):
         config = self.config
@@ -116,9 +115,8 @@ class ServiceConfigure(object):
         if config.get("id", None):
             r = self.unis.get("/services/" + config["id"])
         if not r:
-            logger.warn('_setup_service',
-                        msg="service id not specified or not found "\
-                            "unis instance ...querying for service")
+            logger.warning(msg="service id not specified or not found "\
+                               "unis instance ...querying for service")
             rlist = self.unis.get("/services?name=" + config.get("name", None) +\
                                       "&runningOn.href=" + config["runningOn"]["href"] + "&limit=2")
             # loop over the returned services and find one that
@@ -128,13 +126,11 @@ class ServiceConfigure(object):
                 for i in range(len(rlist)):
                     r = self.unis.get('/services/' + rlist[i]["id"])
                     if r:
-                        logger.info('_setup_service',
-                                    msg="%s service found with id %s" % (config["name"], r["id"]))
+                        logger.info(msg="%s service found with id %s" % (config["name"], r["id"]))
                         break
             else:
-                logger.warn('_setup_service',
-                            msg="no service found by id or querying "\
-                                "...creating new service at %s" % props["unis_url"])
+                logger.warning(msg="no service found by id or querying "\
+                            "...creating new service at %s" % props["unis_url"])
             
         if isinstance(r, dict) and r:
             merge_dicts(config, r)
@@ -152,7 +148,7 @@ class ServiceConfigure(object):
         if r:
             self.service_setup = True
         else:
-            logger.warn('_setup_service', msg="unable to set up service in UNIS")
+            logger.warning(msg="unable to set up service in UNIS")
 
 
     def get(self, key, default=None):

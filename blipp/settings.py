@@ -10,10 +10,10 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import ConfigParser
+import configparser
 import socket
 import netifaces
-import utils
+from . import utils
 
 SCHEMAS = {
     'networkresources': 'http://unis.crest.iu.edu/schema/20160630/networkresource#',
@@ -144,7 +144,7 @@ if MS_URL:
 # Netlogger stuff... pasted from Ahmed's peri-tornado
 ##################################################################
 import logging, logging.handlers
-from netlogger import nllog
+#from netlogger import nllog
 
 DEBUG = False
 TRACE = False
@@ -152,6 +152,14 @@ CONSOLE = True
 NETLOGGER_NAMESPACE = "blippd"
 WORKSPACE = "."
 
+# 2021-01-29
+# Entire logging section commented out and replaced with code section below
+# in order to make code translation from Python 2 to Python 3 easier
+
+def get_logger(namespace="blipp", logfile=None, level=None):
+    return logging.getLogger(namespace)
+
+''' 
 def config_logger():
     """Configures netlogger"""
     nllog.PROJECT_NAMESPACE = NETLOGGER_NAMESPACE
@@ -223,7 +231,7 @@ def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None, level=None):
         set_level(level)
 
     return nllog.get_logger(namespace)
-
+'''
 
 ##################################################################
 # Read in a configuration file
@@ -231,7 +239,7 @@ def get_logger(namespace=NETLOGGER_NAMESPACE, logfile=None, level=None):
 
 CONFIG_FILE="/etc/periscope/blippd.conf"
 
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read(CONFIG_FILE)
 
 main_config = ["unis_url", "ms_url", "data_file", "ssl_cert", "ssl_key",
@@ -254,7 +262,7 @@ for section in config.sections():
     if section == "main":
         continue
     module = config.get(section, "module")
-    if module in probe_map.keys():
+    if module in list(probe_map.keys()):
         conf = dict()
         conf.update({"probe_module": module})
         # set the schedule interval if present (otherwise will get probe default)

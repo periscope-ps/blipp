@@ -12,8 +12,8 @@
 # =============================================================================
 import subprocess
 import json
-from utils import full_event_types
-import settings
+from .utils import full_event_types
+from . import settings
 
 logger = settings.get_logger('ceph_probe')
 
@@ -43,7 +43,7 @@ class Probe:
         try:
             data = self._extract_data(output[0])
         except ValueError as e:
-            logger.exc("get_data", e)
+            #logger.exc("get_data", e)
             return {}
         data = full_event_types(data, EVENT_TYPES)
         return data
