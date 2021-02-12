@@ -76,7 +76,7 @@ class Arbiter():
         return self.run_probes(), interval
         
     def _start_new_probe(self, m):
-        logger.info("-start_new_probe", name=m["configuration"]["name"])
+        logger.info("_start_new_probe", name=m["configuration"]["name"])
         logger.debug("_start_new_probe", config=pprint.pformat(m))
         pr = ProbeRunner(self.config_obj, m)
         parent_conn, child_conn = Pipe()
