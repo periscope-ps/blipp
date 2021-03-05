@@ -10,10 +10,14 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from . import settings
-from . import utils
+from blipp import settings
+from blipp import utils
 
 from collections import defaultdict
+from unis.models import Metadata
+
+import pprint
+
 logger = settings.get_logger('collector')
 
 class Collector:
@@ -37,8 +41,13 @@ class Collector:
         Called (by probe_runner) to insert new data into this collector object.
         '''
         for subject, met_val in data.items():
+            if isinstance(subject, str):
+                try: subject = self.unis.find(subject)[0]
+                except IndexError:
+                    logger.warn(f"Invalid subject reference - '{subject}'")
             ts = met_val.get('ts', ts)
             for ty, v in met_val.items():
+                _match = lambda x: x.measurement == self.measurement and x.eventType == ty
                 if ty == 'ts': continue
                 m = self.mds.get((subject, ty), None)
                 if not m:
@@ -47,18 +56,18 @@ class Collector:
 
                     m = self.unis.metadata.first_where(_match)
                     if m is None:
-                        _match = lambda x: x.measurement == self.measurement and x.eventType == ty
                         d = {
-                            'subject': subject,
                             'eventType': ty,
                             'parameters': {
                                 'datumSchema': settings.SCHEMAS["datum"],
-                                'measurement': self.measurement
                             }
                         }
                         m = self.unis.insert(Metadata(d), commit=True)
+                        m.subject = subject
+                        m.parameters.measurement = self.measurement
+                        self.unis.flush()
                     m.data._batch = int(self.config.reporting_params)
                     self.mds[(subject, ty)] = m
-
+                    
                 m.data.append(v, ts=ts*10e5)
         self.unis.flush()

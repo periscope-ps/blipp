@@ -18,7 +18,7 @@ from blipp.utils import full_event_types, blipp_import_method, get_unis
 from blipp.probes import abc
 import re
 
-from unis.models import Node
+from unis.models import Node, Port
 
 logger = settings.get_logger('net')
 class Proc(abc.Probe):
@@ -66,11 +66,10 @@ class Probe(abc.Probe):
 
     def __init__(self, service, measurement):
         super().__init__(service, measurement)
-        logger.debug(self.config)
+        logger.debug(self.config.to_JSON(top=False))
         self._proc = Proc(getattr(self.config, 'proc_dir', '/proc/'))
-        print("<------------------ The bug is here")
-        self.node_subject = getattr(self.config, 'subject', None) or getattr(self.config, 'runningOn', None) or Node()
-        self.port_match_method = blipp_import(getattr(self.config, 'port_match_method', 'geni_utils.mac_match'))
+        self.node_subject = getattr(self.config, 'subject', None) or getattr(self.service, 'runningOn', None) or Node()
+        self.port_match_method = blipp_import_method(getattr(self.config, 'port_match_method', 'blipp.geni_utils.mac_match'))
         self.unis = get_unis()
         
         logger.debug(f"Probe[net] subject: {self.node_subject.selfRef}")
@@ -150,9 +149,11 @@ class Probe(abc.Probe):
         unis_ports = self.get_interfaces_in_unis()
 
         for face in netifaces.interfaces():
-            p = self.node_subject.ports.first_where(lambda x: self.port_match_method(face, x))
-            if p is None:
-                p = self.unis.insert(Port(self._build_port_dict(face)), commit=True)
+            port_def = self._build_port_dict(face)
+            try:
+                p = list(self.node_subject.ports.where(lambda x: self.port_match_method(x, port_def)))[0]
+            except IndexError:
+                p = self.unis.insert(Port(port_def), commit=True)
                 self.node_subject.ports.append(p)
             subjects[face] = p
         self.unis.flush()
@@ -202,10 +203,7 @@ class Probe(abc.Probe):
         node = self.service.runningOn
         ports = []
         if node:
-            port_list = node.get('ports', [])
-            for port in port_list:
-                p = self.unis.get(port['href'])
-                ports.append(p)
+            return [p for p in node.ports]
         return ports
 
     def _find_or_post_port(self, ports, local_port, matching_method):

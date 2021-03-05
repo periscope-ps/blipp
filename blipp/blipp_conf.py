@@ -47,12 +47,14 @@ class BlippConfigure(ServiceConfigure):
         remote = list(self.unis.measurements.where({'service': self.service}))
         for n,m in self.config['properties']['configurations']['probes'].items():
             p = {**self.config['properties']['configurations']['probe_defaults'], **m, **{'name': n}}
-            m = self.unis.measurements.first_where(lambda x: x.service == self.service.selfRef and x.configuration.name == p['name']) or \
-                self.unis.insert(Measurement(), commit=True)
-            m.service = self.service.selfRef
+            m = self.unis.measurements.first_where(lambda x: x.service == self.service.selfRef and x.configuration.name == p['name'])
+            if not m:
+                logger.warn("Measurement not found, rebuilding")
+                m = self.unis.insert(Measurement(), commit=True)
+                m.service = self.service.selfRef
             m.configuration = p
             m.eventTypes = _get_eventTypes(p)
-            if getattr(m, 'scheduled_times', True) is None:
+            if getattr(m, 'scheduled_times', False) is None:
                 del m.getObject().__dict__['scheduled_times']
             meas.add(m)
 
@@ -74,4 +76,4 @@ class BlippConfigure(ServiceConfigure):
         instance. Possibly excluding those which where initially
         present when blipp started.
         '''
-        return [m for m in self.measurements if getattr(m.configuration, "status", "OFF").upper() == "ON"]
+        return [m for m in self.measurements if getattr(m.configuration, "status", "ON").upper() == "ON"]

@@ -182,6 +182,10 @@ class _singleton(type):
     def __call__(cls, *args, **kwargs):
         if cls not in cls._inst: cls._inst[cls] = super(_singleton, cls).__call__(*args, **kwargs)
         return cls._inst[cls]
-class _RuntimeProxy(Runtime, metaclass=_singleton): pass
+class _RuntimeProxy(Runtime, metaclass=_singleton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.addService(DataService)
+
 def get_unis(url=None):
     return _RuntimeProxy(url)

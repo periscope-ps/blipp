@@ -15,7 +15,7 @@ from . import settings
 from . import utils
 import pprint
 from requests.exceptions import ConnectionError
-from unis.models import Node, Service, Measurement
+from unis.models import Node, Service
 
 logger = settings.get_logger('conf')
 

@@ -45,6 +45,7 @@ class Arbiter():
         self.stopped_procs = {} # {(proc, conn): time_stopped, ...}
 
     def run_probes(self):
+        logger.debug("Starting probes")
         new_m_list = self.config_obj.get_measurements()
         our_m_list = list(self.proc_to_measurement.values())
 

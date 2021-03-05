@@ -32,12 +32,12 @@ class ProbeRunner:
         self.measurement = measurement
         self.config = measurement.configuration
         self.service = service
-        self.probe_defaults = service.probe_defaults
+        self.probe_defaults = service.properties.configurations.probe_defaults
         self.setup()
 
     def run(self, conn):
         for nextt in self.scheduler:
-            logger.debug(msg="got time from scheduler", time=nextt)
+            logger.debug(msg="got time from scheduler")
             if conn.poll():
                 if conn.recv() == "stop":
                     self._cleanup()
@@ -59,13 +59,13 @@ class ProbeRunner:
     def _normalize(self, data):
         if isinstance(next(iter(data.values())), dict):
             return data
-        return dict({self.service.runningOn.selfRef: data})
+        return dict({self.service.runningOn: data})
 
 
     def setup(self):
         config = self.config
         logger.info(f"Configuring probe: '{config.name}' running '{config.probe_module}'")
-        logger.debug(pprint.pformat(config.to_JSON()))
+        logger.debug(pprint.pformat(config.to_JSON(top=False)))
         probe_mod = blipp_import(config.probe_module)
         self.probe = probe_mod.Probe(self.service, self.measurement)
 
@@ -74,8 +74,8 @@ class ProbeRunner:
         else:
             sched_file, sched_name = "builtins", config.collection_schedule
 
-        logger.info("Using '{sched_file}' on '{sched_name}'")
-        self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
+        logger.info(f"Using '{sched_file}' on '{sched_name}'")
+        self.scheduler = blipp_import("blipp.schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
         self.collector = Collector(self.service, self.measurement)
 

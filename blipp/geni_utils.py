@@ -14,10 +14,10 @@ from .utils import clean_mac
 
 def mac_match(geni_port, local_port):
     try:
-        geni_mac = clean_mac(geni_port['properties']['geni']['mac_address'])
-    except KeyError:
+        geni_mac = clean_mac(geni_port.properties.geni.mac_address)
+    except AttributeError:
         try:
-            geni_mac = clean_mac(geni_port['properties']['mac']['address'])
+            geni_mac = clean_mac(geni_port.properties.mac.address)
         except KeyError:
             return False
     try:
