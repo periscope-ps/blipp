@@ -31,7 +31,7 @@ version = "2.2.dev"
 setup(
     name="blipp",
     version=version,
-    packages=["blipp", "scripts", "blipp.schedules"],
+    packages=["blipp", "scripts", "blipp.schedules", "blipp.probes"],
     package_data={},
     author="Matthew Jaffee",
     author_email="matthew.jaffee@gmail.com",
