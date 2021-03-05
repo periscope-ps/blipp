@@ -11,21 +11,17 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import time
+from blipp.probes import abc
 
 
 EVENT_TYPES={
     "dummy":"ps:testing:dummy"
 }
 
-class Probe:
+class Probe(abc.Probe):
     """
     Dummy probe that just sleeps and returns 1
     """
-
-    def __init__(self, service, measurement):
-        self.config = measurement["configuration"]
-        self.duration = self.config.get("schedule_params", {}).get("duration", 0)
-
     def get_data(self):
-        time.sleep(self.duration)
+        time.sleep(getattr(getattr(self.config, "schedule_params", {}), "duration", 0))
         return {EVENT_TYPES["dummy"]: 1}

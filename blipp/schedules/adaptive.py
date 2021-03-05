@@ -11,51 +11,47 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import random
-import blipp.unis_client
 import calendar
 import dateutil.parser
 import datetime
 import pytz
-from blipp.utils import remove_old_resources
 import time
 import re
 from pprint import pprint
 from pprint import pformat
+from blipp import utils
 import blipp.settings
+
+from unis import Runtime
+from unis.models import Measurement, Service
+
 logger = blipp.settings.get_logger('adaptive')
 
-def simple_avoid(service, measurement):
-    config = measurement["configuration"]
-    every = config["schedule_params"]["every"]
-    duration = config["schedule_params"]["duration"]
-    num_to_schedule = config["schedule_params"].get('num_to_schedule', 10)
-    max_wait = config["schedule_params"].get("max_wait", 3)
+def simple_avoid(service: Service, measurement: Measurement) -> None:
+    config = measurement.configuration
+    every = config.schedule_params.every
+    duration = config.schedule_params.duration
+    num_to_schedule = getattr(config.schedule_params, 'num_to_schedule', 10)
+    max_wait = getattr(config.schedule_params, 'max_wait', 3)
     td_duration = datetime.timedelta(seconds=duration)
     td_every = datetime.timedelta(seconds=every)
-    unis = blipp.unis_client.UNISInstance(service)
+    unis = utils.get_unis()
 
     # Wait until resources have been added
-    while "resources" not in measurement["configuration"]:
+    while not hasattr(measurement.configuration, "resources"):
         time.sleep(every/2)
-        measurement = unis.get("/measurements?configuration.name=" +
-                               config["name"] +
-                               "&service=" +
-                               config["serviceRef"])[0]
     conflicting_times = None
 
     while True:
         wait_time = random.random()*max_wait
-        logger.info(msg="random wait initiated",
-                    wait_time=wait_time,
-                    probe=config["name"])
+        logger.info(f"Starting random wait [{wait_time}] for '{config.name}'")
         # wait randomly then regenerate schedule
         time.sleep(wait_time)
 
         start_scheduler = time.time()
 
         conflicting_times = get_conflicting_times(
-            get_conflicting_measurements(unis,
-                                         measurement))
+            get_conflicting_measurements(unis, measurement))
 
         # build schedule, avoiding all conflicting time slots
         now = datetime.datetime.utcnow()
@@ -64,17 +60,14 @@ def simple_avoid(service, measurement):
                                         num_to_schedule, conflicting_times)
 
         # update schedule in UNIS
-        measurement["scheduled_times"] = schedule
-        del measurement["ts"]
-        measurement = unis.put("/measurements/" + measurement["id"], data=measurement)
+        measurement.scheduled_times = schedule
+        unis.flush()
 
-        logger.debug(msg="finish generation",
-                     duration=time.time()-start_scheduler)
+        logger.debug(f"Completed measurement generation [duration: {time.time()-start_scheduler}]")
 
         conflicting_times = check_schedule(unis, measurement)
         if conflicting_times:
-            logger.info(msg="conflict detected",
-                        probe=config["name"])
+            logger.info(f"Confict detected in '{config.name}'")
         else:
             # generate finishing times
             for t in schedule:
@@ -82,7 +75,9 @@ def simple_avoid(service, measurement):
                     dateutil.parser.parse(t["start"]).utctimetuple())
             # when the schedule is exhausted, loop back to the top and recalculate
 
-def check_schedule(unis, measurement):
+
+#TODO measurement is oftype Measurement (rest of functions in module)
+def check_schedule(unis: Runtime, measurement: Measurement) -> list[dict]:
     '''
     Check schedule generated for measurement. If there is a conflicting
     time, return list of scheduled times from measurements that have
@@ -90,22 +85,19 @@ def check_schedule(unis, measurement):
     '''
     cm = get_conflicting_measurements(unis, measurement)
     ct = get_conflicting_times(cm)
-    schedule = measurement["scheduled_times"]
+    schedule = measurement.scheduled_times
     i = 0
     for c in ct:
-        while dateutil.parser.parse(schedule[i]["end"]) <= c["start"]:
+        while dateutil.parser.parse(schedule[i].end) <= c['start']:
             i += 1
-        if dateutil.parser.parse(schedule[i]["start"]) < c["end"]:
-            logger.warning("check_schedule", stime=pformat(schedule[i]),
-                        ctime={
-                            "start": datetime_to_dtstring(c["start"]),
-                            "end": datetime_to_dtstring(c["end"])
-                        })
+        if dateutil.parser.parse(schedule[i].start) < c['end']:
+            logger.warn(f"{pformat(schedule[i].to_JSON()}"))
+            logger.warn(f"start: {datetime_to_dtstring(c['start'])}, end: {datetime_to_dtstring(c['end'])}")
             return ct
     return None
 
 def build_basic_schedule(start, td_every,
-                         td_duration, num_to_schedule, conflicting_times):
+                         td_duration, num_to_schedule: int, conflicting_times: list[dict]) -> list[dict]:
     # build schedule, avoiding all conflicting time slots
     schedule = []
     cur = start
@@ -125,30 +117,22 @@ def build_basic_schedule(start, td_every,
         cur += td_every
     return schedule
 
-def get_conflicting_measurements(unis, measurement):
-    conflicting_measurements = []
-    for resource in measurement["configuration"]["resources"]:
-        meas_for_resource = remove_old_resources(
-            unis.get(
-                "/measurements?configuration.resources.ref=" +
-                resource["ref"]))
-        meas_for_resource = [m for m in meas_for_resource if m["id"] != measurement["id"]]
-        conflicting_measurements.extend(meas_for_resource)
-    return conflicting_measurements
+def get_conflicting_measurements(unis: Runtime, m: Measurement) -> list[Measurement]:
+    conflict = []
+    for r in  m.configuration.resources:
+        for x in unis.measurements.where(lambda x: any([v.ref == r.ref for v in x.configuration.resources])):
+            if x.id != m.id:
+                conflict.append(x)
+    return conflict
 
-def get_conflicting_times(conflicting_measurements):
-    # aggregate all conflicting times
-    conflicting_times = []
-    for meas in conflicting_measurements:
-        conflicting_times.extend(meas.setdefault("scheduled_times", []))
-    # and convert them to datetime objects
-    for tobj in conflicting_times:
-        tobj["start"] = dateutil.parser.parse(tobj["start"])
-        tobj["end"] = dateutil.parser.parse(tobj["end"])
-
-    # sort conflicting intervals by start time
-    conflicting_times = sorted(conflicting_times, key=lambda t: t["start"])
-    return conflicting_times
+def get_conflicting_times(conflicting_measurements: list[Measurements]) -> list[dict]:
+    conflict = []
+    for m in conflicting_measurements:
+        [conflict.append({'start': x.start, 'end': x.end}) for x in getattr(m, 'scheduled_times', [])]
+    for c in conflict:
+        c['start'] = dateutil.parser.parse(c['start'])
+        c['end'] = dateutil.parser.parse(c['end'])
+    return sorted(conflict, key=lambda t: t['start'])
 
 def datetime_to_dtstring(dt):
     '''convert datetime object to a date-time string that UNIS will accept '''
@@ -201,27 +185,19 @@ def score_schedule(start, schedule, every, n2s):
         total -= missed_by/(every * n2s)
     return total
 
-def polite_avoid(config=None, **kwargs):
+def polite_avoid(config=None: Service, **kwargs):
     max_score = 0.9
     while True:
-        every = config["schedule_params"]["every"]
-        duration = config["schedule_params"]["duration"]
-        unis = blipp.unis_client.UNISInstance(config)
+        unis = utils.get_unis()
+        every = config.schedule_params.every
+        duration = config.schedule_params.duration
         num_to_schedule = 100
-        measurement = unis.get("/measurements?configuration.name=" +
-                            config["name"] +
-                            "&service=" +
-                            config["serviceRef"])[0]
-
+        measurement = unis.measurements.first_where(lambda x : x.configuration.name == config.name && \
+                                                    x.service.selfRef == config.serviceRef)
 
         # Wait until resources have been added
-        while "resources" not in measurement["configuration"]:
+        while not hasattr(measurement.configuration, "resources"):
             time.sleep(every/2)
-            measurement = unis.get("/measurements?configuration.name=" +
-                               config["name"] +
-                               "&service=" +
-                               config["serviceRef"])[0]
-
 
         # Get all measurements with resource conflicts
         conflicting_measurements = get_conflicting_measurements(unis,
@@ -249,9 +225,8 @@ def polite_avoid(config=None, **kwargs):
                 max_score /= 0.9
 
         # update schedule in UNIS
-        measurement["scheduled_times"] = schedule
-        del measurement["ts"]
-        unis.put("/measurements/" + measurement["id"], data=measurement)
+        measurement.scheduled_times = schedule
+        unis.flush()
 
         # generate finishing times
         for t in schedule:

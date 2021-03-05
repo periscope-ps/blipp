@@ -11,25 +11,26 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import subprocess
-import json
-from .utils import full_event_types
+import re
+from blipp import settings
+from blipp.utils import full_event_types
+from blipp.probes import abc
 import shlex
-from . import settings
 
 logger = settings.get_logger('cmd_line_probe')
 
-class Probe:
-    '''
-    this is meant to be used by iperf3 specifically
-    '''
-
+class Probe(abc.Probe):
     def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        self.command = self._substitute_command(str(self.config.get("command")), self.config)
+        super().__init__(service, measurement)
+        self.command = self._substitute_command(self.config.command, self.config)
         try:
-            self.EVENT_TYPES = self.config["eventTypes"]
+            self.data_regex = re.compile(
+                str(self.config.regex),
+                flags=re.S|re.M)
+        except Exception:
+            self.data_regex = None
+        try:
+            self.EVENT_TYPES = self.config.eventTypes
         except Exception:
             self.EVENT_TYPES = {}
 
@@ -43,30 +44,17 @@ class Probe:
             raise CmdError(output[1])
         try:
             data = self._extract_data(output[0])
-        except ValueError as e:
+        except NonMatchingOutputError as e:
             #logger.exc("get_data", e)
             return {}
-        
-        throughput = 0
-        interval_num = 0
-        for interval in data['intervals']:
-            throughput += interval['sum']['bits_per_second']
-            interval_num += 1
-            
-        return {"ps:tools:blipp:linux:net:iperf:bandwidth": throughput / interval_num}
+        data = full_event_types(data, self.EVENT_TYPES)
+        return data
 
     def _extract_data(self, stdout):
-        json_begin = stdout.index("Server JSON output:") + len("Server JSON output:")
-        json_end = stdout.index("iperf Done.")
-        json_output = json.loads(stdout[json_begin:json_end])
-        return json_output
-        '''
         matches = self.data_regex.search(stdout)
         if not matches:
             raise NonMatchingOutputError(stdout)
         return matches.groupdict()
-        '''
-        
 
     def _substitute_command(self, command, config):
         ''' command in form "ping $ADDRESS"
@@ -77,8 +65,8 @@ class Probe:
         ret = []
         for item in command:
             if item[0] == '$':
-                if item[1:] in config:
-                    val = config[item[1:]]
+                if hasattr(config, item[1:]):
+                    val = getattr(config, item[1:])
                     if isinstance(val, bool):
                         if val:
                             ret.append(item[1:])
@@ -90,7 +78,7 @@ class Probe:
             elif item:
                 ret.append(item)
         #logger.info('substitute_command', cmd=ret, name=self.config['name'])
-        logger.info(name=self.config['name'])
+        logger.info(name=self.config.name)
         return ret
 
 

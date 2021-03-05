@@ -12,7 +12,8 @@
 # =============================================================================
 import resource
 import os
-from .utils import full_event_types
+from blipp.utils import full_event_types
+from blipp.probes import abc
 
 class Proc:
     """Wrapper to opening files in /proc
@@ -43,14 +44,12 @@ EVENT_TYPES={
     "kernel":"ps:tools:blipp:linux:memory:utilization:kernel"
     }
 
-class Probe:
+class Probe(abc.Probe):
     """Get memory statistics.
     """
     def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
+        super().__init__(service, measurement)
+        self._proc = Proc(getattr(self.config, 'proc_dir', '/proc/'))
 
     def get_data(self):
         bean_counts = self._proc.exists("user_beancounters")

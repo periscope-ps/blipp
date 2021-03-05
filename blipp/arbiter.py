@@ -50,8 +50,8 @@ class Arbiter():
 
         for m in new_m_list:
             if not m in our_m_list:
-                if m['configuration']['collection_schedule'] == 'builtins.scheduled'\
-                    and 'scheduled_times' not in m:
+                if m.configuration.collection_schedule == 'builtins.scheduled' and \
+                   not hasattr(m, 'scheduled_times'):
                     continue
                 
                 if settings.DEBUG:
@@ -69,16 +69,15 @@ class Arbiter():
         self._check_procs()
         interval = self.config_obj.refresh()
         self._cleanup_stopped_probes()
-        if self.config_obj.get("status", "ON").upper() == "OFF":
+        if self.config_obj.service.status.upper() == "OFF":
             self._stop_all()
             return time.time(), interval
-        #self._check_procs()
         return self.run_probes(), interval
         
     def _start_new_probe(self, m):
-        logger.info("_start_new_probe", name=m["configuration"]["name"])
-        logger.debug("_start_new_probe", config=pprint.pformat(m))
-        pr = ProbeRunner(self.config_obj, m)
+        logger.info(f"Starting probe for: {m.configuration.name}")
+        logger.debug(pprint.pformat(m.to_JSON()))
+        pr = ProbeRunner(self.config_obj.service, m)
         parent_conn, child_conn = Pipe()
         probe_proc = Process(target = pr.run, args = (child_conn,))
         probe_proc.start()
@@ -86,9 +85,9 @@ class Arbiter():
 
     def _stop_probe(self, proc_conn_tuple):
         try:
-            logger.info(msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["configuration"]["name"])
-        except Exception:
-            logger.info(msg="sending stop to " + self.proc_to_measurement[proc_conn_tuple]["id"])
+            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple]['configuration']['name']}")
+        except KeyError:
+            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple]['id']}")
         proc_conn_tuple[1].send("stop")
         self.stopped_procs[proc_conn_tuple] = time.time()
 
@@ -124,44 +123,30 @@ class Arbiter():
         for proc, conn in list(self.proc_to_measurement.keys()):
             if not proc.is_alive():
                 proc.join()
-                logger.warning(msg="a probe has exited", exitcode=proc.exitcode)
+                logger.warn(f"A probe has exited [{proc.exitcode}]")
                 m = self.proc_to_measurement.pop((proc, conn))
-                m["configuration"]['status'] ='OFF'
-                if "ts" in m:
-                    del m["ts"]
-                self.config_obj.unis.post("/measurements", m)
+                m.configuration.status = "OFF"
 
     def _print_pc_diff(self, pc, new_m_list):
         # a helper function for printing the difference between old and new probe configs
         # can be useful for debugging
         for npc in new_m_list:
             try:
-                if npc["configuration"]["name"] == pc["configuration"]["name"]:
-                    for key in list(npc.keys()):
-                        if key in list(pc.keys()):
-                            if not pc[key] == npc[key]:
-                                logger.debug("reload_all",
-                                             msg=key +
-                                             " newval:" +
-                                             str(npc[key]) +
-                                             " oldval:" + str(pc[key]))
-                            else:
-                                logger.debug(msg="new key/val: " + key + ": " + str(npc[key]))
-                    for key in list(pc.keys()):
-                        if key not in list(npc.keys()):
-                            logger.debug(msg="deleted key/val: " + key + " :" + str(pc[key]))
-            except:
+                if npc.configuration.name == pc.configuration.name:
+                    for k,v in npc.to_JSON().items():
+                        if getattr(pc, k, object()) != v:
+                            logger.debug(f"Updated measurement [{npc.selfRef}]: {getattr(pc, k, None)} -> {getattr(npc, k, None)}")
+            except AttributeError:
                 logger.debug(msg="name not set")
-
 
 
 def main(config):
     a = Arbiter(config)
     s = ConfigServer(config)
     last_reload_time = time.time()
-    check_interval = int(config["properties"]["configurations"]["unis_poll_interval"])
+    check_interval = int(config.config["properties"]["configurations"]["unis_poll_interval"])
     a.run_probes()
     while s.listen(last_reload_time + check_interval - time.time()):
         last_reload_time, suggested_interval = a.reload_all()
-        check_interval = min((float)(config["properties"]["configurations"]["unis_max_backoff"]), suggested_interval)
+        check_interval = min((float)(config.config["properties"]["configurations"]["unis_max_backoff"]), suggested_interval)
         logger.info(msg="check interval %d"%check_interval)

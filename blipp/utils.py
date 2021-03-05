@@ -15,6 +15,9 @@ import re
 import struct
 import socket
 
+from unis import Runtime
+from unis.services.data import DataService
+
 def try__import__(name):
     try:
         ret=__import__(name)
@@ -32,7 +35,7 @@ def blipp_import(name, **kwargs):
     try:
         ret = __import__(name, fromlist=[1])
     except ImportError:
-        ret = __import__("blipp." + name, fromlist=[1])
+        ret = __import__("blipp.probes." + name, fromlist=[1])
     return ret
 
 def blipp_import_method(method_string):
@@ -172,3 +175,13 @@ def get_default_gateway_linux():
             if fields[1] != '00000000' or not int(fields[3], 16) & 2:
                 continue
             return socket.inet_ntoa(struct.pack("=L", int(fields[2], 16))),fields[0]
+
+
+class _singleton(type):
+    _inst = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._inst: cls._inst[cls] = super(_singleton, cls).__call__(*args, **kwargs)
+        return cls._inst[cls]
+class _RuntimeProxy(Runtime, metaclass=_singleton): pass
+def get_unis(url=None):
+    return _RuntimeProxy(url)

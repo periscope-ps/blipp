@@ -12,8 +12,11 @@
 # =============================================================================
 import subprocess
 import json
-from .utils import full_event_types
-from . import settings
+from blipp.utils import full_event_types
+from blipp import settings
+from blipp.probes import abc
+
+from unis.models import Service, Measurement
 
 logger = settings.get_logger('ceph_probe')
 
@@ -21,16 +24,10 @@ EVENT_TYPES={
     "status":"ps:tools:blipp:linux:ceph:status",
     "used":"ps:tools:blipp:linux:ceph:bytes:used",
     "free":"ps:tools:blipp:linux:ceph:bytes:free"
-    }
+}
 
-class Probe:
-
-    def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        
-        self.command = ['ceph', '-s', '-f', 'json']
+class Probe(abc.Probe):
+    command = ['ceph', '-s', '-f', 'json']
 
     def get_data(self):
         proc = subprocess.Popen(self.command,

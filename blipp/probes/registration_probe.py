@@ -10,11 +10,13 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from . import settings
+from blipp import settings
 import os
 import errno
 import psutil
-from .unis_client import UNISInstance
+from blipp.utils import get_unis
+
+from unis.models import Service
 
 logger = settings.get_logger("registration_probe")
 
@@ -22,38 +24,42 @@ class Probe:
     TTL_DEFAULT = 600
     
     def __init__(self, service, measurement):
-        self.config = measurement["configuration"]
-        self.service = service
-        self.unis = UNISInstance(service)
+        super().__init__(service, measurement)
+        self.unis = get_unis()
         self.pname = None
         self.pidfile = None
         self.id = None
         
         try:
-            self.serviceType = self.config["service_type"]
+            self.serviceType = self.config.service_type
         except Exception:
             logger.error(msg="Must specify service_type!")
+            self.serviceType = None
 
         try:
-            self.accessPoint = self.config["service_accesspoint"]
+            self.accessPoint = self.config.service_accesspoint
         except Exception:
             logger.error(msg="Must specify access point!")
+            self.accessPoint = None
 
         try:
-            self.pidfile = self.config.get("pidfile", None)
+            self.pidfile = self.config.pidFile
         except Exception:
             logger.warning(msg="Config does not specify pidfile")
+            self.pidfile = None
 
-        self.pname = self.config.get("process_name", None)
+        self.name = getattr(self.config, 'process_name', None)
 
         # check for existing service given accessPoint and serviceType
         try:
-            service = self.unis.get("/services?accessPoint=%s&serviceType=%s" %
-                                    (self.accessPoint, self.serviceType))
-            if service and len(service):
-                self.id = service[0]["id"]
+            self.target = self.unis.services.first_where({'accessPoint': self.accessPoint,
+                                                          'serviceType': self.serviceType})
         except Exception as e:
-            logger.error("%s" % e)
+            logger.error(e)
+
+        if self.target is None:
+            self.target = self.unis.insert(Service(self._build_service()), commit=True)
+            self.unis.flush()
 
     def get_data(self):
         stat = "UNKNOWN"
@@ -62,7 +68,7 @@ class Probe:
         if self.pidfile:
             pid = None
             try:
-                self.pidfile = open(self.config["pidfile"])
+                self.pidfile = open(self.pidfile)
                 pid = self.pidfile.read().rstrip()
             except IOError:
                 logger.warning(msg="Could not open pidfile: %s" % self.config["pidfile"])
@@ -88,44 +94,21 @@ class Probe:
             for p in processes:
                 if p.name() == self.pname:
                     stat = "ON"
-
-        self.send_service(status=stat)
+        self.target.status = stat
+        self.unis.flush()
 
         return []
 
-    def send_service(self, status="UNKNOWN"):
-        service_desc = dict()
-        service_desc.update({"$schema": settings.SCHEMAS["services"]})
-        service_desc.update({"serviceType": self.serviceType})
-        service_desc.update({"status": status})
-
+    def _build_service(self):
+        service = {
+            'serviceType': self.serviceType,
+            'description': getattr(self.config, 'service_description', ''),
+            'name': getattr(self.config, 'service_name', ''),
+            'accessPoint': getattr(self.config, 'service_accesspoint', ''),
+            'ttl': getattr(self.config, 'service_ttl', Probe.TTL_DEFAULT),
+        }
         try:
-            service_desc.update({"description": self.config["service_description"]})
-        except:
-            pass
-        try:
-            service_desc.update({"name": self.config["service_name"]})
-        except:
-            pass
-        try:
-            service_desc.update({"accessPoint": self.config["service_accesspoint"]})
-        except:
-            pass
-        try:
-            service_desc.update({"runningOn": {"href": self.config["service_runningon"],
-                                               "rel": "full"}})
-        except:
-            service_desc.update({"runningOn": {"href": self.service["runningOn"]["href"],
-                                               "rel": "full"}})
-        try:
-            service_desc.update({"ttl": self.config["service_ttl"]})
-        except:
-            service_desc.update({"ttl": Probe.TTL_DEFAULT})
-
-        if not self.id:
-            ret = self.unis.post("/services", service_desc)
-            self.id = ret["id"]
-        else:
-            self.unis.put("/services/"+self.id, service_desc)
-        
-        
+            service['runningOn'] = {'href': self.config.service_runningon, 'rel': 'full'}
+        except AttributeError:
+            service['runningOn'] = self.service.runningOn
+        return service

@@ -157,6 +157,9 @@ WORKSPACE = "."
 # in order to make code translation from Python 2 to Python 3 easier
 
 def get_logger(namespace="blipp", logfile=None, level=None):
+    if level is not None:
+        levels = { 'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARN': logging.WARN }
+        logging.basicConfig(level=levels.get(level, logging.WARN))
     return logging.getLogger(namespace)
 
 ''' 

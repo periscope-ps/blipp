@@ -10,7 +10,8 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-from . import settings
+from blipp import settings
+from blipp.probes import abc
 import shlex
 import dateutil.parser
 import calendar
@@ -18,18 +19,18 @@ import re
 
 logger = settings.get_logger("netlogger_probe")
 
-class Probe:
+class Probe(abc.Probe):
     def __init__(self, service, measurement):
-        self.config = measurement["configuration"]
+        super().__init__(service, measurement)
         self.logfile = None
         try:
-            self.logfile = open(self.config["logfile"])
+            self.logfile = open(self.config.logfile)
         except KeyError:
             logger.warning(msg="Config does not specify logfile!")
         except IOError:
-            logger.warning(msg="Could not open logfile: %s" % self.config["logfile"])
+            logger.warning(msg="Could not open logfile: %s" % self.config.logfile)
 
-        self.app_name = self.config.get("appname", "")
+        self.app_name = getattr(self.config, 'appname', '')
         self.et_string = "ps:tools:blipp:netlogger:"
         if self.app_name:
             self.et_string += self.app_name + ":"

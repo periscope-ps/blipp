@@ -43,18 +43,20 @@ setup(
                                             "config/RPM/blippd.service",
                                             "config/RPM/blippd.opts"])],
     install_requires=[
+        "aiohttp",
         "validictory",
         "requests",
-        "netlogger>=4.3.0",
         "netifaces",
         "pyzmq",
         "psutil",
         "docopt",
         "python-daemon>=1.5",
         "python-dateutil",
-        "unittest2"
+        "unittest2",
+        "unisrt"
     ],
     dependency_links=[
+        "git+https://github.com/periscope-ps/unisrt.git/@develop#egg=unisrt",
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",
     ],
     entry_points = {
@@ -63,6 +65,6 @@ setup(
             'blippcmd = scripts.blippcmd:main'
         ]
     },
-    options = {'bdist_rpm':{'post_install' : 'config/RPM/centos_postinstall.sh',
-                            'post_uninstall' : 'config/RPM/centos_postuninstall.sh'}},
+    #options = {'bdist_rpm':{'post_install' : 'config/RPM/centos_postinstall.sh',
+    #                        'post_uninstall' : 'config/RPM/centos_postuninstall.sh'}},
 )

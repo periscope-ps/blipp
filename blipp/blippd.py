@@ -55,7 +55,6 @@ def main(options=None):
         "properties": {
             "configurations": {
                 "unis_url": options.get("--unis-url", None),
-
             }
         }
     }
@@ -66,7 +65,6 @@ def main(options=None):
         fconf = get_file_config(options['--config-file'])
         merge_dicts(conf, fconf)
 
-
     bconf = BlippConfigure(initial_config=conf,
                            node_id=options['--node-id'],
                            pre_existing_measurements=options['--existing'],
@@ -74,8 +72,8 @@ def main(options=None):
 
     bconf.initialize()
     config = bconf.config
-    logger.info('main', config=pprint.pformat(config))
-    logger.warning(msg='NODE: ' + HOSTNAME)
+    logger.info("Running Blippd with the following configuration")
+    logger.info(pprint.pformat(config))
 
     if options['--daemonize']:
         with daemon.DaemonContext():

@@ -11,7 +11,8 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import os
-from .utils import full_event_types
+from blipp.utils import full_event_types
+from blipp.probes import abc
 
 class Proc:
     """Wrapper to opening files in /proc
@@ -43,7 +44,7 @@ EVENT_TYPES={
     }
 
 
-class Probe:
+class Probe(abc.Probe):
     """Get processor/core statistics.
 
     Return scaled values instead of raw counters of jiffies.
@@ -52,8 +53,8 @@ class Probe:
     CORE_TYPE = "core"
 
     def __init__(self, service, measurement):
-        self.config = measurement["configuration"]
-        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
+        super().__init__(service, measurement)
+        self._proc = Proc(getattr(self.config, 'proc_dir', '/proc/'))
         self._prev_cpu_hz = {}
         self._prev_cpu_total_hz = 0
 

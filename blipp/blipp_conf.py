@@ -11,12 +11,10 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 from .conf import ServiceConfigure
-from .utils import merge_into, blipp_import, get_most_recent
-from .schema_cache import SchemaCache
+from .utils import blipp_import
 from . import settings
 from .validation import validate_add_defaults
-
-import pprint
+from unis.models import Measurement
 
 # should be blipp_conf, but netlogger doesn't like that for some reason
 logger = settings.get_logger('confblipp')
@@ -27,109 +25,48 @@ class BlippConfigure(ServiceConfigure):
         if "name" not in initial_config:
             initial_config['name']="blipp"
         self.pem = pre_existing_measurements
-        self.schema_cache = SchemaCache()
         self.probe_defaults = None
         self.measurements = []
         super(BlippConfigure, self).__init__(initial_config, node_id, urn)
 
     def initialize(self):
-        super(BlippConfigure, self).initialize()
-        if not self.service_setup:
-            #logger.error("initialize", msg="Could not reach UNIS to initialize service")
-            logger.error(msg="Could not reach UNIS to initialize service")
-            exit(-1)
-        self.initial_measurements = self.unis.get("/measurements?service=" +
-                                                  self.config["selfRef"])
-        self.initial_measurements = get_most_recent(self.initial_measurements)
-        # use any pre-existing measurements found in UNIS right away
-        if self.pem=="use":
-            for m in self.initial_measurements:
-                self.measurements.append(m)
-        # now strip and add to measurements any probes found in the merged initial config
-        self.initial_probes = self._strip_probes(self.config)
-        if self.initial_probes:
-            self._post_probes()
-            self.unis.put("/services/" + self.config["id"], data=self.config)
-
-    def _post_probes(self):
-        failed_probes = {}
-        for name,probe in list(self.initial_probes.items()):
-            probe.update({"name": name})
+        def _get_eventTypes(p):
+            mod = blipp_import(p['probe_module'])
             try:
-                probe = self._validate_schema_probe(probe)
-            except Exception as e:
-                #logger.exc('_post_probes', e) 
-                continue # skip this probe
-            r = self._post_measurement(probe)
-            if not r:
-                failed_probes[name] = probe
-            else:
-                # add the measurement to our internal list right away
-                self.measurements.append(r)
-        self.initial_probes = failed_probes
-        if failed_probes:
-            logger.warning(msg=pprint.pformat(failed_probes))
+                return list(mod.EVENT_TYPES)
+            except AttributeError:
+                logger.warn("Probe module has no EVENT_TYPES")
+            try:
+                return list(p['eventTypes'])
+            except KeyError:
+                logger.warn("Probe configuration missing eventTypes field")
+            return []
 
-    def _validate_schema_probe(self, probe):
-        if "$schema" in probe:
-            schema = self.schema_cache.get(probe["$schema"])
-            validate_add_defaults(probe, schema)
-        return probe
+        super(BlippConfigure, self).initialize()
+        meas = set()
+        remote = list(self.unis.measurements.where({'service': self.service}))
+        for n,m in self.config['properties']['configurations']['probes'].items():
+            p = {**self.config['properties']['configurations']['probe_defaults'], **m, **{'name': n}}
+            m = self.unis.measurements.first_where(lambda x: x.service == self.service.selfRef and x.configuration.name == p['name']) or \
+                self.unis.insert(Measurement(), commit=True)
+            m.service = self.service.selfRef
+            m.configuration = p
+            m.eventTypes = _get_eventTypes(p)
+            if getattr(m, 'scheduled_times', True) is None:
+                del m.getObject().__dict__['scheduled_times']
+            meas.add(m)
+
+        if self.pem == "use":
+            [meas.add(m) for m in remote]
+
+        self.measurements = list(meas)
+        self.unis.flush()
 
     def refresh(self):
         interval = super(BlippConfigure, self).refresh()
-        
-        if interval != int(self.config['properties']['configurations']['unis_poll_interval']):
-            return interval
-        
-        # unis.get returns a list of config
-        if isinstance(self.config, list):
-            self.config = self.config[0]
-        
-        self.initial_probes = self._strip_probes(self.config)
-        if self.initial_probes:
-            self._post_probes()
-            self.unis.put("/services/" + self.config["id"], data=self.config)
-        qmeas = self.unis.get("/measurements?service=" +
-                              self.config["selfRef"])
-        if qmeas:
-            self.measurements = qmeas
-            self.measurements = get_most_recent(self.measurements)
-            for m in self.measurements:
-                size_orig = len(m["configuration"])
-                merge_into(m["configuration"], self.probe_defaults)
-                if size_orig < len(m["configuration"]):
-                    
-                    self.unis.put("/measurements/"+m["id"], m)
-                    r = self.unis.get("/measurements/"+m["id"])
-                    
-                    m['ts'] = r['ts']
-        else:
-            ''' If measurements don't exist then create them again - i.e register them again '''
-            self.measurements = get_most_recent(self.measurements)
-            for m in self.measurements:
-                self.unis.post("/measurements/", m)
-        
+        [m.touch() for m in self.measurements]
+        self.unis.flush()
         return interval
-
-    def _post_measurement(self, probe):
-        probe_mod = blipp_import(probe["probe_module"])
-        if "EVENT_TYPES" in probe_mod.__dict__:
-            eventTypes = list(probe_mod.EVENT_TYPES.values())
-        else:
-            try:
-                eventTypes = list(probe["eventTypes"].values())
-            except KeyError:
-                logger.warning(msg="No eventTypes present")
-                eventTypes = []
-
-        measurement = {}
-        measurement["service"] = self.config["selfRef"]
-
-        measurement["configuration"] = probe
-        measurement["eventTypes"] = eventTypes
-        r = self.unis.post("/measurements", measurement)
-        return r
 
     def get_measurements(self):
         '''
@@ -137,30 +74,4 @@ class BlippConfigure(ServiceConfigure):
         instance. Possibly excluding those which where initially
         present when blipp started.
         '''
-        measurements = []
-        for m in self.measurements:
-            if self.pem=="use":
-                measurements.append(m)
-            elif m not in self.initial_measurements:
-                measurements.append(m)
-        
-        return [m for m in measurements if m["configuration"].get("status", "ON").upper()=="ON"]
-
-    def _strip_probes(self, initial_config):
-        probes = {}
-        try:
-            probes = initial_config["properties"]["configurations"]["probes"]
-            del initial_config["properties"]["configurations"]["probes"]
-        except Exception:
-            pass
-        try:    
-            probe_defaults = initial_config["properties"]["configurations"]["probe_defaults"]
-            self.probe_defaults = probe_defaults
-        except Exception:
-            pass
-        
-        if probes:
-            for probe in list(probes.values()):
-                merge_into(probe, self.probe_defaults)
-
-        return probes
+        return [m for m in self.measurements if getattr(m.configuration, "status", "OFF").upper() == "ON"]

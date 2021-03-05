@@ -30,8 +30,8 @@ class ProbeRunner:
 
     def __init__(self, service, measurement):
         self.measurement = measurement
-        self.config = measurement['configuration']
-        self.service = service.config
+        self.config = measurement.configuration
+        self.service = service
         self.probe_defaults = service.probe_defaults
         self.setup()
 
@@ -46,7 +46,7 @@ class ProbeRunner:
             self.collect()
 
     def collect(self):
-        logger.debug('collect', name=self.config['name'], module=self.config["probe_module"])
+        logger.debug(f"Collection: '{self.config.name}' from '{self.config.probe_module}'")
         data = self.probe.get_data()
         ts = time.time()
         if data:
@@ -59,26 +59,22 @@ class ProbeRunner:
     def _normalize(self, data):
         if isinstance(next(iter(data.values())), dict):
             return data
-        subject = self.service["runningOn"]["href"]
-        return dict({subject: data})
+        return dict({self.service.runningOn.selfRef: data})
 
 
     def setup(self):
         config = self.config
-        logger.info('setup', name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
-        #logger.warn('NODE: ' + HOSTNAME, name=config["name"], module=config["probe_module"], config=pprint.pformat(config))
-        logger.warning(msg='NODE: ' + HOSTNAME)
-        probe_mod = blipp_import(config["probe_module"])
+        logger.info(f"Configuring probe: '{config.name}' running '{config.probe_module}'")
+        logger.debug(pprint.pformat(config.to_JSON()))
+        probe_mod = blipp_import(config.probe_module)
         self.probe = probe_mod.Probe(self.service, self.measurement)
 
-        if "." in config["collection_schedule"]:
-            sched_file, sched_name = config["collection_schedule"].split('.')
+        if "." in config.collection_schedule:
+            sched_file, sched_name = config.collection_schedule.split('.')
         else:
-            sched_file, sched_name = "builtins", config["collection_schedule"]
+            sched_file, sched_name = "builtins", config.collection_schedule
 
-        logger.info('setup', sched_file=sched_file, sched_name=sched_name)
-        #logger.warn('NODE: ' + HOSTNAME, sched_file=sched_file, sched_name=sched_name)
-        logger.warning(msg='NODE: ' + HOSTNAME)
+        logger.info("Using '{sched_file}' on '{sched_name}'")
         self.scheduler = blipp_import("schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
         self.collector = Collector(self.service, self.measurement)
@@ -88,5 +84,5 @@ class ProbeRunner:
         '''
         Used for graceful exit. Clear any outstanding unreported data.
         '''
-        logger.debug(name=self.config['name'])
+        logger.debug(f"Cleaning up {self.config.name}")
         self.collector.report()

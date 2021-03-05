@@ -11,15 +11,17 @@
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
 import os
-from . import ethtool
+from blipp import ethtool
 import netifaces
-from .unis_client import UNISInstance
-from . import settings
-from .utils import full_event_types, blipp_import_method
+from blipp import settings
+from blipp.utils import full_event_types, blipp_import_method, get_unis
+from blipp.probes import abc
 import re
 
+from unis.models import Node
+
 logger = settings.get_logger('net')
-class Proc:
+class Proc(abc.Probe):
     """Wrapper to opening files in /proc
     """
     def __init__(self, dirname="/proc"):
@@ -54,7 +56,7 @@ EVENT_TYPES={
     "datagrams_out":"ps:tools:blipp:linux:network:udp:utilization:datagrams:out"
     }
 
-class Probe:
+class Probe(abc.Probe):
     """Get network statistics
     """
     UNUSED_METRICS = ["errs_in", "errs_out", "drop_in", "drop_out",
@@ -63,19 +65,15 @@ class Probe:
                       "carrier_out", "carrier_in", "frame_out", "multicast_out"]
 
     def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        logger.debug('Probe.__init__', config=self.config)
-        self._proc = Proc(self.config.get("proc_dir", "/proc/"))
-        self.node_subject=self.config.get(
-            "subject",
-            self.config.get("runningOn", {}).get('href', 'not found'))
-        self.port_match_method=self.config.get(
-            "port_match_method", "geni_utils.mac_match")
-        self.port_match_method=blipp_import_method(self.port_match_method)
-        self.unis = UNISInstance(service)
-        logger.debug('Probe.__init__ ', subject=self.node_subject)
+        super().__init__(service, measurement)
+        logger.debug(self.config)
+        self._proc = Proc(getattr(self.config, 'proc_dir', '/proc/'))
+        print("<------------------ The bug is here")
+        self.node_subject = getattr(self.config, 'subject', None) or getattr(self.config, 'runningOn', None) or Node()
+        self.port_match_method = blipp_import(getattr(self.config, 'port_match_method', 'geni_utils.mac_match'))
+        self.unis = get_unis()
+        
+        logger.debug(f"Probe[net] subject: {self.node_subject.selfRef}")
         self.subjects=self.get_interface_subjects()
 
     def get_data(self):
@@ -85,7 +83,7 @@ class Probe:
         data = self._get_dev_data(netdev.read())
         sdata = self._get_snmp_data(netsnmp.read())
 
-        data[self.node_subject] = sdata
+        data[self.node_subject.selfRef] = sdata
         data = full_event_types(data, EVENT_TYPES)
         return data
 
@@ -113,7 +111,7 @@ class Probe:
             for metric in self.UNUSED_METRICS:
                 if metric in face_data:
                     del face_data[metric]
-            data[self.subjects[iface]] = face_data
+            data[self.subjects[iface].selfRef] = face_data
 
         return data
 
@@ -152,15 +150,12 @@ class Probe:
         unis_ports = self.get_interfaces_in_unis()
 
         for face in netifaces.interfaces():
-            local_port_dict = self._build_port_dict(face)
-            portRef = self._find_or_post_port(unis_ports, local_port_dict, self.port_match_method)
-            if isinstance(portRef, str) or isinstance(portRef, str):
-                subjects[face]=portRef
-            else:
-                logger.warning(msg="subject for face %s is of an unexpected type %s, portRef=%s"%(face,
-                                                                                               type(portRef),
-                                                                                               portRef))
-                subjects[face]="unexpected type"
+            p = self.node_subject.ports.first_where(lambda x: self.port_match_method(face, x))
+            if p is None:
+                p = self.unis.insert(Port(self._build_port_dict(face)), commit=True)
+                self.node_subject.ports.append(p)
+            subjects[face] = p
+        self.unis.flush()
         return subjects
 
     def _build_port_dict(self, port_name):
@@ -168,11 +163,15 @@ class Probe:
                     'ipv6': netifaces.AF_INET6,
                     'mac': netifaces.AF_LINK}
 
-        post_dict = {}
         try:
             capacity = ethtool.get_speed(port_name)
         except OSError:
             capacity = 0
+        post_dict = {
+            'name': port_name,
+            'capacity': capacity,
+            'nodeRef': settings.HOST_URN[:-1]
+        }
 
             # assume each port is a layer2 port for the main 'address'
         try:
@@ -197,15 +196,10 @@ class Probe:
                 #   doesn't recognize it
                 pass
             # TODO some sort of verification here that capacity is right
-        post_dict['name'] = port_name
-        post_dict['capacity'] = capacity
-
-            # hack in a 'nodeRef' so we can find port from rspec
-        post_dict['nodeRef'] = settings.HOST_URN[:-1]
         return post_dict
 
     def get_interfaces_in_unis(self):
-        node = self.unis.get(self.service["runningOn"]["href"])
+        node = self.service.runningOn
         ports = []
         if node:
             port_list = node.get('ports', [])

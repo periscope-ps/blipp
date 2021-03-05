@@ -10,29 +10,41 @@
 #  This software was created at the Indiana University Center for Research in
 #  Extreme Scale Technologies (CREST).
 # =============================================================================
-import subprocess
+import os, subprocess
 import re
-from .utils import full_event_types
+from blipp import settings
+from blipp.utils import full_event_types
+from blipp.probes import abc
 import shlex
-from . import settings
 
-logger = settings.get_logger('traceroute_probe')
+logger = settings.get_logger('iptables_probe')
+CHAINNAME = "CCHAIN"
 
-class Probe:
+class Probe(abc.Probe):
+    '''
+    Linux kernel can do many things with command "iptables". Here is a sample of using iptables to count
+    incoming SSH packets. The corresponding config JSON file "counting_measurement.json" can be found in sample_config directory
+    '''
 
     def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        self.command = self._substitute_command(str(self.config.get("command")), self.config)
+        super().__init__(service, measurement)
+        # add a new chain into the default table FILTER
+        os.system("sudo iptables -N " + CHAINNAME)
+        # insert a rule at the default position 1 of chain INPUT, saying to match on protocol TCP by destination 22, JUMP to the new chain
+        os.system("sudo iptables -I INPUT -p tcp -m tcp --dport 22 -j " + CHAINNAME)
+        # new chain got a rule, which accept everything
+        os.system("sudo iptables -I " + CHAINNAME + " -j ACCEPT")
+
+        self.command = self._substitute_command(str(self.config.command), self.config)
+        
         try:
             self.data_regex = re.compile(
-                str(self.config["regex"]),
+                str(self.config.regex),
                 flags=re.M)
         except Exception:
             self.data_regex = None
         try:
-            self.EVENT_TYPES = self.config["eventTypes"]
+            self.EVENT_TYPES = {"counting": "ps:tools:blipp:linux:net:iptables:counting"}
         except Exception:
             self.EVENT_TYPES = {}
 
@@ -53,36 +65,22 @@ class Probe:
         return data
 
     def _extract_data(self, stdout):
-        matches = self.data_regex.finditer(stdout)
+        matches = self.data_regex.search(stdout)
         if not matches:
             raise NonMatchingOutputError(stdout)
-        ret = {'hopip': []}
-        previous_hop = None
-        hop_list = {}
-        for m in matches:
-            d = m.groupdict()
-            current_hop = d['hop']
-            if not previous_hop and not current_hop:
-                continue
-            elif not current_hop:
-                current_hop = previous_hop
+        return matches.groupdict()
 
-            hop_list.setdefault(current_hop, []).append(d['hopip'] and d['hopip'][1:-1] or '*')
-
-            previous_hop = current_hop
-
-        for i in range(len(hop_list)):
-            ret['hopip'].append(hop_list[str(i + 1)])
-
-        return ret
-    
     def _substitute_command(self, command, config):
+        ''' command in form "ping $ADDRESS"
+        config should have substitutions like "address": "example.com"
+        Note; now more complex
+        '''
         command = shlex.split(command)
         ret = []
         for item in command:
             if item[0] == '$':
-                if item[1:] in config:
-                    val = config[item[1:]]
+                if hasattr(config, item[1:]):
+                    val = getattr(config, item[1:])
                     if isinstance(val, bool):
                         if val:
                             ret.append(item[1:])
@@ -93,9 +91,8 @@ class Probe:
                         ret.append(str(val))
             elif item:
                 ret.append(item)
-        #logger.info('substitute_command', cmd=ret, name=self.config['name'])
-        logger.info(name=self.config['name'])
-        
+        #logger.info('substitute_command', cmd=ret, name=self.config.name)
+        logger.info(name=self.config.name)
         return ret
 
 

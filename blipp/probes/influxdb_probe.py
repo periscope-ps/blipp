@@ -14,10 +14,11 @@ from requests.exceptions import ConnectionError
 import subprocess
 import json
 import shlex
-from . import settings
+from blipp import settings
+from blipp import utils
+from blipp.probes import abc
 import datetime
 import calendar
-from .unis_client import UNISInstance
 
 logger = settings.get_logger('influxdb_probe')
 
@@ -38,25 +39,26 @@ EVENT_COLUMNS={
 
 ETHTABLE = 'ethstat_value'
 
-class Probe:
+class Probe(abc.Probe):
 
     def __init__(self, service, measurement):
-        self.service = service
-        self.measurement = measurement
-        self.config = measurement["configuration"]
-        self.unis = UNISInstance(service)
-        
-        self.command = self._substitute_command(str(self.config.get("command")), self.config)
+        super().__init__(service, measurement)
+        self.unis = utils.get_unis()
+
+        self.command = self._substitute_command(str(self.config.command), self.config)
         
         # TODO: get the latest ts and store it and use it as query bound next run.
         query_url = 'http://localhost:8086/query?pretty=true&u=reader&p=Qul@r*Buve5'
         query_db = "db=collectd"
-        query_table = self.config.get("table")
-        query_every = self.config.get("schedule_params").get("every")
-        query = "q=select * from {0} where time > now() - {1}s;".format(query_table, query_every)
-        self.command = ['curl', '-GET', query_url,
-                        '--data-urlencode', query_db,
-                        '--data-urlencode', query]
+        try:
+            query = f"q=select * from {self.config.table} where time > now() - {self.config.schedule_params.every}s;"
+        except AttributeError as exp:
+            logger.warn(f"Bad probe configuration for '{self.config.name}' at [{self.measurement.selfRef}]")
+            query = ""
+
+            self.command = ['curl', '-GET', query_url,
+                            '--data-urlencode', query_db,
+                            '--data-urlencode', query]
 
     def get_data(self):
         proc = subprocess.Popen(self.command,
@@ -87,40 +89,22 @@ class Probe:
             
             host_name = values[host_index]
             try:
-                host_obj = self.unis.get("/nodes?name=" + host_name)
+                host_obj = self.unis.nodes.first_where({'name': host_name})
             except ConnectionError:
                 host_obj = None
             
             if not host_obj:
                 # host not registered in this domain OR ConnectionError
                 return {}
-            
+
             if table_name == ETHTABLE:
-                if 'ports' in host_obj[0]:
-                    ports = host_obj[0]['ports']
-                    subject = None
-                    
-                    for port in ports:
-                        port_id = port['href'].split('/')[-1]
-                        try:
-                            port_obj = self.unis.get("/ports/" + port_id)
-                        except ConnectionError:
-                            port_obj = None
-                        
-                        if port_obj and port_obj['name'] == values[subject_index]:
-                            subject = port_obj['selfRef']
-                            break
-                    
-                    if not subject:
-                        # none of the eth matches
-                        return {}
-                    
-                else:
-                    # this host has no eth uploaded
+                subject = host_obj.ports.first_where({'name': values[subject_index]})
+                if not subject:
+                    # none of the eth matches
                     return {}
             else :
                 # other tables (disk stat) will aggregate all instances
-                subject = host_obj[0]['selfRef']
+                subject = host_obj
             
             event_type = EVENT_MAPS['.'.join([table_name, values[event_index]])]
             dt = datetime.datetime.strptime(values[time_index], "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -128,7 +112,7 @@ class Probe:
             
             values = values[-1]
             
-            return {subject: {'ts': time, event_type: values}}
+            return {subject.selfRef: {'ts': time, event_type: values}}
         
         
         json_output = json.loads(stdout)
@@ -172,8 +156,8 @@ class Probe:
         ret = []
         for item in command:
             if item[0] == '$':
-                if item[1:] in config:
-                    val = config[item[1:]]
+                if hasattr(config, item[1:]):
+                    val = getattr(config, item[1:])
                     if isinstance(val, bool):
                         if val:
                             ret.append(item[1:])
@@ -184,7 +168,7 @@ class Probe:
                         ret.append(str(val))
             elif item:
                 ret.append(item)
-        logger.info('substitute_command', cmd=ret, name=self.config['name'])
+        logger.info('substitute_command', cmd=ret, name=self.config.name)
         return ret
 
 class CmdError(Exception):
