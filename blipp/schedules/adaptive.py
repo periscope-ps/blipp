@@ -91,7 +91,7 @@ def check_schedule(unis: Runtime, measurement: Measurement) -> list[dict]:
         while dateutil.parser.parse(schedule[i].end) <= c['start']:
             i += 1
         if dateutil.parser.parse(schedule[i].start) < c['end']:
-            logger.warn(f"{pformat(schedule[i].to_JSON()}"))
+            logger.warn(f"{pformat(schedule[i].to_JSON())}")
             logger.warn(f"start: {datetime_to_dtstring(c['start'])}, end: {datetime_to_dtstring(c['end'])}")
             return ct
     return None
@@ -185,14 +185,14 @@ def score_schedule(start, schedule, every, n2s):
         total -= missed_by/(every * n2s)
     return total
 
-def polite_avoid(config=None: Service, **kwargs):
+def polite_avoid(config:Service=None, **kwargs):
     max_score = 0.9
     while True:
         unis = utils.get_unis()
         every = config.schedule_params.every
         duration = config.schedule_params.duration
         num_to_schedule = 100
-        measurement = unis.measurements.first_where(lambda x : x.configuration.name == config.name && \
+        measurement = unis.measurements.first_where(lambda x : x.configuration.name == config.name and \
                                                     x.service.selfRef == config.serviceRef)
 
         # Wait until resources have been added
