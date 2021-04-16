@@ -16,6 +16,7 @@ from .probe_runner import ProbeRunner
 from multiprocessing import Process, Pipe
 from copy import copy
 from .config_server import ConfigServer
+from blipp.utils import get_unis
 import pprint
 
 logger = settings.get_logger('arbiter')
@@ -49,22 +50,16 @@ class Arbiter():
         new_m_list = self.config_obj.get_measurements()
         our_m_list = list(self.proc_to_measurement.values())
 
-        for m in new_m_list:
-            if not m in our_m_list:
-                if m.configuration.collection_schedule == 'builtins.scheduled' and \
-                   not hasattr(m, 'scheduled_times'):
-                    continue
-                
-                if settings.DEBUG:
-                    self._print_pc_diff(m, our_m_list)
-                self._start_new_probe(m)
+        get_unis().measurements.addCallback(self._update_probe_callback)
 
-        for proc_conn, pc in list(self.proc_to_measurement.items()):
-            if not pc in new_m_list:
-                if settings.DEBUG:
-                    self._print_pc_diff(pc, new_m_list)
-                self._stop_probe(proc_conn)
-        return time.time()
+        for m in new_m_list:
+            if m.configuration.collection_schedule == 'builtins.scheduled' and \
+                not hasattr(m, 'scheduled_times'):
+                continue
+                
+            if settings.DEBUG:
+                self._print_pc_diff(m, our_m_list)
+            self._start_new_probe(m)
 
     def reload_all(self):
         self._check_procs()
@@ -72,8 +67,27 @@ class Arbiter():
         self._cleanup_stopped_probes()
         if self.config_obj.service.status.upper() == "OFF":
             self._stop_all()
-            return time.time(), interval
-        return self.run_probes(), interval
+        return time.time(), interval
+
+    def _update_probe_callback(self, m, event_type):
+        etype = event_type.lower()
+        #if etype == "update" or etype == "new" or etype == "delete":
+        #    print(etype)
+        #    print(m.to_JSON())
+        if event_type.lower() == "update" or event_type.lower() == "new":
+            logger.debug(f"Updating probe {m.configuration.name}")
+            if m.configuration.collection_schedule == 'builtins.scheduled' and \
+                not hasattr(m, 'scheduled_times'):
+                return
+            if settings.DEBUG:
+                self._print_pc_diff(m, list(self.proc_to_measurement.values()))
+            self._start_new_probe(m)
+        if event_type.lower() == "update" or event_type.lower() == "delete":
+            for proc_conn, m_old in list(self.proc_to_measurement.items()):
+                if m_old.id == m.id:
+                    if settings.DEBUG:
+                        self._print_pc_diff(m, [m_old])
+                    self._stop_probe(proc_conn)
         
     def _start_new_probe(self, m):
         logger.info(f"Starting probe for: {m.configuration.name}")
@@ -86,9 +100,9 @@ class Arbiter():
 
     def _stop_probe(self, proc_conn_tuple):
         try:
-            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple]['configuration']['name']}")
+            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple].configuration.name}")
         except KeyError:
-            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple]['id']}")
+            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple].id}")
         proc_conn_tuple[1].send("stop")
         self.stopped_procs[proc_conn_tuple] = time.time()
 

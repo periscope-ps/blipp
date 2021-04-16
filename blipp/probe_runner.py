@@ -40,7 +40,7 @@ class ProbeRunner:
             logger.debug(msg="got time from scheduler")
             if conn.poll():
                 if conn.recv() == "stop":
-                    self._cleanup()
+                    logger.debug(f"[probe_runner] Stop signal received for {self.config.name}")
                     break
             time.sleep(max(nextt-time.time(), 0))
             self.collect()
@@ -78,11 +78,3 @@ class ProbeRunner:
         self.scheduler = blipp_import("blipp.schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
         self.collector = Collector(self.service, self.measurement)
-
-
-    def _cleanup(self):
-        '''
-        Used for graceful exit. Clear any outstanding unreported data.
-        '''
-        logger.debug(f"Cleaning up {self.config.name}")
-        self.collector.report()
