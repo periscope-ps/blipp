@@ -18,9 +18,10 @@ from copy import copy
 from .config_server import ConfigServer
 from blipp.utils import get_unis
 import pprint
+import zmq
+import os
 
 logger = settings.get_logger('arbiter')
-PROBE_GRACE_PERIOD = 10
 
 class Arbiter():
     '''
@@ -42,8 +43,10 @@ class Arbiter():
 
     def __init__(self, config_obj):
         self.config_obj = config_obj # BlippConfigure object
-        self.proc_to_measurement = {} # {(proc, conn): measurement_dict, ...}
-        self.stopped_procs = {} # {(proc, conn): time_stopped, ...}
+        self.proc_to_measurement = {} # {proc: measurement_dict, ...}
+        self.id_to_measurement = {} # {id: measurement_dict, ...}
+        self.sub_sock = self._create_sub_sock(self.config_obj.zmqportpath)
+        self.collector = Collector()
 
     def run_probes(self):
         logger.debug("Starting probes")
@@ -69,6 +72,18 @@ class Arbiter():
             self._stop_all()
         return time.time(), interval
 
+    def _create_sub_sock(self, sockpath):
+        sockpath = f"ipc://{sockpath}/0"
+        #sockpath = "ipc:///tmp/feed/0"
+        #print(sockpath)
+        ctx = zmq.Context()
+        sock = ctx.socket(zmq.SUB)
+        sock.setsockopt(zmq.SUBSCRIBE, b"")
+        if not(os.path.isdir(sockpath)):
+            os.mkdir(sockpath)
+        sock.bind(sockpath)
+        return sock
+
     def _update_probe_callback(self, m, event_type):
         etype = event_type.lower()
         #if etype == "update" or etype == "new" or etype == "delete":
@@ -83,7 +98,7 @@ class Arbiter():
                 self._print_pc_diff(m, list(self.proc_to_measurement.values()))
             self._start_new_probe(m)
         if event_type.lower() == "update" or event_type.lower() == "delete":
-            for proc_conn, m_old in list(self.proc_to_measurement.items()):
+            for proc, m_old in list(self.proc_to_measurement.items()):
                 if m_old.id == m.id:
                     if settings.DEBUG:
                         self._print_pc_diff(m, [m_old])
@@ -92,19 +107,21 @@ class Arbiter():
     def _start_new_probe(self, m):
         logger.info(f"Starting probe for: {m.configuration.name}")
         logger.debug(pprint.pformat(m.to_JSON()))
-        pr = ProbeRunner(self.config_obj.service, m)
-        parent_conn, child_conn = Pipe()
-        probe_proc = Process(target = pr.run, args = (child_conn,))
+        sockpath = f"ipc://{self.config_obj.zmqportpath}/0"
+        #sockpath = "ipc:///tmp/feed/0"
+        pr = ProbeRunner(self.config_obj.service, m, sockpath)
+        probe_proc = Process(target = pr.run)
         probe_proc.start()
-        self.proc_to_measurement[(probe_proc, parent_conn)] = m
+        self.proc_to_measurement[probe_proc] = m
+        self.id_to_measurement[m.id] = m
 
-    def _stop_probe(self, proc_conn_tuple):
+    def _stop_probe(self, proc):
         try:
-            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple].configuration.name}")
+            logger.info(f"Stopping {self.proc_to_measurement[proc].configuration.name}")
         except KeyError:
-            logger.info(f"Sending stop signal to {self.proc_to_measurement[proc_conn_tuple].id}")
-        proc_conn_tuple[1].send("stop")
-        self.stopped_procs[proc_conn_tuple] = time.time()
+            logger.info(f"Stopping {self.proc_to_measurement[proc].id}")
+        proc.terminate()
+        proc.join()
 
     def _stop_all(self):
         '''
@@ -112,34 +129,17 @@ class Arbiter():
         '''
         logger.info('_stop_all')
         for proc, conn in list(self.proc_to_measurement.keys()):
-            self._stop_probe((proc, conn))
-
-    def _cleanup_stopped_probes(self):
-        '''
-        Join probes that were previously stopped, and kill probes that
-        should have stopped but didn't.
-        '''
-
-        now = time.time()
-        sp = copy(self.stopped_procs)
-        for k,v in list(sp.items()):
-            if not k[0].is_alive():
-                k[0].join()
-                del self.stopped_procs[k]
-            elif v < (now - PROBE_GRACE_PERIOD):
-                k[0].terminate()
-                k[0].join()
-                del self.stopped_procs[k]
+            self._stop_probe(proc)
 
     def _check_procs(self):
         '''
         Join probes that have died or exited.
         '''
-        for proc, conn in list(self.proc_to_measurement.keys()):
+        for proc in list(self.proc_to_measurement.keys()):
             if not proc.is_alive():
                 proc.join()
                 logger.warn(f"A probe has exited [{proc.exitcode}]")
-                m = self.proc_to_measurement.pop((proc, conn))
+                m = self.proc_to_measurement.pop(proc)
                 m.configuration.status = "OFF"
 
     def _print_pc_diff(self, pc, new_m_list):
@@ -157,11 +157,9 @@ class Arbiter():
 
 def main(config):
     a = Arbiter(config)
-    s = ConfigServer(config)
-    last_reload_time = time.time()
-    check_interval = int(config.config["properties"]["configurations"]["unis_poll_interval"])
     a.run_probes()
-    while s.listen(last_reload_time + check_interval - time.time()):
-        last_reload_time, suggested_interval = a.reload_all()
-        check_interval = min((float)(config.config["properties"]["configurations"]["unis_max_backoff"]), suggested_interval)
-        logger.info(msg="check interval %d"%check_interval)
+    while True:
+        msg = a.sub_sock.recv_json()
+        data = msg['msg']
+        m = a.id_to_measurement[msg['id']]
+        self.collector.insert(data, m, time.time())

@@ -16,6 +16,7 @@ import socket
 from .collector import Collector
 from .utils import blipp_import
 import pprint
+import zmq
 
 HOSTNAME = socket.gethostname()
 logger = settings.get_logger('probe_runner')
@@ -28,20 +29,16 @@ class ProbeRunner:
     connection object so that it can receive a "stop" if necessary.
     '''
 
-    def __init__(self, service, measurement):
+    def __init__(self, service, measurement, sockpath):
         self.measurement = measurement
         self.config = measurement.configuration
         self.service = service
         self.probe_defaults = service.properties.configurations.probe_defaults
-        self.setup()
+        self.setup(sockpath)
 
-    def run(self, conn):
+    def run(self):
         for nextt in self.scheduler:
             logger.debug(msg="got time from scheduler")
-            if conn.poll():
-                if conn.recv() == "stop":
-                    logger.debug(f"[probe_runner] Stop signal received for {self.config.name}")
-                    break
             time.sleep(max(nextt-time.time(), 0))
             self.collect()
 
@@ -52,9 +49,13 @@ class ProbeRunner:
         if data:
             if isinstance(data, list):
                 for d in data:
-                    self.collector.insert(self._normalize(d), ts)
+                    msg = bytes(self._normalize(d), "utf8")
+                    meas_id = bytes(self.measurement.id, "utf8")
+                    self.pub_sock.send_json({'msg': msg.decode('utf8'), 'id': meas_id.decode('utf8')})
             else:
-                self.collector.insert(self._normalize(data), ts)
+                msg = bytes(self._normalize(data), "utf8")
+                meas_id = bytes(self.measurement.id, "utf8")
+                self.pub_sock.send_json({'msg': msg.decode('utf8'), 'id': meas_id.decode('utf8')})
 
     def _normalize(self, data):
         if isinstance(next(iter(data.values())), dict):
@@ -62,7 +63,7 @@ class ProbeRunner:
         return dict({self.service.runningOn: data})
 
 
-    def setup(self):
+    def setup(self, sockpath):
         config = self.config
         logger.info(f"Configuring probe: '{config.name}' running '{config.probe_module}'")
         logger.debug(pprint.pformat(config.to_JSON(top=False)))
@@ -77,4 +78,8 @@ class ProbeRunner:
         logger.info(f"Using '{sched_file}' on '{sched_name}'")
         self.scheduler = blipp_import("blipp.schedules." + sched_file, fromlist=[1]).__getattribute__(sched_name)
         self.scheduler = self.scheduler(self.service, self.measurement)
-        self.collector = Collector(self.service, self.measurement)
+        ctx = zmq.Context()
+        sock = ctx.socket(zmq.PUB)
+        sockpath = f"{sockpath}/0"
+        sock.connect(sockpath)
+        self.pub_sock = sock

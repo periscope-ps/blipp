@@ -29,16 +29,14 @@ class Collector:
     Depends directly on the MS and UNIS... output could be far more modular.
     """
 
-    def __init__(self, service, measurement):
-        self.config = measurement.configuration
-        self.measurement = measurement
+    def __init__(self):
         self.unis = utils.get_unis()
         self.mds = {}
         self.cache = defaultdict(list)
 
-    def insert(self, data, ts):
+    def insert(self, data, measurement, ts):
         '''
-        Called (by probe_runner) to insert new data into this collector object.
+        Called (by arbiter) to insert new data into this collector object.
         '''
         for subject, met_val in data.items():
             if isinstance(subject, str):
@@ -47,12 +45,12 @@ class Collector:
                     logger.warn(f"Invalid subject reference - '{subject}'")
             ts = met_val.get('ts', ts)
             for ty, v in met_val.items():
-                _match = lambda x: x.measurement == self.measurement and x.eventType == ty
+                _match = lambda x: x.measurement == measurement and x.eventType == ty
                 if ty == 'ts': continue
                 m = self.mds.get((subject, ty), None)
                 if not m:
-                    if ty not in self.measurement.eventTypes:
-                        self.measurement.eventTypes.append(ty)
+                    if ty not in measurement.eventTypes:
+                        measurement.eventTypes.append(ty)
 
                     m = self.unis.metadata.first_where(_match)
                     if m is None:
