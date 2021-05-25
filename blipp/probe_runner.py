@@ -80,6 +80,5 @@ class ProbeRunner:
         self.scheduler = self.scheduler(self.service, self.measurement)
         ctx = zmq.Context()
         sock = ctx.socket(zmq.PUB)
-        sockpath = f"{sockpath}/0"
         sock.connect(sockpath)
         self.pub_sock = sock
