@@ -13,7 +13,6 @@
 from . import settings
 import time
 import socket
-from .collector import Collector
 from .utils import blipp_import
 import pprint
 import zmq
@@ -49,11 +48,11 @@ class ProbeRunner:
         if data:
             if isinstance(data, list):
                 for d in data:
-                    msg = bytes(self._normalize(d), "utf8")
+                    msg = bytes(str(self._normalize(d)), "utf8")
                     meas_id = bytes(self.measurement.id, "utf8")
                     self.pub_sock.send_json({'msg': msg.decode('utf8'), 'id': meas_id.decode('utf8')})
             else:
-                msg = bytes(self._normalize(data), "utf8")
+                msg = bytes(str(self._normalize(data)), "utf8")
                 meas_id = bytes(self.measurement.id, "utf8")
                 self.pub_sock.send_json({'msg': msg.decode('utf8'), 'id': meas_id.decode('utf8')})
 

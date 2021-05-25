@@ -13,6 +13,7 @@
 import time
 from . import settings
 from .probe_runner import ProbeRunner
+from .collector import Collector
 from multiprocessing import Process, Pipe
 from copy import copy
 from .config_server import ConfigServer
@@ -73,15 +74,12 @@ class Arbiter():
         return time.time(), interval
 
     def _create_sub_sock(self, sockpath):
-        sockpath = f"ipc://{sockpath}/0"
-        #sockpath = "ipc:///tmp/feed/0"
-        #print(sockpath)
         ctx = zmq.Context()
         sock = ctx.socket(zmq.SUB)
         sock.setsockopt(zmq.SUBSCRIBE, b"")
         if not(os.path.isdir(sockpath)):
             os.mkdir(sockpath)
-        sock.bind(sockpath)
+        sock.bind(f"ipc:///{sockpath}/0")
         return sock
 
     def _update_probe_callback(self, m, event_type):
@@ -108,7 +106,6 @@ class Arbiter():
         logger.info(f"Starting probe for: {m.configuration.name}")
         logger.debug(pprint.pformat(m.to_JSON()))
         sockpath = f"ipc://{self.config_obj.zmqportpath}/0"
-        #sockpath = "ipc:///tmp/feed/0"
         pr = ProbeRunner(self.config_obj.service, m, sockpath)
         probe_proc = Process(target = pr.run)
         probe_proc.start()
@@ -160,6 +157,6 @@ def main(config):
     a.run_probes()
     while True:
         msg = a.sub_sock.recv_json()
-        data = msg['msg']
+        data = dict(msg['msg'])
         m = a.id_to_measurement[msg['id']]
         self.collector.insert(data, m, time.time())
