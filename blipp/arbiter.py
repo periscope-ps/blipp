@@ -84,10 +84,7 @@ class Arbiter():
 
     def _update_probe_callback(self, m, event_type):
         etype = event_type.lower()
-        #if etype == "update" or etype == "new" or etype == "delete":
-        #    print(etype)
-        #    print(m.to_JSON())
-        if event_type.lower() == "update" or event_type.lower() == "new":
+        if etype == "update" or etype == "new":
             logger.debug(f"Updating probe {m.configuration.name}")
             if m.configuration.collection_schedule == 'builtins.scheduled' and \
                 not hasattr(m, 'scheduled_times'):
@@ -95,12 +92,12 @@ class Arbiter():
             if settings.DEBUG:
                 self._print_pc_diff(m, list(self.proc_to_measurement.values()))
             self._start_new_probe(m)
-        if event_type.lower() == "update" or event_type.lower() == "delete":
+        if etype == "update" or etype == "delete":
             for proc, m_old in list(self.proc_to_measurement.items()):
                 if m_old.id == m.id:
                     if settings.DEBUG:
                         self._print_pc_diff(m, [m_old])
-                    self._stop_probe(proc_conn)
+                    self._stop_probe(proc)
         
     def _start_new_probe(self, m):
         logger.info(f"Starting probe for: {m.configuration.name}")
