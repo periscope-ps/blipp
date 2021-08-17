@@ -6,6 +6,7 @@
   "location":{"institution": "CREST"},
   "description": "BLiPP running locally",
   "zmqportpath": "/run/blipp",
+  "numprprocs": 10,
   "properties": {
     "configurations": {
       "unis_url":"http://localhost:8888",

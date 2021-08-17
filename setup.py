@@ -53,11 +53,13 @@ setup(
         "python-daemon>=1.5",
         "python-dateutil",
         "unittest2",
-        "unisrt"
+        "unisrt",
+        "lace"
     ],
     dependency_links=[
         "git+https://github.com/periscope-ps/unisrt.git/@develop#egg=unisrt",
         "http://129.79.244.8/python-ethtool-0.7.tar#egg=ethtool-0.7",
+        "git+https://github.com/periscope-ps/lace.git/@master#egg=lace",
     ],
     entry_points = {
         'console_scripts': [

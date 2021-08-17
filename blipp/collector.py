@@ -36,15 +36,18 @@ class Collector:
 
     def insert(self, data, measurement, ts):
         '''
-        Called (by arbiter) to insert new data into this collector object.
+        Called (by arbiter) to insert new data into UNIS.
         '''
+        logger.debug(f"Collector attempting to insert data:\n{data}\nfor Measurement: {measurement.configuration.name}")
         for subject, met_val in data.items():
             if isinstance(subject, str):
                 try: subject = self.unis.find(subject)[0]
                 except IndexError:
                     logger.warn(f"Invalid subject reference - '{subject}'")
             ts = met_val.get('ts', ts)
+            logger.debug(f"{met_val.items()}")
             for ty, v in met_val.items():
+                logger.debug(f"ty: {ty}, v: {v}")
                 _match = lambda x: x.measurement == measurement and x.eventType == ty
                 if ty == 'ts': continue
                 m = self.mds.get((subject, ty), None)
@@ -62,10 +65,12 @@ class Collector:
                         }
                         m = self.unis.insert(Metadata(d), commit=True)
                         m.subject = subject
-                        m.parameters.measurement = self.measurement
+                        m.parameters.measurement = measurement
+                        logger.debug("Before internal flush")
                         self.unis.flush()
-                    m.data._batch = int(self.config.reporting_params)
+                        logger.debug("After internal flush")
+                    m.data._batch = int(measurement.configuration.reporting_params)
                     self.mds[(subject, ty)] = m
-                    
                 m.data.append(v, ts=ts*10e5)
+        logger.debug("Attempting to call self.unis.flush in insert() in collector")
         self.unis.flush()

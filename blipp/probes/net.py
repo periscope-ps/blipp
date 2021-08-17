@@ -72,9 +72,11 @@ class Probe(abc.Probe):
         self.port_match_method = blipp_import_method(getattr(self.config, 'port_match_method', 'blipp.geni_utils.mac_match'))
         self.unis = get_unis()
         
-        logger.debug(f"Probe[net] subject: {self.node_subject.selfRef}")
-        self.subjects=self.get_interface_subjects()
+        logger.debug(f"Probe[net] subject: {getattr(self.node_subject, 'selfRef', None)}")
+        #print(f"{type(self.service)} -- {getattr(self.service, '_rt', None)}")
 
+        self.subjects=self.get_interface_subjects()
+        
     def get_data(self):
         netdev = self._proc.open('net', 'dev')
         netsnmp = self._proc.open('net', 'snmp')

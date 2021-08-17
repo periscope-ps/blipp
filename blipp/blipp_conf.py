@@ -26,10 +26,13 @@ class BlippConfigure(ServiceConfigure):
             initial_config['name']="blipp"
         if "zmqportpath" not in initial_config:
             initial_config['zmqportpath']="/run/blipp"
+        if "numprprocs" not in initial_config:
+            initial_config['numprprocs']=10
         self.pem = pre_existing_measurements
         self.probe_defaults = None
         self.measurements = []
         self.zmqportpath = initial_config['zmqportpath']
+        self.numprprocs = initial_config['numprprocs']
         super(BlippConfigure, self).__init__(initial_config, node_id, urn)
 
     def initialize(self):

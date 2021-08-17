@@ -38,6 +38,12 @@ from copy import deepcopy
 from .utils import merge_dicts, delete_nones
 # import cProfile
 
+import logging, lace
+from lace.logging import trace
+trace.enabled(True)
+trace.showCallDepth(True)
+logging.basicConfig(level=lace.logging.TRACE_ALL, format='{color}[{levelname:.2} {name:>20}]{reset} {message}', style='{')
+
 HOSTNAME = socket.gethostname()
 
 def get_options():

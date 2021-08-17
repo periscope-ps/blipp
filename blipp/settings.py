@@ -159,7 +159,7 @@ WORKSPACE = "."
 def get_logger(namespace="blipp", logfile=None, level=None):
     if level is not None:
         levels = { 'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARN': logging.WARN }
-        logging.basicConfig(level=levels.get(level, logging.WARN))
+        #logging.basicConfig(level=levels.get(level, logging.WARN))
     return logging.getLogger(namespace)
 
 ''' 
