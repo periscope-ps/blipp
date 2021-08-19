@@ -40,9 +40,24 @@ from .utils import merge_dicts, delete_nones
 
 import logging, lace
 from lace.logging import trace
-trace.enabled(True)
 trace.showCallDepth(True)
-logging.basicConfig(level=lace.logging.TRACE_ALL, format='{color}[{levelname:.2} {name:>20}]{reset} {message}', style='{')
+
+ulog = logging.getLogger('unis')
+stderr = logging.StreamHandler()
+formatter = logging.Formatter('{color}[{levelname:.2} {class:>10.10}.{func:<10.10}]{reset} {message}', style='{')
+stderr.setFormatter(formatter)
+stderr.setLevel(lace.logging.TRACE_ALL)
+ulog.addHandler(stderr)
+ulog.setLevel(lace.logging.TRACE_ALL)
+ulog.propagate = False
+
+glog = logging.getLogger()
+stderr = logging.StreamHandler()
+formatter = logging.Formatter('\033[91m{name} >>> {message}{reset}', style='{')
+stderr.setFormatter(formatter)
+stderr.setLevel(logging.DEBUG)
+glog.addHandler(stderr)
+glog.setLevel(logging.DEBUG)
 
 HOSTNAME = socket.gethostname()
 
